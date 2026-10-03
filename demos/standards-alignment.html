@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Standards Coverage Check</title>
+<style>
+  :root {
+    --bg: #fcfcfb; --ink: #0b0b0b; --muted: #52514e; --line: #d9d8d3;
+    --card: #ffffff; --accent: #1c5cab; --accent-ink: #ffffff; --soft: #eef4fc;
+    --gap: #a3221b; --gap-bg: #fdeceb; --dup: #7a4f00; --dup-bg: #fff2d1; --ok-bg: #e8f3ea;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 20px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1500px; margin: 0 auto; padding: 24px 16px 40px; }
+  h1 { font-size: 2.1rem; margin: 0; line-height: 1.2; }
+  .sub { color: var(--muted); margin: 6px 0 20px; font-size: 1.15rem; }
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 18px; }
+  .controls > span { color: var(--muted); font-weight: 600; margin-right: 4px; }
+  button { font: inherit; font-weight: 600; padding: 10px 22px; min-height: 52px; cursor: pointer;
+    background: var(--card); color: var(--ink); border: 2px solid var(--accent); border-radius: 10px; }
+  button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+  #toggle-prompt { border-color: var(--line); }
+  #toggle-prompt[aria-pressed="true"] { border-color: var(--accent); }
+  .prompt { background: var(--soft); border: 1px solid var(--accent); border-radius: 10px; padding: 14px 18px; margin-bottom: 18px; }
+  .prompt pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: .9rem/1.5 ui-monospace, Menlo, Consolas, monospace; }
+  .label { font-size: 1rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 8px; }
+  .pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); gap: 16px; align-items: start; }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; min-width: 0; }
+  .panel.input { background: #f3f2ee; }
+  .paste { margin: 0 0 14px; white-space: pre-wrap; overflow-wrap: anywhere; font: .85rem/1.5 ui-monospace, Menlo, Consolas, monospace;
+    background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+  .paste-h { font-weight: 700; margin: 0 0 4px; font-size: 1rem; }
+  .drafting { color: var(--muted); font-style: italic; font-size: 1.2rem; }
+  .tiles { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 14px; }
+  .tile { border: 1px solid var(--line); border-radius: 10px; padding: 6px 14px; background: var(--card); }
+  .tile b { display: block; font-size: 1.6rem; line-height: 1.2; }
+  .tile.gap { background: var(--gap-bg); border-color: var(--gap); }
+  .tile.dup { background: var(--dup-bg); border-color: #c98500; }
+  table { border-collapse: collapse; width: 100%; font-size: .95rem; table-layout: fixed; }
+  th, td { border: 1px solid var(--line); padding: 6px 4px; text-align: center; }
+  th { background: #f3f2ee; }
+  th.code, td.code { text-align: left; width: 34%; padding-left: 8px; }
+  td.code b { display: block; }
+  tr.gap td { background: var(--gap-bg); }
+  tr.dup td { background: var(--dup-bg); }
+  tr.partial td { background: var(--soft); }
+  td.mark { font-size: 1.3rem; }
+  .badge { display: inline-block; font-size: .78rem; font-weight: 800; letter-spacing: .04em; border-radius: 6px; padding: 1px 7px; color: #fff; }
+  .badge.gap { background: var(--gap); }
+  .badge.dup { background: var(--dup); }
+  .badge.partial { background: var(--accent); }
+  .badge.none { background: var(--muted); }
+  .badge.fix { background: #1e6b34; }
+  .badge.ok { background: #1e6b34; }
+  .legend { color: var(--muted); font-size: .95rem; margin: 8px 0 14px; }
+  .legend span { display: inline-block; margin-right: 14px; }
+  ul.findings { list-style: none; padding: 0; margin: 0; }
+  ul.findings li { border-left: 6px solid var(--line); padding: 6px 0 6px 12px; margin-bottom: 10px; }
+  ul.findings li.gap { border-color: var(--gap); }
+  ul.findings li.dup { border-color: #c98500; }
+  ul.findings li.partial { border-color: var(--accent); }
+  ul.findings li.fix, ul.findings li.ok { border-color: #1e6b34; }
+  footer { color: var(--muted); font-size: 1rem; margin-top: 20px; }
+  @media (max-width: 900px) { .pair { grid-template-columns: 1fr; } }
+  @media (max-width: 520px) { table { font-size: .8rem; } td.mark { font-size: 1.05rem; } th.code, td.code { width: 38%; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Standards coverage check</h1>
+  <p class="sub">Paste a course outline and the standards list. Get back a coverage grid with every gap and repeat flagged, ready for the department meeting.</p>
+
+  <div class="controls" role="group" aria-label="Sample course">
+    <span>Sample course</span>
+    <button data-input="sci8" aria-pressed="true">Grade 8 Science</button>
+    <button data-input="ela10" aria-pressed="false">English 10</button>
+    <button id="toggle-prompt" aria-pressed="false">Show the prompt</button>
+  </div>
+
+  <section class="prompt" id="prompt" hidden>
+    <p class="label">The prompt (copy it, fill in the brackets)</p>
+    <pre id="prompt-text"></pre>
+  </section>
+
+  <div class="pair">
+    <section class="panel input">
+      <p class="label">What you paste in</p>
+      <p class="paste-h">Standards list</p>
+      <pre class="paste" id="in-standards"></pre>
+      <p class="paste-h">Course outline (department draft)</p>
+      <pre class="paste" id="in-outline"></pre>
+    </section>
+    <section class="panel">
+      <p class="label">What comes back</p>
+      <div id="out"></div>
+    </section>
+  </div>
+
+  <footer>
+    A person still checks every mark against the actual unit plans and assessments; the outline is only as complete as whoever wrote it.
+    Every output was generated ahead of time so this page works with no internet.
+  </footer>
+</main>
+
+<script>
+const INPUTS = {
+  sci8: {
+    id: "sci8",
+    standards:
+`SCI.8.1  Plan an investigation that controls variables and collects measurable data.
+SCI.8.2  Analyze distance-time graphs to describe speed and acceleration.
+SCI.8.3  Explain how balanced and unbalanced forces change an object's motion.
+SCI.8.4  Model how energy is transferred and conserved within a system.
+SCI.8.5  Compare kinetic and potential energy using evidence.
+SCI.8.6  Describe how waves carry energy; compare amplitude and frequency.
+SCI.8.7  Model the structure of atoms and simple molecules.
+SCI.8.8  Use evidence to distinguish a chemical change from a physical change.
+SCI.8.9  Explain conservation of mass in a chemical reaction.
+SCI.8.10 Describe how human activity changes a local ecosystem or resource.
+SCI.8.11 Evaluate a design solution against criteria and constraints.
+SCI.8.12 Communicate a scientific argument using claim, evidence, and reasoning.`,
+    outline:
+`GR 8 SCIENCE - yr plan (team draft v3, pls don't edit w/o asking)
+U1 Lab Safety + Science Skills (~3 wks)
+  safety contract, metric measurement, paper towel lab
+  (controlled exp), graphing practice, CER intro
+U2 Motion & Forces (~5 wks)
+  speed calcs, d-t graphs, Newton's laws, balanced/
+  unbalanced, EGG DROP challenge (design/test/redesign)
+U3 Energy (~4 wks)
+  KE/PE, skate park sim, energy transfer + conservation,
+  roller coaster design project
+U4 Matter (~5 wks)
+  atoms, periodic table, molecules, states of matter,
+  physical vs chemical change, density lab
+U5 Chemical Reactions (~3 wks)
+  signs of rxn, balancing eq. intro, baking soda+vinegar
+  open vs closed bag (cons. of mass), phys vs chem review
+U6 Spring Science Fair (~4 wks)
+  indep. investigation, controlled exp, poster, CER
+  write-up, presentations`
+  },
+  ela10: {
+    id: "ela10",
+    standards:
+`ELA.10.1  Cite strong textual evidence to support analysis of a text.
+ELA.10.2  Determine a theme or central idea and trace its development.
+ELA.10.3  Analyze how an author's structural choices create effects.
+ELA.10.4  Determine word meanings, including figurative language.
+ELA.10.5  Analyze an author's point of view or purpose in nonfiction.
+ELA.10.6  Evaluate an argument and the reasoning and evidence behind it.
+ELA.10.7  Write arguments supported by valid reasoning and evidence.
+ELA.10.8  Write informative texts that explain complex ideas clearly.
+ELA.10.9  Conduct a short research project using several credible sources.
+ELA.10.10 Present findings orally so listeners can follow the reasoning.`,
+    outline:
+`ENGLISH 10 -- course outline (dept shared doc, DRAFT)
+Unit 1: Coming of Age (Q1, ~7 wks)
+ - short stories x4, whole-class novel
+ - annotation / close reading, theme tracking chart
+ - figurative language, vocab quizzes (weekly)
+ - lit analysis paragraph w/ embedded quotes -> essay
+Unit 2: Persuasion & Rhetoric (~5 wks)
+ - famous speeches, ethos/pathos/logos
+ - author's purpose, evaluating an argument
+ - ARGUMENTATIVE ESSAY #1
+Unit 3: Shakespeare (Q3, ~6 wks)
+ - acts/scenes, dramatic structure, dramatic irony
+ - figurative lang. in verse, theme
+ - quote analysis journal, perform a scene (groups)
+Unit 4: Nonfiction & Media (~5 wks)
+ - news articles + op-eds, author's purpose, bias
+ - evaluating claims/evidence in media
+ - ARGUMENTATIVE ESSAY #2
+Unit 5: Research (Q4, ~5 wks)
+ - research paper (argument-based), MLA citation
+ - source credibility checklist
+ - final presentation to class`
+  }
+};
+
+const PROMPTS = {
+  align:
+`Map the course outline below against the standards list and return a coverage grid.
+
+FORMAT: A table with one row per standard (use the codes exactly as given) and one column per unit. Mark ● where a unit clearly teaches or assesses the standard and ◐ where it only touches it. Under the table, list:
+1. GAPS: standards no unit addresses.
+2. DUPLICATES: standards taught as new content in more than one unit, with a rough estimate of the overlap in days or weeks.
+3. PARTIAL: standards that are touched but not fully taught.
+4. NO STANDARD: outline topics that match no standard on the list.
+For each item, give one specific, low-cost fix. If one change fixes two problems, say so.
+
+VOICE: A curriculum director writing for a department team. Plain, specific, no praise, no filler.
+
+CONTEXT: This is our district's [grade and course] outline. Spiraling a skill on purpose is fine; flag it only when the same content is re-taught. Base every mark on the outline text only. If a topic's alignment is unclear, write "unclear" instead of guessing.
+
+STANDARDS:
+[paste the standards list]
+
+COURSE OUTLINE:
+[paste the outline]`
+};
+
+const CANNED = {
+  align: {
+    sci8: {
+      units: ["Lab Safety + Skills", "Motion & Forces", "Energy", "Matter", "Chemical Reactions", "Science Fair"],
+      rows: [
+        ["SCI.8.1",  "●··◐·●", "ok"],
+        ["SCI.8.2",  "●●····", "ok"],
+        ["SCI.8.3",  "·●····", "ok"],
+        ["SCI.8.4",  "··●···", "ok"],
+        ["SCI.8.5",  "··●···", "ok"],
+        ["SCI.8.6",  "······", "gap"],
+        ["SCI.8.7",  "···●··", "ok"],
+        ["SCI.8.8",  "···●●·", "dup"],
+        ["SCI.8.9",  "····●·", "ok"],
+        ["SCI.8.10", "······", "gap"],
+        ["SCI.8.11", "·◐◐···", "partial"],
+        ["SCI.8.12", "●····●", "ok"]
+      ],
+      findings: [
+        ["gap", "SCI.8.6 Waves", "No unit mentions waves, sound, or light. Fix: a 2-week waves mini-unit right after U3. Waves carry energy, so it builds on U3's vocabulary. The time can come from the two items below."],
+        ["gap", "SCI.8.10 Human impact", "Nothing in the outline connects human activity to an ecosystem or resource. Fix: a 1-week case study at the end of U3 (where does our school's electricity come from?) covers it without a new unit."],
+        ["dup", "SCI.8.8 Physical vs. chemical change", "Taught in U4, then again as \"review\" in U5. If the U5 review is more than a warm-up, that is 3 to 4 days of repeat. Fix: assess it once in U4; let U5's open/closed bag lab serve as the review."],
+        ["partial", "SCI.8.11 Design criteria", "The egg drop (U2) and roller coaster (U3) are design projects, but neither lists criteria and constraints or judges the redesign against them. Fix: add a one-page criteria sheet to the egg drop and score the redesign with it."],
+        ["none", "U4 \"states of matter\"", "About 1 week that matches no Grade 8 standard. Check whether it is already taught in an earlier grade. If so, this is the cheapest week to reclaim for waves."],
+        ["ok", "SCI.8.1 in three units", "Spiraled on purpose: it is a practice skill. No change, but name U6 as the unit where it is formally assessed."]
+      ]
+    },
+    ela10: {
+      units: ["Coming of Age", "Persuasion", "Shakespeare", "Nonfiction & Media", "Research"],
+      rows: [
+        ["ELA.10.1",  "●·●··", "ok"],
+        ["ELA.10.2",  "●·●··", "ok"],
+        ["ELA.10.3",  "◐·●··", "ok"],
+        ["ELA.10.4",  "●·●··", "ok"],
+        ["ELA.10.5",  "·●·●·", "dup"],
+        ["ELA.10.6",  "·●·●·", "dup"],
+        ["ELA.10.7",  "·●·●●", "dup"],
+        ["ELA.10.8",  "·····", "gap"],
+        ["ELA.10.9",  "····●", "ok"],
+        ["ELA.10.10", "··◐·●", "ok"]
+      ],
+      findings: [
+        ["gap", "ELA.10.8 Informative writing", "Every major essay in the outline is literary analysis or argument. No unit asks students to explain or inform."],
+        ["dup", "ELA.10.5, 10.6, 10.7 in U2 and U4", "Both units teach author's purpose, evaluating an argument, and a full argumentative essay. The U5 research paper is also argument-based. That is three argument essays and roughly 3 weeks of repeated instruction."],
+        ["fix", "One change fixes both", "Turn U4's Argumentative Essay #2 into an informative explainer (for example, how a news story gets reported and checked). U4 keeps its media-literacy reading, one duplicate essay goes away, and ELA.10.8 is covered."],
+        ["ok", "ELA.10.10 Presenting", "U3's scene performance is speaking, not presenting findings, so it only touches the standard. U5's final presentation covers it fully. No change needed."],
+        ["none", "Weekly vocab quizzes, MLA citation", "Neither matches a listed standard. Fine to keep; just know they are local priorities, not standards, if time gets tight."]
+      ]
+    }
+  }
+};
+
+// AI boundary. Canned today; to go live, replace this body with a call to a model
+// (send PROMPTS[task] + the input text, return the model's text). Nothing else changes.
+async function respond(task, input) {
+  await new Promise(r => setTimeout(r, 700)); // feels like generation; remove when live
+  return CANNED[task][input.id];
+}
+
+const BADGE = { gap: "GAP", dup: "DUPLICATE", partial: "PARTIAL", none: "NO STANDARD", fix: "FIX", ok: "OK" };
+const $ = id => document.getElementById(id);
+let run = 0;
+
+function render(out) {
+  const count = f => out.rows.filter(r => r[2] === f).length;
+  const tiles =
+    `<div class="tiles">
+      <div class="tile"><b>${out.rows.length}</b>standards</div>
+      <div class="tile"><b>${count("ok")}</b>covered cleanly</div>
+      <div class="tile gap"><b>${count("gap")}</b>gaps</div>
+      <div class="tile dup"><b>${count("dup")}</b>duplicated</div>
+      ${count("partial") ? `<div class="tile"><b>${count("partial")}</b>partial</div>` : ""}
+    </div>`;
+  const head = `<tr><th class="code">Standard</th>${out.units.map((u, i) => `<th>U${i + 1}</th>`).join("")}</tr>`;
+  const rows = out.rows.map(([code, marks, flag]) =>
+    `<tr class="${flag}"><td class="code"><b>${code}</b>${flag === "ok" ? "" : `<span class="badge ${flag}">${BADGE[flag]}</span>`}</td>` +
+    [...marks].map(m => `<td class="mark">${m === "·" ? "" : m}</td>`).join("") + `</tr>`).join("");
+  const legend = `<p class="legend">${out.units.map((u, i) => `<span><b>U${i + 1}</b> ${u}</span>`).join("")}<span>● taught · ◐ touched</span></p>`;
+  const findings = `<ul class="findings">${out.findings.map(([k, title, text]) =>
+    `<li class="${k}"><span class="badge ${k}">${BADGE[k]}</span> <b>${title}.</b> ${text}</li>`).join("")}</ul>`;
+  $("out").innerHTML = tiles + `<table>${head}${rows}</table>` + legend + findings;
+}
+
+async function choose(id) {
+  const mine = ++run;
+  const input = INPUTS[id];
+  document.querySelectorAll("[data-input]").forEach(b => b.setAttribute("aria-pressed", b.dataset.input === id));
+  $("in-standards").textContent = input.standards;
+  $("in-outline").textContent = input.outline;
+  $("out").innerHTML = `<p class="drafting">Drafting…</p>`;
+  const out = await respond("align", input);
+  if (mine === run) render(out);
+}
+
+document.querySelectorAll("[data-input]").forEach(b => b.addEventListener("click", () => choose(b.dataset.input)));
+$("toggle-prompt").addEventListener("click", e => {
+  const box = $("prompt");
+  box.hidden = !box.hidden;
+  e.currentTarget.setAttribute("aria-pressed", !box.hidden);
+  e.currentTarget.textContent = box.hidden ? "Show the prompt" : "Hide the prompt";
+});
+$("prompt-text").textContent = PROMPTS.align;
+choose("sci8");
+</script>
+</body>
+</html>

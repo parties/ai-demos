@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Board Memo First Drafts</title>
+<style>
+  :root {
+    --bg: #fcfcfb; --ink: #0b0b0b; --muted: #52514e; --line: #d9d8d3;
+    --card: #ffffff; --accent: #1c5cab; --accent-ink: #ffffff; --soft: #eef4fc;
+    --paper: #f3f2ee; --warn-bg: #fff3d6; --warn-line: #c98500; --good: #1b7a4a;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 20px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1500px; margin: 0 auto; padding: 24px 16px 40px; }
+  h1 { font-size: 2.1rem; margin: 0; line-height: 1.2; }
+  .sub { color: var(--muted); margin: 6px 0 20px; font-size: 1.15rem; }
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 18px; }
+  .controls > span { color: var(--muted); font-weight: 600; margin-right: 4px; }
+  button { font: inherit; font-weight: 600; padding: 10px 22px; min-height: 52px; cursor: pointer;
+    background: var(--card); color: var(--ink); border: 2px solid var(--accent); border-radius: 10px; }
+  button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+  #toggle-prompt { border-color: var(--line); }
+  .prompt { background: var(--soft); border: 2px solid var(--accent); border-radius: 12px; padding: 14px 18px; margin-bottom: 18px; }
+  .prompt h2 { font-size: 1rem; margin: 0 0 6px; }
+  pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; }
+  .prompt pre { font-size: 1rem; }
+  .cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); gap: 16px; align-items: start; }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; }
+  .panel.in { background: var(--paper); }
+  .panel > h2 { font-size: 1rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 8px; }
+  .panel h3 { font-size: 1.1rem; margin: 0 0 6px; }
+  .notes { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; }
+  .example { background: var(--card); border: 1px dashed #8f8d87; border-radius: 10px; padding: 12px 16px; font-size: .9rem; }
+  .drafting { color: var(--muted); font-style: italic; font-size: 1.15rem; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .chip { border: 2px solid var(--good); color: var(--good); border-radius: 999px; padding: 2px 12px; font-weight: 600; font-size: .95rem; background: #e7f4ec; }
+  .memo { border: 1px solid var(--line); border-radius: 6px; padding: 18px 22px; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+  .memo .org { font-size: .9rem; letter-spacing: .08em; text-transform: uppercase; font-weight: 700; border-bottom: 3px solid var(--ink); padding-bottom: 6px; margin-bottom: 10px; }
+  .memo dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 2px 14px; margin: 0 0 12px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+  .memo dt { font-weight: 700; }
+  .memo dd { margin: 0; }
+  .memo h4 { font-size: .95rem; letter-spacing: .06em; margin: 14px 0 4px; color: var(--accent); }
+  .memo p { margin: 0 0 6px; }
+  .memo ul { margin: 0 0 6px; padding-left: 1.2em; }
+  mark { background: var(--warn-bg); border: 2px solid var(--warn-line); border-radius: 6px; padding: 0 4px; color: var(--ink); font-weight: 600; }
+  .flag { background: var(--warn-bg); border: 2px solid var(--warn-line); border-radius: 10px; padding: 10px 16px; margin: 16px 0 0; }
+  .flag h3 { margin: 0 0 4px; font-size: 1.15rem; }
+  .flag ul { margin: 0; padding-left: 1.2em; }
+  .flag li { margin: 4px 0; }
+  footer { color: var(--muted); font-size: 1rem; margin-top: 20px; }
+  @media (min-width: 901px) { .panel.in { position: sticky; top: 12px; } }
+  @media (max-width: 900px) { .cols { grid-template-columns: minmax(0, 1fr); } .memo dl { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Board memo first drafts</h1>
+  <p class="sub">Your bullet notes plus last month's memo become a draft in the board's house format. You edit instead of starting cold.</p>
+
+  <div class="controls" role="group" aria-label="Notes">
+    <span>This month's notes</span>
+    <button data-input="roof" aria-pressed="true">Emergency roof repair</button>
+    <button data-input="literacy" aria-pressed="false">Reading screener results</button>
+    <button data-input="phones" aria-pressed="false">Cell phone policy</button>
+    <button id="toggle-prompt" aria-pressed="false">Show the prompt</button>
+  </div>
+
+  <section class="prompt" id="prompt" hidden>
+    <h2>The prompt (copy this into any AI chat)</h2>
+    <pre id="prompt-text"></pre>
+  </section>
+
+  <div class="cols">
+    <section class="panel in">
+      <h2>What you paste in</h2>
+      <div class="notes"><h3>1. Your notes</h3><pre id="in-notes"></pre></div>
+      <div class="example"><h3>2. Last month's memo (the format to copy)</h3><pre id="in-example"></pre></div>
+    </section>
+    <section class="panel">
+      <h2>What comes back</h2>
+      <div id="out"></div>
+    </section>
+  </div>
+
+  <footer>
+    The superintendent checks every figure against the source, sets the agenda number, and owns the final wording before it goes in the packet.
+    Every output was generated ahead of time so this page works with no internet.
+  </footer>
+</main>
+
+<script>
+const PROMPTS = {
+  memo: `Draft a memo to the Board of Education from my notes below.
+
+Format: copy the exact structure of the example memo: the same header lines (TO, FROM, DATE, RE, ITEM TYPE) and the same section headings in the same order. Keep it to one page. Write the RECOMMENDATION as a motion the Board could vote on, or "None; information only." After the memo, add a short list called "Before this goes in the packet."
+
+Voice: plain, neutral, and factual, the way a superintendent writes for a public board packet. Short sentences. Job titles, never names. No adjectives the facts don't support.
+
+Context: I'm the superintendent; the meeting is October 14, 2026. Use only facts from my notes. Where a number or detail is missing, uncertain, or marked with "?", write [CONFIRM] in the draft instead of guessing. Leave out anything that doesn't belong in a public document (comments about individual staff, speculation). In the "Before this goes in the packet" list, name every [CONFIRM] and every note you left out, with one line on why.
+
+EXAMPLE MEMO (last month's, for format only):
+[paste last month's memo]
+
+MY NOTES:
+[paste your notes]`
+};
+
+const EXAMPLE = `MEMORANDUM TO THE BOARD OF EDUCATION
+TO: Board of Education
+FROM: Superintendent
+DATE: September 2, 2026
+RE: Food Service Management Contract, One-Year Extension
+ITEM TYPE: Action · Agenda item 7.2 · Meeting of September 9, 2026
+
+PURPOSE
+To request Board approval of a one-year extension of the food service management agreement with Fairmeadow Dining Services.
+
+BACKGROUND
+The district entered a five-year agreement with Fairmeadow in 2021 after a competitive bid. The agreement allows two one-year extensions by mutual consent. Lunch participation rose from 61% to 68% over the term.
+
+CONSIDERATIONS
+• The management fee rises 2.8%, from $0.212 to $0.218 per meal.
+• A new bid could not take effect before July 2027.
+• 10 of 11 cafeteria managers recommend extension.
+
+FISCAL IMPACT
+About $214,000 for 2026–27, paid from the Food Service Fund. No general fund impact.
+
+RECOMMENDATION
+That the Board approve a one-year extension of the food service management agreement with Fairmeadow Dining Services, effective October 1, 2026, at a fee not to exceed $0.218 per meal.
+
+ATTACHMENTS
+A. Contract amendment   B. Participation data, 2021–2026`;
+
+const INPUTS = {
+  roof: { id: "roof", notes:
+`- roof leak lincoln ms gym. found 9/14 after the storm, water all over gym floor
+- facilities dir got 3 quotes: Ridgeway Roofing 87,400 / Larkspur 92,100 / Tri-County Commercial 104,800
+- went w/ ridgeway (lowest)
+- used emergency purchasing (policy 6320?) i signed w/ board pres ok on 9/16
+- work done 9/22-10/1, gym reopened 10/2
+- paid out of capital reserve, bal after ~1.1M?
+- need board to ratify at oct mtg
+- roof is from 2004. on 5yr plan for full replacement 2028 anyway. move it up??
+- insurance claim filed, deductible 25k, might get some back` },
+  literacy: { id: "literacy", notes:
+`- fall screener done all 6 elem schools k-5, window closed 9/26
+- 3,412 kids screened (98.6% of enrolled)
+- at/above benchmark 58%  (last fall 54, fall 2024 51)
+- K biggest jump 49 -> 60
+- gr 3 basically flat 57 -> 56 -- worried, 3rd is the state test yr
+- some risk 24%, high risk 18%
+- washington el up 11 pts, roosevelt down 3. new principal at roosevelt + 2 open reading spec. positions there
+- yr 2 of new phonics materials
+- interventions start 10/14, rescreen jan
+- want to thank teachers. DON'T overpromise` },
+  phones: { id: "phones", notes:
+`- policy 5131 rewrite: phones away bell to bell gr 6-12 (now only K-5 + teacher's choice)
+- 1st reading oct, 2nd reading + vote nov 11
+- teacher survey: 78% say phones major distraction (n=412)
+- counselors say social media conflicts way up
+- lincoln ms pilot spring '26 w/ pouches: discipline referrals down 31% vs spring '25. fewer fights?? check
+- pouches ~$28/student x ~4,100 kids 6-12 = ~115k. from ESSER leftovers? no, ESSER's gone. gen fund or title IV?
+- exceptions: medical, IEP/504, emergencies
+- parents worried abt reaching kids in emergencies/lockdowns. need comms plan
+- student council asked to keep phones at lunch. NOT in draft. board should talk abt it` }
+};
+
+const CANNED = {
+  memo: {
+    roof: {
+      chips: ["Same 7 headings as September", "Recommendation written as a motion", "One page", "Titles, no names"],
+      head: [["TO", "Board of Education"], ["FROM", "Superintendent"], ["DATE", "October 7, 2026"],
+        ["RE", "Ratification of Emergency Roof Repair, Lincoln Middle School Gymnasium"],
+        ["ITEM TYPE", "Action · Agenda item [CONFIRM] · Meeting of October 14, 2026"]],
+      sections: [
+        ["PURPOSE", ["To request Board ratification of an emergency expenditure of $87,400 for repair of the Lincoln Middle School gymnasium roof."]],
+        ["BACKGROUND", ["On September 14, 2026, a storm caused water to enter the Lincoln Middle School gymnasium through the roof. The facilities director obtained three quotes. Under the district's emergency purchasing policy [CONFIRM policy number], the Superintendent authorized the work on September 16 after consulting the Board President. Work was completed September 22 to October 1, and the gymnasium reopened October 2."]],
+        ["CONSIDERATIONS", [
+          "• The lowest of three quotes was accepted: Ridgeway Roofing, $87,400; Larkspur Roofing, $92,100; Tri-County Commercial Roofing, $104,800.",
+          "• The gymnasium roof was installed in 2004 and is scheduled for full replacement in 2028 under the five-year capital plan. Staff will return with a recommendation on whether to move that replacement earlier.",
+          "• An insurance claim has been filed. After the $25,000 deductible, up to $62,400 may be recovered."]],
+        ["FISCAL IMPACT", ["$87,400 from the Capital Reserve Fund. The remaining balance is approximately $1.1 million [CONFIRM]. Any insurance recovery will be returned to the Capital Reserve Fund."]],
+        ["RECOMMENDATION", ["That the Board ratify the emergency expenditure of $87,400 to Ridgeway Roofing for repair of the Lincoln Middle School gymnasium roof, paid from the Capital Reserve Fund."]],
+        ["ATTACHMENTS", ["A. Quote tabulation   B. Emergency authorization, September 16, 2026   C. Photographs of damage"]]
+      ],
+      checks: [
+        "Policy number: your notes say \"6320?\". Confirm it before citing it.",
+        "Capital reserve balance: \"~1.1M?\" needs the exact figure from the business office.",
+        "Agenda item number: not in your notes. Fill in when the agenda is set.",
+        "\"Up to $62,400\" is arithmetic from your notes ($87,400 minus the $25,000 deductible), not the insurer's estimate. The draft says \"may.\"",
+        "\"Any insurance recovery will be returned to the Capital Reserve Fund\" is my assumption. Strike it if that isn't the practice.",
+        "Left out: \"move it up??\" Written as a staff follow-up, not a decision, since it isn't settled."]
+    },
+    literacy: {
+      chips: ["Same 7 headings as September", "Information item, no motion", "One page", "Cautious tone, as asked"],
+      head: [["TO", "Board of Education"], ["FROM", "Superintendent"], ["DATE", "October 7, 2026"],
+        ["RE", "Fall 2026 Reading Screener Results, Grades K–5"],
+        ["ITEM TYPE", "Information · Agenda item [CONFIRM] · Meeting of October 14, 2026"]],
+      sections: [
+        ["PURPOSE", ["To report fall reading screener results for grades K–5. No Board action is required."]],
+        ["BACKGROUND", ["The district screens every K–5 student in reading three times a year. The fall window closed September 26 at all six elementary schools. This is the second year of the phonics materials adopted in 2025. These results reflect the daily work of classroom teachers and reading staff."]],
+        ["CONSIDERATIONS", [
+          "• 3,412 students were screened, 98.6% of enrolled K–5 students.",
+          "• 58% scored at or above benchmark, compared with 54% last fall and 51% in fall 2024. These are different groups of students each year, so the trend is an early sign, not proof of lasting gains.",
+          "• Kindergarten showed the largest change, from 49% to 60%.",
+          "• Grade 3 was essentially flat (57% to 56%). Because grade 3 is the first state-tested year, staff will prioritize it.",
+          "• Results varied by school: Washington Elementary rose 11 points; Roosevelt Elementary declined 3 points. Roosevelt has two open reading specialist positions.",
+          "• 24% of students scored at some risk and 18% at high risk. Intervention begins October 14, and all students will be screened again in January."]],
+        ["FISCAL IMPACT", ["None anticipated. Intervention is delivered within existing staffing and materials budgets [CONFIRM: the two Roosevelt vacancies may require contracted services]."]],
+        ["RECOMMENDATION", ["None; information only. Staff will report winter results in February."]],
+        ["ATTACHMENTS", ["A. Results by grade, three-year trend   B. Results by school, three-year trend"]]
+      ],
+      checks: [
+        "Left out: \"new principal at Roosevelt.\" In a public memo it reads as blaming one person. Decide whether that context belongs in your spoken report instead.",
+        "Fiscal impact: two open specialist positions may mean contracted services. Check with the business office before you say \"none.\"",
+        "Agenda item number: not in your notes.",
+        "\"February\" for the winter report is my assumption from a January rescreen. Confirm the date.",
+        "Wording check: the draft says \"compared with last fall,\" not \"students improved,\" because each fall is a different group of students."]
+    },
+    phones: {
+      chips: ["Same 7 headings as September", "First reading, vote noted for Nov 11", "One page", "Open question flagged for the Board"],
+      head: [["TO", "Board of Education"], ["FROM", "Superintendent"], ["DATE", "October 7, 2026"],
+        ["RE", "Policy 5131, Student Use of Personal Electronic Devices: First Reading"],
+        ["ITEM TYPE", "Discussion · First reading · Agenda item [CONFIRM] · Meeting of October 14, 2026"]],
+      sections: [
+        ["PURPOSE", ["To present proposed revisions to Policy 5131 for first reading. Board action is scheduled for second reading on November 11, 2026."]],
+        ["BACKGROUND", ["Current policy restricts personal devices in grades K–5 and leaves classroom rules in grades 6–12 to individual teachers. The revision would require phones to be stored and off from first bell to last bell in grades 6–12. Lincoln Middle School piloted lockable storage pouches in spring 2026."]],
+        ["CONSIDERATIONS", [
+          "• In a staff survey (412 responses), 78% of teachers described phones as a major classroom distraction.",
+          "• During the Lincoln pilot, discipline referrals fell 31% compared with spring 2025 [CONFIRM source].",
+          "• The draft includes exceptions for documented medical needs, IEP and Section 504 plans, and emergencies.",
+          "• Families have asked how they will reach students during an emergency. A family communication plan will accompany the second reading.",
+          "• The student council has asked that phones be allowed at lunch. The current draft does not include this, and the Board may wish to discuss it."]],
+        ["FISCAL IMPACT", ["Approximately $115,000 for storage pouches (about $28 per student for roughly 4,100 students in grades 6–12). Funding source: [CONFIRM: general fund or Title IV]."]],
+        ["RECOMMENDATION", ["None at first reading. Staff will recommend approval at second reading on November 11, 2026."]],
+        ["ATTACHMENTS", ["A. Policy 5131, redline   B. Lincoln Middle School pilot summary   C. Staff survey results"]]
+      ],
+      checks: [
+        "Left out: \"fewer fights??\" Only the 31% referral figure is in the draft, and it still needs a source document.",
+        "Left out: \"social media conflicts way up.\" Your notes have no number for it. Add the counselors' figure or keep it for your spoken report.",
+        "Funding source is blank on purpose. You ruled out ESSER in your own notes; the business office picks the fund.",
+        "The 31% compares one school to its own prior spring. Don't let it be read as \"phones caused the referrals.\"",
+        "Agenda item number: not in your notes."]
+    }
+  }
+};
+
+// AI boundary. Canned today; to go live, replace this body with a call to a model
+// (send PROMPTS[task] + the input text, return the model's text). Nothing else changes.
+async function respond(task, input) {
+  await new Promise(r => setTimeout(r, 700)); // feels like generation; remove when live
+  return CANNED[task][input.id];
+}
+
+const esc = s => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const marks = s => esc(s).replace(/\[CONFIRM([^\]]*)\]/g, "<mark>CONFIRM$1</mark>");
+
+function renderMemo(m) {
+  const body = m.sections.map(([h, lines]) => {
+    const bullets = lines.filter(l => l.startsWith("• "));
+    const text = bullets.length ? `<ul>${bullets.map(l => `<li>${marks(l.slice(2))}</li>`).join("")}</ul>`
+      : lines.flatMap(l => l.split("   ")).map(l => `<p>${marks(l)}</p>`).join("");
+    return `<h4>${h}</h4>${text}`;
+  }).join("");
+  return `<div class="chips">${m.chips.map(c => `<span class="chip">✓ ${esc(c)}</span>`).join("")}</div>
+    <article class="memo"><div class="org">Memorandum to the Board of Education</div>
+    <dl>${m.head.map(([k, v]) => `<dt>${k}:</dt><dd>${marks(v)}</dd>`).join("")}</dl>${body}</article>
+    <div class="flag"><h3>⚠ Before this goes in the packet (${m.checks.length})</h3>
+    <ul>${m.checks.map(c => `<li>${esc(c)}</li>`).join("")}</ul></div>`;
+}
+
+let current = "roof", runId = 0;
+async function show(id) {
+  current = id;
+  const run = ++runId;
+  document.querySelectorAll("[data-input]").forEach(b => b.setAttribute("aria-pressed", b.dataset.input === id));
+  document.getElementById("in-notes").textContent = INPUTS[id].notes;
+  const out = document.getElementById("out");
+  out.innerHTML = '<p class="drafting">Drafting…</p>';
+  const memo = await respond("memo", { id, notes: INPUTS[id].notes, example: EXAMPLE });
+  if (run === runId) out.innerHTML = renderMemo(memo);
+}
+
+document.querySelectorAll("[data-input]").forEach(b => b.addEventListener("click", () => show(b.dataset.input)));
+const toggle = document.getElementById("toggle-prompt");
+toggle.addEventListener("click", () => {
+  const box = document.getElementById("prompt");
+  box.hidden = !box.hidden;
+  toggle.setAttribute("aria-pressed", !box.hidden);
+  toggle.textContent = box.hidden ? "Show the prompt" : "Hide the prompt";
+});
+document.getElementById("prompt-text").textContent = PROMPTS.memo;
+document.getElementById("in-example").textContent = EXAMPLE;
+show(current);
+</script>
+</body>
+</html>

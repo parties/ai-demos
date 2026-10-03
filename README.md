@@ -3,3 +3,4 @@
 Interactive AI demos for school and district staff, published at https://parties.github.io/ai-demos/.
 Each demo is a single HTML file that works offline: no CDN, no web fonts, no external images.
 Every record in every demo is fabricated.
+In every demo, all AI output goes through one `respond()` function. It returns pre-written output today; swapping its body for a model call makes the page live.

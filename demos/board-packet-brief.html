@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Board Packet in One Page</title>
+<style>
+  :root {
+    --bg: #fcfcfb; --ink: #0b0b0b; --muted: #52514e; --line: #d9d8d3;
+    --card: #ffffff; --accent: #1c5cab; --accent-ink: #ffffff; --soft: #eef4fc;
+    --paper: #f3f2ee; --warn-bg: #fff3d6; --warn-line: #c98500; --good: #1b7a4a;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 20px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1500px; margin: 0 auto; padding: 24px 16px 40px; }
+  h1 { font-size: 2.1rem; margin: 0; line-height: 1.2; }
+  .sub { color: var(--muted); margin: 6px 0 20px; font-size: 1.15rem; }
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 18px; }
+  .controls > span { color: var(--muted); font-weight: 600; margin-right: 4px; }
+  button { font: inherit; font-weight: 600; padding: 10px 22px; min-height: 52px; cursor: pointer;
+    background: var(--card); color: var(--ink); border: 2px solid var(--accent); border-radius: 10px; }
+  button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+  #toggle-prompt { border-color: var(--line); }
+  .prompt { background: var(--soft); border: 2px solid var(--accent); border-radius: 12px; padding: 14px 18px; margin-bottom: 18px; }
+  .prompt h2 { font-size: 1rem; margin: 0 0 6px; }
+  pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; }
+  .prompt pre { font-size: 1rem; }
+  .cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); gap: 16px; align-items: start; }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; }
+  .panel.in { background: var(--paper); }
+  .panel > h2 { font-size: 1rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 8px; }
+  .meta { color: var(--muted); font-size: 1rem; margin: 0 0 10px; }
+  .doc { max-height: 72vh; overflow-y: auto; background: #8f8d87; padding: 12px; border-radius: 8px; }
+  .page { background: var(--card); padding: 14px 18px; margin-bottom: 12px; font-size: .9rem; line-height: 1.45; box-shadow: 0 1px 4px rgba(0,0,0,.25); }
+  .page:last-child { margin-bottom: 0; }
+  .page .pg { float: right; color: var(--muted); font-size: .85rem; font-weight: 600; }
+  .gap { text-align: center; color: #ffffff; font-weight: 600; font-size: .9rem; margin: -2px 0 10px; }
+  .drafting { color: var(--muted); font-style: italic; font-size: 1.15rem; }
+  .brief-head { margin: 0 0 12px; font-size: 1.3rem; }
+  .tiles { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+  .tile { border: 1px solid var(--line); border-radius: 10px; padding: 6px 14px; background: var(--card); }
+  .tile b { display: block; font-size: 1.6rem; line-height: 1.2; }
+  .tile.warn { background: var(--warn-bg); border: 2px solid var(--warn-line); }
+  h3.sec { font-size: 1.15rem; margin: 18px 0 8px; border-bottom: 2px solid var(--ink); padding-bottom: 2px; }
+  .tablewrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 1rem; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: .9rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+  td.num { white-space: nowrap; font-weight: 700; }
+  td.pg { white-space: nowrap; color: var(--muted); }
+  .bar { margin-bottom: 8px; }
+  .bar .lab { display: flex; justify-content: space-between; gap: 12px; font-weight: 600; font-size: 1rem; }
+  .bar .track { height: 20px; background: var(--paper); border-radius: 6px; overflow: hidden; }
+  .bar .fill { height: 100%; background: var(--accent); border-radius: 6px; min-width: 4px; }
+  .flag { background: var(--warn-bg); border: 2px solid var(--warn-line); border-radius: 10px; padding: 10px 16px; margin: 10px 0; }
+  .flag h4 { margin: 0 0 2px; font-size: 1.1rem; }
+  .flag p { margin: 2px 0; }
+  .tag { display: inline-block; font-size: .85rem; font-weight: 700; border-radius: 999px; padding: 0 10px; margin: 4px 6px 0 0; border: 2px solid var(--ink); background: var(--card); }
+  .tag.link { border-color: var(--accent); color: var(--accent); }
+  ol.read { margin: 0; padding-left: 1.4em; }
+  ol.read li { margin: 4px 0; }
+  footer { color: var(--muted); font-size: 1rem; margin-top: 20px; }
+  @media (min-width: 901px) { .panel.in { position: sticky; top: 12px; } }
+  @media (max-width: 900px) { .cols { grid-template-columns: minmax(0, 1fr); } .doc { max-height: 55vh; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>A board packet in one page</h1>
+  <p class="sub">Paste the public packet. Get the decisions due, the dollars, and the items likely to draw questions, each with a page number.</p>
+
+  <div class="controls" role="group" aria-label="Packet">
+    <span>Packet</span>
+    <button data-input="nov" aria-pressed="true">November regular meeting · 148 pp.</button>
+    <button data-input="june" aria-pressed="false">June budget adoption · 112 pp.</button>
+    <button id="toggle-prompt" aria-pressed="false">Show the prompt</button>
+  </div>
+
+  <section class="prompt" id="prompt" hidden>
+    <h2>The prompt (copy this into any AI chat)</h2>
+    <pre id="prompt-text"></pre>
+  </section>
+
+  <div class="cols">
+    <section class="panel in">
+      <h2>What you paste in</h2>
+      <p class="meta" id="in-meta"></p>
+      <div class="doc" id="in-doc"></div>
+    </section>
+    <section class="panel">
+      <h2>What comes back</h2>
+      <div id="out"></div>
+    </section>
+  </div>
+
+  <footer>
+    Every number and page reference gets checked against the packet before you rely on it; anything marked "calculated" is the AI's own math.
+    Every output was generated ahead of time so this page works with no internet.
+  </footer>
+</main>
+
+<script>
+const PROMPTS = {
+  brief: `Turn this board packet into a one-page brief I can read before the meeting.
+
+Format: (1) a line of key numbers: pages, votes due, total dollars; (2) a table of every decision due: item number, what the Board is deciding, dollar amount, page; (3) the dollars by item, largest first; (4) "Likely to draw questions": up to five items, each with the specific fact a board member or the public will ask about and the page it's on; (5) "Read these pages first": the five pages that matter most. Point out anything that connects two agenda items (for example, a spending request and an enrollment or budget report that bears on it). Label any number you calculated yourself rather than found in the packet.
+
+Voice: crisp and neutral, for a superintendent preparing for a public meeting. Don't say whether items should pass.
+
+Context: this is the public board packet for our next meeting. Use only what's in the packet. Give a page number for every fact so I can check it.
+
+PACKET:
+[paste the packet text]`
+};
+
+const INPUTS = {
+  nov: { id: "nov", meta: "Regular Meeting, November 11, 2026 · 148 pages · excerpt shown: contents + 6 pages",
+    pages: [
+      ["ii", `REGULAR MEETING OF THE BOARD OF EDUCATION
+Wednesday, November 11, 2026 · 7:00 p.m. · Central Office Board Room
+
+1. Call to Order, Roll Call, Pledge ........ 1
+2. Approval of Agenda ........ 1
+3. Recognitions: Fall All-Conference Athletes; Lincoln MS Science Olympiad ........ 2
+4. Public Comment ........ 3
+5. Superintendent's Report ........ 4
+6. CONSENT AGENDA ........ 12
+   6.1 Minutes: Oct 14 regular meeting; Oct 28 work session ........ 12
+   6.2 Personnel Report ........ 19
+   6.3 Monthly Financial Report, September ........ 24
+   6.4 Acceptance of Donations ($14,250) ........ 33
+   6.5 Overnight Field Trip: Lincoln MS Grade 8, State Capital ........ 35
+   6.6 Renewal: Northwind Learning Reading Intervention Licenses ........ 38
+   6.7 Purchase: Student Laptops, Cooperative Contract ........ 44
+7. ACTION ITEMS ........ 59
+   7.1 Jefferson Elementary HVAC Replacement, Change Order #3 ........ 59
+   7.2 Award: Student Transportation Services, 2027–2032 ........ 66
+   7.3 Policy 5131, Student Use of Personal Electronic Devices (Second Reading) ........ 84
+   7.4 Architectural Services, Washington High School Science Wing ........ 96
+   7.5 2027–28 School Calendar ........ 112
+8. INFORMATION AND DISCUSSION ........ 122
+   8.1 Fall Enrollment Report ........ 122
+   8.2 First-Quarter Budget Update ........ 131
+   8.3 Strategic Plan Progress, Goal 2 ........ 139
+9. Board Member Reports ........ 147
+10. Adjournment ........ 148`],
+      ["44–45", `6.7 PURCHASE: STUDENT LAPTOPS, COOPERATIVE CONTRACT
+Background: The district's one-to-one device program replaces student devices on a four-year cycle. The 1,150 devices purchased in 2022 for grades 6 and 9 reach end of manufacturer support in June 2027.
+Recommendation: That the Board approve the purchase of 1,150 student laptops at $359.00 per unit through the regional purchasing cooperative contract, for a total of $412,850.
+Funding: Technology Capital Fund. 2026–27 budgeted amount for student device replacement: $380,000.`],
+      ["59–62", `7.1 JEFFERSON ELEMENTARY HVAC REPLACEMENT, CHANGE ORDER #3
+Change Order #3 covers removal of asbestos-containing material found in the ceiling plenum during demolition, and a 19-day schedule extension. Amount: $238,600.
+
+CHANGE ORDER HISTORY (p. 61)
+Original contract (bid March 2026) ......... $1,742,000
+CO #1  Electrical panel upgrade ............ $41,200
+CO #2  Additional ductwork, gym wing ....... $49,800
+CO #3  Asbestos abatement (this item) ...... $238,600
+Revised contract amount .................... $2,071,600
+Project contingency (10%) .................. $174,200
+
+Funding (p. 62): 2025 Capital Projects Fund. Amounts above contingency will be covered by transfer of savings from the Roosevelt Elementary roofing project.
+Recommendation: Approve Change Order #3 in the amount of $238,600.`],
+      ["66, 79", `7.2 AWARD: STUDENT TRANSPORTATION SERVICES, 2027–2032
+A request for proposals was issued August 4, 2026. Two proposals were received.
+Recommendation: That the Board award a five-year contract to Bluestone Transit Co., beginning July 1, 2027. Year 1 cost: $2,315,000, with a 4.5% annual escalator. For comparison, the current contract's final-year cost (2026–27) is $2,071,000.
+
+PROPOSAL TABULATION (p. 79)
+Bluestone Transit Co. ..... Year 1: $2,315,000 ..... Responsive
+Ridgeline Coach Lines ..... Year 1: $2,198,000 ..... Non-responsive: did not submit the required description of its driver background-check process (RFP §4.3)`],
+      ["96–98", `7.4 ARCHITECTURAL SERVICES, WASHINGTON HIGH SCHOOL SCIENCE WING
+Recommendation: That the Board approve an agreement for design through construction administration for a 14-classroom science wing, in an amount not to exceed $1,240,000 (about 8.5% of the estimated construction cost of $14.6 million).
+Funding (p. 98): Design services from the Capital Projects Fund. A source for construction funding has not been identified; staff anticipate bringing a bond referendum recommendation to the Board in 2027.`],
+      ["122–124", `8.1 FALL ENROLLMENT REPORT (INFORMATION)
+October 1 enrollment: 9,812 students, 214 below the projection of 10,026 and 192 below last year (10,004).
+Largest variance from projection: Washington High School grade 9, 61 students below projection.
+Revenue impact (p. 124): Under the state aid formula, the enrollment variance is estimated to reduce 2027–28 state aid by approximately $1.9 million.`]
+    ] },
+  june: { id: "june", meta: "Budget Hearing and Special Meeting, June 10, 2026 · 112 pages · excerpt shown: contents + 6 pages",
+    pages: [
+      ["ii", `BUDGET HEARING AND SPECIAL MEETING OF THE BOARD OF EDUCATION
+Wednesday, June 10, 2026 · 6:30 p.m. · Washington High School Auditorium
+
+1. Call to Order ........ 1
+2. PUBLIC HEARING: Proposed 2026–27 Budget ........ 2
+3. Public Comment ........ 3
+4. ACTION ITEMS ........ 4
+   4.1 Adoption of 2026–27 General Fund Budget ........ 4
+   4.2 Certification of 2026 Property Tax Levy ........ 38
+   4.3 Use of Unassigned Fund Balance ........ 44
+   4.4 2026–27 Staffing Plan ........ 51
+   4.5 Employee Health Insurance Renewal, Lakeshore Benefits Trust ........ 66
+   4.6 School Meal Prices, 2026–27 ........ 78
+   4.7 Athletic Participation Fee ........ 83
+5. INFORMATION ........ 88
+   5.1 Five-Year Financial Forecast ........ 88
+   5.2 Grant-Funded Programs Ending June 30 ........ 101
+6. Adjournment ........ 112`],
+      ["4", `4.1 ADOPTION OF 2026–27 GENERAL FUND BUDGET
+Total expenditures: $148,320,000 (2025–26: $143,860,000).
+Total revenues: $145,170,000.
+The difference of $3,150,000 is addressed through use of unassigned fund balance (Item 4.3).
+Recommendation: Adopt the 2026–27 General Fund budget as presented.`],
+      ["38–39", `4.2 CERTIFICATION OF 2026 PROPERTY TAX LEVY
+Recommended levy: $61,480,000, an increase of 3.9% over the 2025 levy of $59,172,000.
+The maximum allowable increase under the levy limit is 4.0% (p. 39).`],
+      ["44–46", `4.3 USE OF UNASSIGNED FUND BALANCE
+Estimated unassigned fund balance, June 30, 2026: $14,720,000.
+Recommended use for 2026–27 operations: $3,150,000.
+Estimated unassigned fund balance after use: $11,570,000.
+Board Policy 6220 (p. 46): "The district shall maintain an unassigned general fund balance of not less than eight percent (8%) of annual general fund expenditures."`],
+      ["51–53", `4.4 2026–27 STAFFING PLAN: REDUCTION OF 14.5 FTE
+9.0 FTE through retirements and resignations not refilled; 5.5 FTE through non-renewal of probationary staff.
+By area (p. 53): Central office 2.0 (including one director) · Elementary art and music 3.0 (moves from two sessions per week to one) · Secondary electives 2.5 · Grades 4–5 classroom 4.0 (class sizes rise about one student) · Instructional aides 3.0.
+Estimated savings: $1,421,000.`],
+      ["66, 78, 83", `4.5 HEALTH INSURANCE RENEWAL: Lakeshore Benefits Trust renewal of +9.4%, an increase of $1,612,000.
+4.6 MEAL PRICES (p. 78): Lunch +$0.25 (elementary $2.85 to $3.10; secondary $3.10 to $3.35). Breakfast +$0.15. Projected Food Service Fund revenue: +$118,000.
+4.7 ATHLETIC FEE (p. 83): Per-sport fee from $75 to $110; family cap from $225 to $330. Projected revenue: +$96,000. Fee waivers continue for students eligible for meal benefits.`],
+      ["88–89", `5.1 FIVE-YEAR FINANCIAL FORECAST (INFORMATION)
+Projected operating result after 2026–27: 2027–28, −$4.1 million; 2028–29, −$5.6 million; 2029–30, −$6.8 million.
+Key assumptions (p. 89): flat enrollment; health insurance growth of 6.0% per year (as presented at the March budget preview).`]
+    ] }
+};
+
+const CANNED = {
+  brief: {
+    nov: {
+      title: "Brief: November 11 regular meeting",
+      tiles: [["148", "pages"], ["12", "votes (7 consent, 5 action)"], ["$14.74M", "total commitments"], ["5", "items likely to draw questions", true]],
+      decisions: [
+        ["6.6", "Renew reading intervention licenses (Northwind Learning) · consent", "$186,400", "38"],
+        ["6.7", "Buy 1,150 student laptops · consent", "$412,850", "44"],
+        ["7.1", "HVAC change order #3, Jefferson Elementary", "$238,600", "59"],
+        ["7.2", "Five-year bus contract, Bluestone Transit Co.", "$12.66M (yr 1: $2.32M)", "66"],
+        ["7.3", "Cell phone policy 5131, final vote", "none", "84"],
+        ["7.4", "Architect, Washington HS science wing", "up to $1.24M", "96"],
+        ["7.5", "2027–28 school calendar", "none", "112"],
+        ["6.1–6.5", "Routine consent: minutes, personnel, financials, $14,250 in donations, one overnight trip", "n/a", "12–35"]
+      ],
+      bars: [["7.2 Bus contract (5 yrs, calculated)", 12.66], ["7.4 Science wing architect", 1.24], ["6.7 Student laptops", 0.41285], ["7.1 HVAC change order", 0.2386], ["6.6 Reading licenses", 0.1864]],
+      unit: "M",
+      questions: [
+        { h: "7.2 Bus contract: why not the lower bid?", t: "Ridgeline's year-1 price was $117,000 lower, about $640,000 over five years at the same escalator. It was ruled non-responsive for one missing document (RFP §4.3). Year 1 with Bluestone is 11.8% above this year's cost.", pg: "66, 79", calc: true },
+        { h: "7.1 HVAC: change orders now 18.9% over the bid", t: "Three change orders total $329,600 against a $174,200 contingency, so the project is $155,400 past contingency. The gap comes from Roosevelt roofing savings. Expect: why didn't the pre-construction survey find the asbestos?", pg: "61–62", calc: true },
+        { h: "7.4 Designing a $14.6M wing with no construction money", t: "$1.24M for design now; construction funding depends on a 2027 bond that hasn't been proposed. In the same packet, enrollment is 214 below projection and Washington HS grade 9 is 61 below.", pg: "96, 98, 122", link: "Connects 7.4 and 8.1" },
+        { h: "6.7 Laptops: largest consent item, and over budget", t: "$412,850 against a $380,000 budget line, $32,850 over. It is larger than action item 7.1. A member may pull it from consent.", pg: "44–45", calc: true },
+        { h: "7.3 Phone policy: final vote with public interest", t: "41 written comments (26 support, 11 oppose, 4 other). The student council's request for phones at lunch was not added. Expect speakers at public comment.", pg: "84, 90" }
+      ],
+      read: [["p. 79", "Proposal tabulation: the reason the lower bid was rejected"], ["p. 61", "Change order history and contingency"], ["p. 98", "Science wing funding note"], ["p. 124", "State aid impact of lower enrollment ($1.9M)"], ["p. 45", "Laptop budget line"]]
+    },
+    june: {
+      title: "Brief: June 10 budget hearing and special meeting",
+      tiles: [["112", "pages"], ["7", "votes, all action items"], ["$148.32M", "general fund budget (+3.1%)"], ["5", "items likely to draw questions", true]],
+      decisions: [
+        ["4.1", "Adopt the 2026–27 general fund budget", "$148.32M", "4"],
+        ["4.2", "Certify the property tax levy (+3.9%)", "$61.48M", "38"],
+        ["4.3", "Use fund balance to close the gap", "$3.15M", "44"],
+        ["4.4", "Reduce 14.5 FTE (5.5 non-renewals)", "saves $1.42M", "51"],
+        ["4.5", "Health insurance renewal (+9.4%)", "+$1.61M", "66"],
+        ["4.6", "Raise meal prices (lunch +$0.25)", "+$118,000 revenue", "78"],
+        ["4.7", "Raise athletic fee from $75 to $110", "+$96,000 revenue", "83"]
+      ],
+      barsTitle: "How the plan pays for the year",
+      bars: [["Fund balance (one-time)", 3.15], ["Staff reductions", 1.42], ["Meal prices (Food Service Fund)", 0.118], ["Athletic fee", 0.096]],
+      unit: "M",
+      questions: [
+        { h: "4.3 Fund balance drops below board policy", t: "After the $3.15M draw, the balance is $11.57M, which is 7.8% of expenditures. Policy 6220 requires at least 8%, so the plan is about $296,000 short. The packet does not say this anywhere.", pg: "4, 44, 46", calc: true, link: "Connects 4.1 and 4.3" },
+        { h: "The gap is structural, not one-year", t: "The forecast shows −$4.1M next year, growing to −$6.8M by 2029–30, and it assumes 6.0% health growth. Tonight's renewal is 9.4%, so the forecast is likely optimistic.", pg: "66, 88–89", link: "Connects 4.5 and 5.1" },
+        { h: "4.4 Elementary art and music cut in half", t: "3.0 FTE; students go from two sessions a week to one. Likely the largest public comment topic. Central office takes 2.0 FTE, which is the fairness answer people will ask for.", pg: "53" },
+        { h: "4.7 Athletic fee up 47%", t: "$75 to $110 per sport; family cap $225 to $330. Have the answer ready: fee waivers continue for students eligible for meal benefits.", pg: "83", calc: true },
+        { h: "4.2 Levy one-tenth of a point under the limit", t: "+3.9% against a 4.0% limit. Expect: \"Why tax near the maximum and still cut staff?\"", pg: "38–39" }
+      ],
+      read: [["p. 46", "Policy 6220, the 8% fund balance floor"], ["p. 88–89", "Forecast and its 6.0% health assumption"], ["p. 53", "Staffing cuts by area"], ["p. 39", "Levy limit"], ["p. 83", "Athletic fee and waivers"]]
+    }
+  }
+};
+
+// AI boundary. Canned today; to go live, replace this body with a call to a model
+// (send PROMPTS[task] + the input text, return the model's text). Nothing else changes.
+async function respond(task, input) {
+  await new Promise(r => setTimeout(r, 700)); // feels like generation; remove when live
+  return CANNED[task][input.id];
+}
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function renderBrief(b) {
+  const max = Math.max(...b.bars.map(x => x[1]));
+  const money = v => v >= 1 ? `$${v.toFixed(2)}${b.unit}` : `$${(v * 1000).toFixed(1).replace(/\.0$/, "")}K`;
+  return `<h3 class="brief-head">${esc(b.title)}</h3>
+    <div class="tiles">${b.tiles.map(([n, l, w]) => `<div class="tile${w ? " warn" : ""}"><b>${esc(n)}</b>${esc(l)}</div>`).join("")}</div>
+    <h3 class="sec">Decisions due</h3>
+    <div class="tablewrap"><table><thead><tr><th>Item</th><th>Deciding</th><th>Amount</th><th>Page</th></tr></thead><tbody>
+    ${b.decisions.map(([i, d, a, p]) => `<tr><td>${esc(i)}</td><td>${esc(d)}</td><td class="num">${esc(a)}</td><td class="pg">p. ${esc(p)}</td></tr>`).join("")}
+    </tbody></table></div>
+    <h3 class="sec">${esc(b.barsTitle || "Dollars by item")}</h3>
+    ${b.bars.map(([l, v]) => `<div class="bar"><div class="lab"><span>${esc(l)}</span><span>${money(v)}</span></div><div class="track"><div class="fill" style="width:${(v / max * 100).toFixed(1)}%"></div></div></div>`).join("")}
+    <h3 class="sec">⚠ Likely to draw questions</h3>
+    ${b.questions.map(q => `<div class="flag"><h4>${esc(q.h)}</h4><p>${esc(q.t)}</p>
+      <span class="tag">p. ${esc(q.pg)}</span>${q.link ? `<span class="tag link">${esc(q.link)}</span>` : ""}${q.calc ? `<span class="tag">Calculated, check it</span>` : ""}</div>`).join("")}
+    <h3 class="sec">Read these pages first</h3>
+    <ol class="read">${b.read.map(([p, t]) => `<li><b>${esc(p)}</b>: ${esc(t)}</li>`).join("")}</ol>`;
+}
+
+let runId = 0;
+async function show(id) {
+  const run = ++runId;
+  const input = INPUTS[id];
+  document.querySelectorAll("[data-input]").forEach(b => b.setAttribute("aria-pressed", b.dataset.input === id));
+  document.getElementById("in-meta").textContent = input.meta;
+  document.getElementById("in-doc").innerHTML = input.pages.map(([pg, text], i) =>
+    (i ? '<div class="gap">· · · pages skipped · · ·</div>' : "") +
+    `<div class="page"><span class="pg">p. ${esc(pg)}</span><pre>${esc(text)}</pre></div>`).join("");
+  const out = document.getElementById("out");
+  out.innerHTML = '<p class="drafting">Reading the packet and drafting the brief…</p>';
+  const brief = await respond("brief", input);
+  if (run === runId) out.innerHTML = renderBrief(brief);
+}
+
+document.querySelectorAll("[data-input]").forEach(b => b.addEventListener("click", () => show(b.dataset.input)));
+const toggle = document.getElementById("toggle-prompt");
+toggle.addEventListener("click", () => {
+  const box = document.getElementById("prompt");
+  box.hidden = !box.hidden;
+  toggle.setAttribute("aria-pressed", !box.hidden);
+  toggle.textContent = box.hidden ? "Show the prompt" : "Hide the prompt";
+});
+document.getElementById("prompt-text").textContent = PROMPTS.brief;
+show("nov");
+</script>
+</body>
+</html>

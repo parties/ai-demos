@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vendor Privacy Review</title>
+<style>
+  :root {
+    --bg: #fcfcfb; --ink: #0b0b0b; --muted: #52514e; --line: #d9d8d3;
+    --card: #ffffff; --accent: #1c5cab; --accent-ink: #ffffff; --soft: #eef4fc;
+    --ok-bg: #e3f3e6; --ok-ink: #11592a; --no-bg: #fbe4e2; --no-ink: #8f1c12;
+    --q-bg: #fdf1d6; --q-ink: #6e4400; --mark: #fff0a8;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 20px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1500px; margin: 0 auto; padding: 24px 16px 40px; }
+  h1 { font-size: 2.1rem; margin: 0; line-height: 1.2; }
+  .sub { color: var(--muted); margin: 6px 0 20px; font-size: 1.15rem; }
+  .controls { display: flex; flex-wrap: wrap; gap: 12px 22px; align-items: center; margin-bottom: 18px; }
+  .presets { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .presets > span { color: var(--muted); font-weight: 600; margin-right: 4px; }
+  button { font: inherit; font-weight: 600; padding: 10px 22px; min-height: 52px; cursor: pointer;
+    background: var(--card); color: var(--ink); border: 2px solid var(--accent); border-radius: 10px; }
+  button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+  #toggle-prompt { border-color: var(--line); }
+  #toggle-prompt[aria-pressed="true"] { border-color: var(--accent); }
+  .prompt { background: #f3f2ee; border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px; margin: 0 0 18px;
+    white-space: pre-wrap; overflow-wrap: anywhere; font: .95rem/1.5 ui-monospace, Menlo, Consolas, monospace; }
+  .io { display: grid; grid-template-columns: 2fr 3fr; gap: 16px; align-items: start; }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; min-width: 0; }
+  .panel.in { background: #f3f2ee; }
+  .panel h2 { font-size: 1rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 8px; }
+  .doc-title { font-weight: 700; margin: 0 0 8px; }
+  .policy p { margin: 0 0 10px; font-size: .95rem; }
+  mark { background: var(--mark); color: var(--ink); padding: 0 2px; border-radius: 3px; }
+  mark::before { content: attr(data-n); display: inline-block; background: var(--ink); color: #fff; font-size: .75rem;
+    font-weight: 700; border-radius: 4px; padding: 0 5px; margin-right: 4px; vertical-align: 2px; }
+  .drafting { color: var(--muted); font-style: italic; }
+  .decision { background: var(--soft); border-left: 6px solid var(--accent); border-radius: 8px; padding: 10px 14px; margin: 0 0 14px; }
+  .counts { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 14px; }
+  .pill { border-radius: 999px; padding: 4px 14px; font-weight: 700; }
+  .met { background: var(--ok-bg); color: var(--ok-ink); }
+  .not { background: var(--no-bg); color: var(--no-ink); }
+  .unclear { background: var(--q-bg); color: var(--q-ink); }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: .9rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted);
+    border-bottom: 2px solid var(--line); padding: 6px 8px; }
+  td { border-bottom: 1px solid var(--line); padding: 10px 8px; vertical-align: top; }
+  td .req { display: block; color: var(--muted); font-size: .9rem; }
+  .status { white-space: nowrap; }
+  .quote { font-style: italic; margin: 0 0 4px; }
+  .quote.none { font-style: normal; color: var(--no-ink); font-weight: 600; }
+  .why { margin: 0; font-size: .95rem; }
+  .src { font-size: .85rem; color: var(--muted); margin-top: 2px; }
+  .src.bad { color: var(--no-ink); font-weight: 700; }
+  h3 { font-size: 1.15rem; margin: 18px 0 6px; }
+  ul.list { margin: 0; padding-left: 1.2em; }
+  ul.list li { margin-bottom: 6px; }
+  footer { color: var(--muted); font-size: 1rem; margin-top: 20px; }
+  @media (max-width: 900px) {
+    .io { grid-template-columns: 1fr; }
+    thead { display: none; }
+    table, tbody, tr, td { display: block; }
+    tr { border-bottom: 2px solid var(--line); padding: 8px 0; }
+    td { border: 0; padding: 4px 0; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Vendor privacy review</h1>
+  <p class="sub">A vendor's public privacy policy, checked line by line against the district's own checklist. Gaps get flagged, but the decision stays yours.</p>
+
+  <div class="controls">
+    <div class="presets" role="group" aria-label="Example policy" id="presets"><span>Example policy</span></div>
+    <button id="toggle-prompt" aria-pressed="false">Show the prompt</button>
+  </div>
+  <pre class="prompt" id="prompt" hidden></pre>
+
+  <div class="io">
+    <section class="panel in">
+      <h2>What you paste in: the vendor's public policy</h2>
+      <p class="doc-title" id="doc-title"></p>
+      <div class="policy" id="policy"></div>
+    </section>
+    <section class="panel">
+      <h2>What comes back: checked against your list</h2>
+      <div id="out"></div>
+    </section>
+  </div>
+
+  <footer>
+    Someone checks each quote against the vendor's current policy and contract. Approval, and any legal review, stays with the district.
+    Every output was generated ahead of time so this page works with no internet.
+  </footer>
+</main>
+
+<script>
+const CHECKLIST = [
+  ["Data retention", "Deleted no later than 60 days after the contract ends"],
+  ["Training on our data", "Student data is never used to train AI models"],
+  ["Subprocessors", "Published list, plus advance notice before new ones are added"],
+  ["Deletion on request", "Deleted within 30 days of a district request, with written confirmation"],
+  ["Breach notice", "District notified within 72 hours"],
+  ["Data location", "Stored in the United States"]
+];
+
+const PROMPTS = {
+  review: `Review the vendor privacy policy below against our district's data-privacy checklist.
+
+Format: a table with one row per checklist item. Columns: the item, a status (Met / Not met / Unclear), the exact sentence from the policy that supports the status (quoted word for word, or "No matching language found"), and one plain sentence explaining why. After the table, list anything else in the policy a privacy reviewer should notice, then the questions we should send the vendor to resolve every Unclear or Not met item.
+
+Voice: precise and neutral, for an IS director preparing a review for the district's privacy committee.
+
+Context: mark Unclear when the language is vague, conditional, or missing a number we require. Quote only text that appears in the policy; do not paraphrase inside quotation marks. Do not fill gaps with assumptions, and do not recommend approving or rejecting the vendor; that decision belongs to the district.
+
+Our checklist:
+${CHECKLIST.map(([k, v], i) => `${i + 1}. ${k}: ${v}`).join("\n")}
+
+Policy:
+[paste the vendor's public privacy policy here]`
+};
+
+const INPUTS = [
+  { id: "northwind", label: "Northwind Learning", title: "Northwind Learning, Inc. — Student Data Privacy Policy (effective August 1, 2026)", text:
+`1. Scope. This Policy describes how Northwind Learning, Inc. ("Northwind," "we," "us") collects, uses, and protects Student Data in connection with the Northwind Reading platform (the "Services") provided to schools and districts (each, a "School").
+
+2. Use of Student Data. We use Student Data solely to provide and support the Services to the School and for no other commercial purpose. We do not sell Student Data or use it for targeted advertising. We do not use Student Data to train, fine-tune, or improve artificial intelligence or machine learning models.
+
+3. Service Providers. We engage third-party service providers to host data and deliver the Services, each of whom is bound by written obligations no less protective than this Policy. A current list of our subprocessors is available upon request.
+
+4. Retention. We retain Student Data only for as long as necessary to provide the Services, and in no event longer than sixty (60) days following termination or expiration of the School's agreement.
+
+5. Deletion. Upon written request from the School, we will delete Student Data within thirty (30) days and provide written certification of deletion. Backup copies are overwritten in the ordinary course within an additional thirty (30) days.
+
+6. Security. We maintain administrative, technical, and physical safeguards, including encryption of Student Data in transit and at rest. In the event of a Security Incident involving Student Data, we will notify affected Schools without undue delay and in accordance with applicable law.
+
+7. Data Location. Student Data is stored on servers located in the United States.
+
+8. Changes. We will provide Schools at least thirty (30) days' notice before any material change to this Policy takes effect.` },
+
+  { id: "bluefinch", label: "Bluefinch Quiz", title: "Bluefinch Games LLC — Privacy Policy (last updated March 3, 2026)", text:
+`Bluefinch Games LLC ("Bluefinch") operates the Bluefinch Quiz website and mobile applications (the "Platform"). By using the Platform, you agree to the collection and use of information in accordance with this Policy.
+
+Information We Collect. We collect information you provide directly, such as names, email addresses, and content created on the Platform ("Customer Content"), and information collected automatically, including device identifiers, IP addresses, and usage patterns ("Usage Data").
+
+How We Use Information. We use information to operate and maintain the Platform, personalize your experience, and communicate with you. We may use Customer Content and Usage Data to develop, improve, and train our products and services, including our machine learning features.
+
+Sharing. We share information with trusted third-party service providers and business partners who assist us in operating the Platform. We may also disclose information in connection with a merger, acquisition, or sale of assets.
+
+Retention. Personal Information is retained for as long as your account is active and for a reasonable period thereafter. We may retain Usage Data and De-identified Data indefinitely.
+
+Your Choices. Users may request deletion of their account by contacting support. Certain information may remain in backup copies or archives for a period of time.
+
+International Transfers. Your information may be transferred to, stored, and processed in countries other than the country in which you reside.
+
+Children. Where required by law, we rely on the school to provide consent on behalf of parents for students under 13.
+
+Changes. We may update this Policy at any time. Continued use of the Platform after changes constitutes acceptance of the revised Policy.` },
+
+  { id: "harborview", label: "Harborview Classroom", title: "Harborview Classroom — Customer Data Privacy Addendum (version 4.2)", text:
+`1. Definitions. "Customer Data" means all data, including Student Data, submitted to the Harborview Classroom service (the "Service") by or on behalf of Customer.
+
+2. Processing. Harborview processes Customer Data only on Customer's documented instructions and to provide the Service. We do not use Customer Data to train generalized AI models. We may use aggregated, de-identified data to improve the Service, including its AI-assisted features.
+
+3. Subprocessors. Harborview maintains a list of Subprocessors at its Trust Center and will provide Customer at least thirty (30) days' notice before adding a new Subprocessor. Customer may object to a new Subprocessor on reasonable grounds.
+
+4. Retention and Deletion. Customer Data is retained for the duration of the subscription term and deleted within ninety (90) days after termination. Customer may export or delete Customer Data at any time through the administrator console. Upon request, Harborview will provide written confirmation of deletion.
+
+5. Security Breach. Harborview will notify Customer of a Security Breach affecting Customer Data within seventy-two (72) hours of confirming the breach, and will provide information reasonably requested by Customer to meet its own notification obligations.
+
+6. Hosting. Customer Data is hosted in data centers located in the United States and Canada.
+
+7. Audits. Upon request, no more than once annually, Harborview will provide a summary of its most recent independent security assessment.` }
+];
+
+// Pre-generated output. rows follow CHECKLIST order; status is met | not | unclear.
+const CANNED = { review: {
+  northwind: {
+    rows: [
+      ["met", "in no event longer than sixty (60) days following termination or expiration of the School's agreement", "Matches the 60-day limit exactly."],
+      ["met", "We do not use Student Data to train, fine-tune, or improve artificial intelligence or machine learning models.", "A direct, unconditional commitment."],
+      ["unclear", "A current list of our subprocessors is available upon request.", "The list is on request only, and the policy never promises notice before a new subprocessor is added."],
+      ["met", "Upon written request from the School, we will delete Student Data within thirty (30) days and provide written certification of deletion.", "Meets both the 30-day window and written confirmation. Backups take up to 30 more days; worth knowing."],
+      ["unclear", "we will notify affected Schools without undue delay and in accordance with applicable law", "“Without undue delay” sets no deadline. There is no hour count to hold them to."],
+      ["met", "Student Data is stored on servers located in the United States.", "Covers where data is stored."]
+    ],
+    also: [],
+    questions: [
+      "Will you publish your subprocessor list and give the district 30 days' notice before adding a new one?",
+      "Will you commit in writing to notifying the district within 72 hours of discovering a security incident?"
+    ]
+  },
+  bluefinch: {
+    rows: [
+      ["not", "Personal Information is retained for as long as your account is active and for a reasonable period thereafter.", "No end date. A separate line keeps usage data indefinitely."],
+      ["not", "We may use Customer Content and Usage Data to develop, improve, and train our products and services, including our machine learning features.", "Student work and activity could be used to train their AI features."],
+      ["not", "We share information with trusted third-party service providers and business partners who assist us in operating the Platform.", "No list, no notice, and “business partners” is never defined."],
+      ["unclear", "Users may request deletion of their account by contacting support.", "No timeline and no written confirmation. It is written for individual users, not for a district."],
+      ["not", null, "The policy never mentions a breach or security incident."],
+      ["not", "Your information may be transferred to, stored, and processed in countries other than the country in which you reside.", "Data may be stored outside the United States."]
+    ],
+    also: [
+      ["Continued use of the Platform after changes constitutes acceptance of the revised Policy.", "Terms can change with no notice to the district."],
+      ["We may also disclose information in connection with a merger, acquisition, or sale of assets.", "Data could move to a new owner under new terms."]
+    ],
+    questions: [
+      "This reads as a consumer policy. Do you offer a school data privacy agreement that replaces it?",
+      "Can you commit in writing that student content will never be used to train machine-learning features?",
+      "Where is data stored, and who are your subprocessors and “business partners”?",
+      "What is your breach notification process and timeline?"
+    ]
+  },
+  harborview: {
+    rows: [
+      ["not", "Customer Data is retained for the duration of the subscription term and deleted within ninety (90) days after termination.", "90 days, not 60. A small gap that may be negotiable in the contract."],
+      ["unclear", "We do not use Customer Data to train generalized AI models.", "“Generalized” leaves room for training Harborview's own feature models, and the next sentence allows de-identified data to improve AI features."],
+      ["met", "Harborview maintains a list of Subprocessors at its Trust Center and will provide Customer at least thirty (30) days' notice before adding a new Subprocessor.", "Published list plus 30 days' notice."],
+      ["met", "Upon request, Harborview will provide written confirmation of deletion.", "Admins can delete at any time in the console, with written confirmation on request."],
+      ["met", "within seventy-two (72) hours of confirming the breach", "Meets 72 hours, but the clock starts when they confirm a breach, not when they first notice it."],
+      ["not", "Customer Data is hosted in data centers located in the United States and Canada.", "Canada is outside the requirement."]
+    ],
+    also: [],
+    questions: [
+      "Can post-termination deletion be shortened to 60 days in our agreement?",
+      "Does “generalized AI models” exclude models built for Harborview's own features? Is any district data, even de-identified, used to train them?",
+      "Can the district's data be kept in U.S. data centers only?",
+      "Does the 72-hour clock start at discovery or at confirmation?"
+    ]
+  }
+}};
+
+// AI boundary. Canned today; to go live, replace this body with a call to a model
+// (send PROMPTS[task] + the input text, return the model's text). Nothing else changes.
+async function respond(task, input) {
+  await new Promise(r => setTimeout(r, 700)); // feels like generation; remove when live
+  return CANNED[task][input.id];
+}
+
+const esc = s => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const STATUS = { met: ["met", "✓ Met"], not: ["not", "✗ Not met"], unclear: ["unclear", "? Unclear"] };
+const $ = id => document.getElementById(id);
+
+// Highlights each quote in the policy; returns which quotes were really found there.
+function showPolicy(input, quotes) {
+  let html = esc(input.text);
+  const found = quotes.map(([n, q]) => {
+    if (!q) return false;
+    const eq = esc(q);
+    if (!html.includes(eq)) return false;
+    html = html.replace(eq, () => `<mark data-n="${n}">${eq}</mark>`);
+    return true;
+  });
+  $("policy").innerHTML = html.split("\n\n").map(p => `<p>${p}</p>`).join("");
+  return found;
+}
+
+let current = 0;
+async function select(input) {
+  const run = ++current;
+  document.querySelectorAll("[data-id]").forEach(b => b.setAttribute("aria-pressed", b.dataset.id === input.id));
+  $("doc-title").textContent = input.title;
+  showPolicy(input, []);
+  $("out").innerHTML = '<p class="drafting">Drafting…</p>';
+  const res = await respond("review", input);
+  if (run !== current) return;
+
+  const quotes = res.rows.map((r, i) => [i + 1, r[1]]).concat(res.also.map((a, i) => [String.fromCharCode(65 + i), a[0]]));
+  const found = showPolicy(input, quotes);
+  const count = k => res.rows.filter(r => r[0] === k).length;
+  const srcNote = (q, ok) => !q ? "" : ok ? '<div class="src">Quote found in the policy ✓</div>'
+    : '<div class="src bad">⚠ Quote not found in the policy. Verify before using.</div>';
+
+  let html = `<p class="decision"><strong>The decision stays yours.</strong> This flags gaps against your checklist. It does not approve or reject a vendor.</p>
+    <div class="counts"><span class="pill met">✓ ${count("met")} met</span><span class="pill not">✗ ${count("not")} not met</span><span class="pill unclear">? ${count("unclear")} unclear</span></div>
+    <table><thead><tr><th>Your checklist</th><th>Status</th><th>What the policy says</th></tr></thead><tbody>`;
+  res.rows.forEach(([status, quote, why], i) => {
+    const [cls, label] = STATUS[status];
+    html += `<tr><td><strong>${i + 1}. ${esc(CHECKLIST[i][0])}</strong><span class="req">${esc(CHECKLIST[i][1])}</span></td>
+      <td class="status"><span class="pill ${cls}">${label}</span></td>
+      <td>${quote ? `<p class="quote">“${esc(quote)}”</p>` : '<p class="quote none">No matching language found.</p>'}
+      <p class="why">${esc(why)}</p>${srcNote(quote, found[i])}</td></tr>`;
+  });
+  html += "</tbody></table>";
+  if (res.also.length) {
+    html += "<h3>Also worth noticing</h3><ul class=\"list\">" + res.also.map(([q, note], i) =>
+      `<li><strong>${String.fromCharCode(65 + i)}.</strong> <span class="quote">“${esc(q)}”</span> ${esc(note)}${srcNote(q, found[res.rows.length + i])}</li>`).join("") + "</ul>";
+  }
+  html += "<h3>Questions to send the vendor</h3><ul class=\"list\">" + res.questions.map(q => `<li>${esc(q)}</li>`).join("") + "</ul>";
+  $("out").innerHTML = html;
+}
+
+INPUTS.forEach(input => {
+  const b = document.createElement("button");
+  b.textContent = input.label;
+  b.dataset.id = input.id;
+  b.setAttribute("aria-pressed", "false");
+  b.addEventListener("click", () => select(input));
+  $("presets").appendChild(b);
+});
+
+$("prompt").textContent = PROMPTS.review;
+const toggle = $("toggle-prompt");
+toggle.addEventListener("click", () => {
+  const box = $("prompt");
+  box.hidden = !box.hidden;
+  toggle.setAttribute("aria-pressed", !box.hidden);
+  toggle.textContent = box.hidden ? "Show the prompt" : "Hide the prompt";
+});
+
+select(INPUTS[0]);
+</script>
+</body>
+</html>

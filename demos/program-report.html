@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Numbers to Report Narrative</title>
+<style>
+  :root {
+    --bg: #fcfcfb; --ink: #0b0b0b; --muted: #52514e; --line: #d9d8d3;
+    --card: #ffffff; --accent: #1c5cab; --accent-ink: #ffffff; --soft: #eef4fc;
+    --hl: #ffe38a; --ok: #135c2f; --ok-bg: #e4f3e9; --warn: #7a4300; --warn-bg: #fff3df; --paper: #f3f2ee;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); overflow-wrap: anywhere;
+    font: 20px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1500px; margin: 0 auto; padding: 24px 16px 40px; }
+  h1 { font-size: 2.1rem; margin: 0; line-height: 1.2; }
+  .sub { color: var(--muted); margin: 6px 0 20px; font-size: 1.15rem; }
+  .controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 18px; }
+  .controls > span { color: var(--muted); font-weight: 600; }
+  button { font: inherit; font-weight: 600; padding: 10px 22px; min-height: 52px; cursor: pointer;
+    background: var(--card); color: var(--ink); border: 2px solid var(--accent); border-radius: 10px; }
+  button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+  #toggle-prompt { border-color: var(--line); }
+  #toggle-prompt[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); }
+  pre.prompt { white-space: pre-wrap; background: var(--paper); border: 1px solid var(--line); border-radius: 10px;
+    padding: 14px 18px; margin: 0 0 18px; font: .95rem/1.5 ui-monospace, Menlo, Consolas, monospace; }
+  .cols { display: grid; grid-template-columns: 1fr 1.1fr; gap: 18px; align-items: start; }
+  .label { font-size: 1rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 8px; font-weight: 700; }
+  .scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--line); font-size: .85rem; }
+  caption { text-align: left; font-weight: 700; font-size: 1rem; padding-bottom: 6px; }
+  th, td { overflow-wrap: normal; padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+  thead th { background: var(--paper); font-size: .8rem; }
+  td.num { white-space: nowrap; font-weight: 700; }
+  td.rid { font-weight: 800; color: var(--accent); }
+  tr.hl td { background: var(--hl); }
+  .notes { background: var(--paper); border: 1px dashed #b9b7af; border-radius: 10px; padding: 10px 14px; margin-top: 12px; font-size: .9rem; }
+  .notes b { display: block; }
+  .report { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; }
+  .report h3 { font-size: 1.2rem; margin: 14px 0 4px; }
+  .report h3:first-child { margin-top: 0; }
+  .report p { margin: 0; line-height: 1.65; }
+  .sent { cursor: pointer; border-radius: 4px; padding: 1px 0; }
+  .sent.on { background: var(--hl); box-shadow: 0 0 0 2px var(--hl); }
+  .ref { font-size: .7rem; font-weight: 800; color: var(--accent); background: var(--soft); border-radius: 5px; padding: 1px 5px; margin: 0 3px; vertical-align: 2px; white-space: nowrap; }
+  .trace { background: var(--soft); border: 2px solid var(--accent); border-radius: 12px; padding: 10px 16px; margin-bottom: 12px; min-height: 64px; }
+  .trace b { color: var(--accent); }
+  .trace .math { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .9rem; margin-top: 4px; }
+  .stats { font-weight: 700; color: var(--ok); margin: 10px 0 0; }
+  .left-out { background: var(--warn-bg); border: 2px solid #e6b866; border-radius: 12px; padding: 12px 16px; margin-top: 14px; }
+  .left-out h3 { margin: 0 0 4px; color: var(--warn); font-size: 1.1rem; }
+  .left-out ul { margin: 0; padding-left: 1.2em; font-size: .95rem; }
+  .left-out li { margin: 4px 0; }
+  .drafting { color: var(--muted); font-style: italic; font-size: 1.2rem; padding: 30px 0; }
+  footer { color: var(--muted); font-size: 1rem; margin-top: 20px; }
+  @media (max-width: 900px) { .cols { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Numbers to report narrative</h1>
+  <p class="sub">A table of program numbers goes in. The needs, outcomes, and next-steps sections come back, and every sentence points to the row it came from. Click any sentence.</p>
+
+  <div class="controls">
+    <span>Program</span>
+    <button data-preset="tutoring" aria-pressed="true">After-school math tutoring (state report)</button>
+    <button data-preset="literacy" aria-pressed="false">Family literacy nights (grant renewal)</button>
+    <button id="toggle-prompt" aria-pressed="false">Show the prompt</button>
+  </div>
+  <pre class="prompt" id="prompt" hidden></pre>
+
+  <div class="cols">
+    <section>
+      <div class="label">What you paste in</div>
+      <div id="input"></div>
+    </section>
+    <section>
+      <div class="label">What comes back</div>
+      <div id="output"></div>
+    </section>
+  </div>
+
+  <footer>
+    A person checks every number against the source data and the funder's required wording, and the program lead signs off before submission.
+    Every output was generated ahead of time so this page works with no internet.
+  </footer>
+</main>
+
+<script>
+const PROMPTS = {
+  report: `Write the narrative sections of a grant or state program report from the program data below.
+
+Format: three sections. Needs statement (2-3 sentences), Outcomes (5-7 sentences), Next steps (3 sentences). After every sentence, put the table row(s) it relies on in brackets, like [R4]. If you calculate a percentage or a change, show the calculation in a list after the narrative so I can check it.
+
+Voice: plain, confident, third person, for a reviewer who reads dozens of these. Numbers before adjectives. No "significant," "dramatic," or "transformative."
+
+Context: use only the numbers in the table. Do not claim the program caused an outcome; say "compared with." Then, separately, list anything in my notes that the table does not support, so I can add data or cut it.
+
+Program data:
+[paste the table]
+
+My notes:
+[paste]`
+};
+
+const INPUTS = {
+  tutoring: { id: "tutoring",
+    title: "After-school math tutoring, Lincoln Middle School, 2025-26",
+    rows: [
+      ["R1", "Students in grades 6-8 below grade level in math", "412", "", ""],
+      ["R2", "Students enrolled", "186", "131", "175"],
+      ["R3", "Average sessions attended (of 60 offered)", "38", "29", ""],
+      ["R4", "Regular attenders (30+ sessions)", "119 (64%)", "58 (44%)", ""],
+      ["R5", "Regular attenders who gained 1+ grade level on the spring math screener", "71 of 119 (60%)", "", "50%"],
+      ["R6", "Other enrolled students who gained 1+ grade level", "13 of 67 (19%)", "", ""],
+      ["R7", "Students on the waitlist (no tutor available)", "34", "", ""],
+      ["R8", "Certified tutors (students per tutor)", "9 (21:1)", "7 (19:1)", "15:1"],
+      ["R9", "Enrolled students who ride the Mon-Thu late bus", "88", "", ""],
+      ["R10", "Families who would recommend the program (102 survey responses)", "91%", "", ""]
+    ],
+    notes: "Kids love it. Behavior referrals are way down for our regulars. Teachers say confidence is up. We need more tutors. Late bus is essential."
+  },
+  literacy: { id: "literacy",
+    title: "Family literacy nights, K-2, 2025-26",
+    rows: [
+      ["R1", "Elementary schools hosting", "4 of 6", "2 of 6", ""],
+      ["R2", "Literacy nights held", "22", "9", "24"],
+      ["R3", "Family visits (total)", "1,184", "520", ""],
+      ["R4", "Different families attending", "431", "", ""],
+      ["R5", "Families attending 3+ nights", "167", "", ""],
+      ["R6", "Books sent home", "3,050", "", "2,500"],
+      ["R7", "Nights with Spanish interpretation", "14 of 22", "3 of 9", ""],
+      ["R8", "K-2 at reading benchmark, children of 3+ night families (fall to winter)", "52% to 68%", "", ""],
+      ["R9", "K-2 at reading benchmark, whole district (fall to winter)", "55% to 61%", "", ""],
+      ["R10", "Cost per family visit", "$9.80", "$14.25", ""],
+      ["R11", "Families asking for a virtual option (212 survey responses)", "38%", "", ""]
+    ],
+    notes: "Parents tell us they feel more confident reading at home. Attendance seems better the day after literacy night. Want all 6 schools next year. Would love a virtual option."
+  }
+};
+
+// Each sentence: [text, [row ids], calculation or ""]
+const CANNED = { report: {
+  tutoring: {
+    sections: [
+      ["Needs statement", [
+        ["Lincoln Middle School has 412 students in grades 6-8 performing below grade level in math.", ["R1"], ""],
+        ["This year the program served 186 of them, 45% of those eligible, and placed 34 more on a waitlist because no tutor was available.", ["R1", "R2", "R7"], "186 ÷ 412 = 0.451 → 45%"],
+        ["Access depends on transportation: 88 enrolled students, 47%, ride the late bus home.", ["R9", "R2"], "88 ÷ 186 = 0.473 → 47%"]
+      ]],
+      ["Outcomes", [
+        ["Enrollment grew 42% over the prior year, from 131 to 186 students, exceeding the target of 175.", ["R2"], "(186 − 131) ÷ 131 = 0.420 → 42%"],
+        ["Students attended an average of 38 of 60 sessions, up from 29.", ["R3"], ""],
+        ["119 students, 64% of those enrolled, attended 30 or more sessions, compared with 44% the year before.", ["R4"], "119 ÷ 186 = 0.640 → 64%"],
+        ["Of these regular attenders, 60% gained at least one grade level on the spring math screener, above the 50% target.", ["R5"], "71 ÷ 119 = 0.597 → 60%"],
+        ["Among students who attended less often, 19% made the same gain.", ["R6"], "13 ÷ 67 = 0.194 → 19%"],
+        ["91% of families who answered the survey (102 responses) would recommend the program.", ["R10"], ""]
+      ]],
+      ["Next steps", [
+        ["Add three certified tutors, moving the ratio from 21:1 toward the 15:1 target while opening seats for the 34 waitlisted students.", ["R8", "R7"], "Now: 186 ÷ 9 = 20.7 → 21:1. With 12 tutors and the waitlist: 220 ÷ 12 = 18.3 → 18:1"],
+        ["Keep the Monday-Thursday late bus, which 88 enrolled students ride.", ["R9"], ""],
+        ["Focus outreach on attendance, not only enrollment: regular attenders were about three times as likely to gain a grade level.", ["R5", "R6"], "60% ÷ 19% = 3.1"]
+      ]]
+    ],
+    leftOut: [
+      "\"Behavior referrals are way down\": the table has no referral data. Add the counts, or cut it.",
+      "\"Teachers say confidence is up\": no teacher or student survey in the table.",
+      "\"Kids love it\": the table has only a family survey, so the narrative uses the 91% instead.",
+      "Caution: regular attenders chose to come more often. The 60% vs. 19% gap is \"compared with,\" not proof the tutoring caused it."
+    ]
+  },
+  literacy: {
+    sections: [
+      ["Needs statement", [
+        ["This fall, 55% of the district's K-2 students were reading at benchmark, so nearly half of its youngest readers started the year behind.", ["R9"], "100% − 55% = 45% not at benchmark"],
+        ["Children whose families became regular literacy-night attendees started lower still, at 52%.", ["R8"], ""],
+        ["Last year, only 2 of the district's 6 elementary schools offered family literacy nights.", ["R1"], ""]
+      ]],
+      ["Outcomes", [
+        ["This year 4 of 6 schools hosted 22 literacy nights, just short of the 24 planned.", ["R1", "R2"], ""],
+        ["Family visits more than doubled, from 520 to 1,184, reaching 431 different families.", ["R3", "R4"], "1,184 ÷ 520 = 2.28"],
+        ["167 families, 39% of those who came, returned for three or more nights.", ["R5", "R4"], "167 ÷ 431 = 0.387 → 39%"],
+        ["Children in those families rose from 52% to 68% at benchmark between fall and winter, a 16-point gain, compared with 6 points district-wide.", ["R8", "R9"], "68 − 52 = 16 points; 61 − 55 = 6 points"],
+        ["Spanish interpretation was offered at 14 of 22 nights, up from 3 of 9 the year before.", ["R7"], ""],
+        ["The program sent home 3,050 books, beating its goal of 2,500, while cost per family visit fell from $14.25 to $9.80.", ["R6", "R10"], "(14.25 − 9.80) ÷ 14.25 = 0.312 → 31% lower"]
+      ]],
+      ["Next steps", [
+        ["Extend literacy nights to the remaining 2 elementary schools.", ["R1"], "6 − 4 = 2"],
+        ["Provide interpretation at every night; 8 of 22 nights still had none.", ["R7"], "22 − 14 = 8"],
+        ["Pilot a virtual option, which 38% of 212 surveyed families requested.", ["R11"], "0.38 × 212 = about 81 families"]
+      ]]
+    ],
+    leftOut: [
+      "\"Parents feel more confident reading at home\": no survey item measures confidence. Add one next year, or cut it.",
+      "\"Attendance is better the day after literacy night\": the table has no attendance data.",
+      "Caution: families who came three or more times chose to. Their children's 16-point gain is \"compared with\" the district's 6, not proof the nights caused it."
+    ]
+  }
+}};
+
+// AI boundary. Canned today; to go live, replace this body with a call to a model
+// (send PROMPTS[task] + the input text, return the model's text). Nothing else changes.
+async function respond(task, input) {
+  await new Promise(r => setTimeout(r, 700)); // feels like generation; remove when live
+  return CANNED[task][input.id];
+}
+
+const $ = id => document.getElementById(id);
+const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+let current = INPUTS.tutoring, seq = 0, sentences = [];
+
+function showInput() {
+  $("input").innerHTML =
+    `<div class="scroll"><table><caption>${esc(current.title)}</caption><thead><tr><th></th><th>Measure</th><th>This year</th><th>Last year</th><th>Target</th></tr></thead><tbody>` +
+    current.rows.map(([id, m, now, prior, target]) =>
+      `<tr data-row="${id}"><td class="rid">${id}</td><td>${esc(m)}</td><td class="num">${esc(now)}</td><td class="num">${esc(prior) || "—"}</td><td class="num">${esc(target) || "—"}</td></tr>`).join("") +
+    `</tbody></table></div><div class="notes"><b>Program lead's notes</b>${esc(current.notes)}</div>`;
+}
+
+function trace(i) {
+  const [text, refs, math] = sentences[i];
+  document.querySelectorAll(".sent").forEach(s => s.classList.toggle("on", +s.dataset.i === i));
+  document.querySelectorAll("tr[data-row]").forEach(tr => tr.classList.toggle("hl", refs.includes(tr.dataset.row)));
+  const rows = refs.map(id => current.rows.find(r => r[0] === id));
+  $("trace").innerHTML = rows.map(([id, m, now, prior]) =>
+    `<div><b>${id}</b> ${esc(m)}: <b>${esc(now)}</b>${prior ? ` (last year ${esc(prior)})` : ""}</div>`).join("") +
+    (math ? `<div class="math">Check: ${esc(math)}</div>` : "");
+}
+
+function render(r) {
+  sentences = r.sections.flatMap(s => s[1]);
+  let i = 0;
+  $("output").innerHTML =
+    `<div class="trace" id="trace">Click any sentence to see the row it came from.</div><article class="report">` +
+    r.sections.map(([h, list]) => `<h3>${esc(h)}</h3><p>` + list.map(([t, refs]) =>
+      `<span class="sent" role="button" tabindex="0" data-i="${i++}">${esc(t)}<span class="ref">${refs.join(" ")}</span></span>`).join(" ") + `</p>`).join("") +
+    `<p class="stats">✓ ${sentences.length} sentences · ${sentences.length} traced to a row in the table · 0 numbers from outside it</p></article>` +
+    `<section class="left-out"><h3>⚠ Left out: the table doesn't support it</h3><ul>${r.leftOut.map(t => `<li>${esc(t)}</li>`).join("")}</ul></section>`;
+  document.querySelectorAll(".sent").forEach(s => {
+    s.addEventListener("click", () => trace(+s.dataset.i));
+    s.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); trace(+s.dataset.i); } });
+  });
+}
+
+async function run() {
+  const n = ++seq;
+  showInput();
+  $("output").innerHTML = '<p class="drafting">Drafting…</p>';
+  const r = await respond("report", current);
+  if (n === seq) render(r);
+}
+
+document.querySelectorAll("[data-preset]").forEach(b => b.addEventListener("click", () => {
+  current = INPUTS[b.dataset.preset];
+  document.querySelectorAll("[data-preset]").forEach(x => x.setAttribute("aria-pressed", x === b));
+  run();
+}));
+
+$("prompt").textContent = PROMPTS.report;
+$("toggle-prompt").addEventListener("click", e => {
+  const p = $("prompt"); p.hidden = !p.hidden;
+  e.currentTarget.setAttribute("aria-pressed", !p.hidden);
+  e.currentTarget.textContent = p.hidden ? "Show the prompt" : "Hide the prompt";
+});
+
+run();
+</script>
+</body>
+</html>

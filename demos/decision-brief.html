@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Evidence Before a Decision</title>
+<style>
+  :root {
+    --bg: #fcfcfb; --ink: #0b0b0b; --muted: #52514e; --line: #d9d8d3;
+    --card: #ffffff; --accent: #1c5cab; --accent-ink: #ffffff; --soft: #eef4fc;
+    --paper: #f3f2ee; --warn-bg: #fff3d6; --warn-line: #c98500; --good: #1b7a4a; --good-bg: #e7f4ec;
+    --con: #8a2a1c;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 20px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1500px; margin: 0 auto; padding: 24px 16px 40px; }
+  h1 { font-size: 2.1rem; margin: 0; line-height: 1.2; }
+  .sub { color: var(--muted); margin: 6px 0 20px; font-size: 1.15rem; }
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 18px; }
+  .controls > span { color: var(--muted); font-weight: 600; margin-right: 4px; }
+  button { font: inherit; font-weight: 600; padding: 10px 22px; min-height: 52px; cursor: pointer;
+    background: var(--card); color: var(--ink); border: 2px solid var(--accent); border-radius: 10px; }
+  button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+  #toggle-prompt { border-color: var(--line); }
+  .prompt { background: var(--soft); border: 2px solid var(--accent); border-radius: 12px; padding: 14px 18px; margin-bottom: 18px; }
+  .prompt h2 { font-size: 1rem; margin: 0 0 6px; }
+  pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; }
+  .prompt pre { font-size: 1rem; }
+  .cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.7fr); gap: 16px; align-items: start; }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; }
+  .panel.in { background: var(--paper); }
+  .panel > h2 { font-size: 1rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 8px; }
+  .meta { color: var(--muted); font-size: 1rem; margin: 0 0 10px; }
+  .docs { max-height: 72vh; overflow-y: auto; }
+  .doc { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; margin-bottom: 10px; font-size: .9rem; }
+  .doc b { display: block; font-size: .95rem; margin-bottom: 2px; }
+  .drafting { color: var(--muted); font-style: italic; font-size: 1.15rem; }
+  .decision { font-size: 1.2rem; font-weight: 700; margin: 0 0 10px; }
+  .tiles { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+  .tile { border: 1px solid var(--line); border-radius: 10px; padding: 6px 14px; background: var(--card); }
+  .tile b { display: block; font-size: 1.6rem; line-height: 1.2; }
+  .tile.warn { background: var(--warn-bg); border: 2px solid var(--warn-line); }
+  .tile.done { background: var(--good-bg); border: 2px solid var(--good); }
+  .sides { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+  .side h3 { margin: 0 0 8px; font-size: 1.2rem; padding: 4px 12px; border-radius: 8px; color: #ffffff; }
+  .side.pro h3 { background: var(--good); }
+  .side.con h3 { background: var(--con); }
+  .claim { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; background: var(--card); }
+  .claim p { margin: 0 0 4px; font-weight: 600; line-height: 1.35; }
+  .claim .ev { font-size: .95rem; color: var(--muted); margin: 0 0 8px; font-weight: 400; }
+  .src { display: inline-block; font-size: .85rem; font-weight: 700; border: 2px solid var(--accent); color: var(--accent); border-radius: 999px; padding: 0 10px; margin-right: 6px; }
+  .claim button { font-size: .95rem; min-height: 44px; padding: 6px 14px; border: 2px solid var(--warn-line); background: var(--warn-bg); color: var(--ink); }
+  .claim button[aria-pressed="true"] { border-color: var(--good); background: var(--good-bg); color: var(--good); }
+  .claim.checked { border-color: var(--good); }
+  h3.sec { font-size: 1.15rem; margin: 18px 0 8px; border-bottom: 2px solid var(--ink); padding-bottom: 2px; }
+  .flag { background: var(--warn-bg); border: 2px solid var(--warn-line); border-radius: 10px; padding: 8px 14px; margin: 8px 0; }
+  .flag p { margin: 0; }
+  ul.gaps, ol.qs { margin: 0; padding-left: 1.4em; }
+  ul.gaps li, ol.qs li { margin: 4px 0; }
+  ol.qs li::marker { font-weight: 700; color: var(--accent); }
+  footer { color: var(--muted); font-size: 1rem; margin-top: 20px; }
+  @media (min-width: 901px) { .panel.in { position: sticky; top: 12px; } }
+  @media (max-width: 900px) { .cols { grid-template-columns: minmax(0, 1fr); } .docs { max-height: 55vh; } .sides { grid-template-columns: minmax(0, 1fr); } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Evidence before a decision</h1>
+  <p class="sub">Paste the documents on a district decision. Get both sides with sources, where the documents disagree, and the questions still to ask.</p>
+
+  <div class="controls" role="group" aria-label="Decision">
+    <span>Decision</span>
+    <button data-input="fourday" aria-pressed="true">Four-day school week</button>
+    <button data-input="start" aria-pressed="false">Later high school start</button>
+    <button id="toggle-prompt" aria-pressed="false">Show the prompt</button>
+  </div>
+
+  <section class="prompt" id="prompt" hidden>
+    <h2>The prompt (copy this into any AI chat)</h2>
+    <pre id="prompt-text"></pre>
+  </section>
+
+  <div class="cols">
+    <section class="panel in">
+      <h2>What you paste in</h2>
+      <p class="meta" id="in-meta"></p>
+      <div class="docs" id="in-docs"></div>
+    </section>
+    <section class="panel">
+      <h2>What comes back</h2>
+      <div id="out"></div>
+    </section>
+  </div>
+
+  <footer>
+    Every claim is checked against the original document before anyone uses it, and the decision stays with the superintendent and board; the AI does not recommend one.
+    Every output was generated ahead of time so this page works with no internet.
+  </footer>
+</main>
+
+<script>
+const PROMPTS = {
+  brief: `Read the documents I paste below and write a decision brief on the proposal they discuss.
+
+Format: (1) one sentence naming the decision; (2) "Arguments for" and "Arguments against," each as short claims. After each claim, name the document it came from (Doc A, Doc B…) and add one line on how strong that evidence is (survey and sample size, staff estimate, one district, self-report, research summary); (3) where the documents disagree or depend on each other; (4) what none of the documents address; (5) the questions I should still ask before deciding, most important first.
+
+Voice: neutral and even-handed, written for a superintendent and cabinet. Do not recommend a decision.
+
+Context: use only what is in these documents. No outside facts and no statistics from memory. If a document makes a claim without a source, say so. I will check every claim against the original before I use it.
+
+DOCUMENTS:
+[paste Doc A, Doc B, Doc C…]`
+};
+
+const INPUTS = {
+  fourday: { id: "fourday", meta: "4 documents · about 9 pages in full · excerpts shown",
+    docs: [
+      ["Doc A · Operations memo (Transportation, Food Service, Facilities), Sept. 2026",
+       "A Monday–Thursday schedule would save an estimated $412,000 a year in transportation (fuel, driver wages, maintenance), $96,000 in food service, and $138,000 in custodial and utility costs if buildings close Fridays: $646,000 total, about 0.4% of the $148 million general fund. To keep annual instructional minutes the same, the student day would grow by 75 minutes (from 300 to 375 instructional minutes). Elementary dismissal would move from 3:15 to 4:30."],
+      ["Doc B · Staff survey summary, spring 2026",
+       "Certified staff (n = 611): 71% favor a four-day week; 64% say it would make them more likely to stay in the district. Classified staff, including bus drivers, aides, and food service (n = 188): 38% favor; 52% are concerned about losing hours and pay."],
+      ["Doc C · Policy brief excerpt, Rural Schools Policy Center, 2025",
+       "Four-day weeks are most common in rural districts with fewer than 1,000 students. Districts report recruitment benefits. A multi-state analysis found small negative effects on math achievement, larger where total instructional time fell. Districts that kept total instructional time constant showed no measurable effect. Reported savings typically range from 0.4% to 2.5% of operating budgets."],
+      ["Doc D · Family survey results, Sept. 2026 (1,240 responses)",
+       "58% oppose, 31% support, 11% unsure. Top concern among those opposed: Friday childcare (66%). 22% of K–5 families say they would need to pay for Friday childcare. Many comments ask whether the district would offer a Friday program."]
+    ] },
+  start: { id: "start", meta: "5 documents · about 14 pages in full · excerpts shown",
+    docs: [
+      ["Doc A · State pediatric association position summary",
+       "Recommends that middle and high schools start no earlier than 8:30 a.m. Sleep timing shifts later at puberty; teens need 8 to 10 hours. Insufficient sleep is associated with lower attention, mood problems, and drowsy-driving crashes."],
+      ["Doc B · Transportation analysis, Oct. 2026",
+       "Option 1 (flip tiers): high school 8:45–3:40; elementary 7:50–2:25 (now 8:40–3:15). Same buses and drivers; cost neutral. First elementary pickups about 7:00 a.m. Option 2 (add a third tier): six more buses, about $540,000 a year; elementary times unchanged."],
+      ["Doc C · Athletic director memo",
+       "With a 3:40 dismissal, varsity athletes would miss an estimated 22 class periods per season for away contests, up from about 9. Two of three practice fields have no lights; lighting one field would cost about $180,000."],
+      ["Doc D · High school student survey, spring 2026 (n = 1,906)",
+       "Average reported school-night sleep: 6 hours 41 minutes. 74% support a later start. 41% have after-school jobs; 23% regularly care for younger siblings after school."],
+      ["Doc E · Slides from a regional superintendents' meeting",
+       "A district that moved its high school start last year: first-period tardies down 37%; attendance up 1.2 percentage points in year one."]
+    ] }
+};
+
+const CANNED = {
+  brief: {
+    fourday: {
+      decision: "Decision: whether to move to a Monday–Thursday school week starting in 2027–28.",
+      pro: [
+        ["Could save about $646,000 a year in transportation, food service, and building costs.", "Doc A", "Staff estimate. Does not subtract the cost of any Friday program."],
+        ["71% of certified staff favor the change.", "Doc B", "Survey, n = 611."],
+        ["64% of certified staff say it would make them more likely to stay.", "Doc B", "Stated intention, not measured turnover."],
+        ["No measurable achievement effect where total instructional time stayed the same.", "Doc C", "Research summary, mostly districts under 1,000 students. No study is named."],
+        ["Districts report recruitment benefits.", "Doc C", "Reported by districts; no figures given."]
+      ],
+      con: [
+        ["58% of responding families oppose; Friday childcare is the top concern.", "Doc D", "1,240 responses. Families chose to respond, so it may not represent everyone."],
+        ["22% of K–5 families say they would need to pay for Friday childcare.", "Doc D", "Self-report."],
+        ["Classified staff could lose hours and pay: 52% are worried; only 38% favor.", "Doc B", "Survey, n = 188."],
+        ["Small negative math effects where instructional time fell.", "Doc C", "Research summary; size of effect not given."],
+        ["The student day grows to 375 minutes, and elementary dismissal moves to 4:30.", "Doc A", "Staff plan."]
+      ],
+      disagree: [
+        "The savings and the staff concern are partly the same dollars: Doc A counts driver wages as savings, and Doc B shows those drivers worry about lost pay.",
+        "Doc C's \"no effect\" finding depends on keeping instructional time constant. Doc A does that only with a 375-minute day; Doc C doesn't say whether districts with days that long were studied.",
+        "Doc A's savings (0.4% of the budget) sit at the very bottom of Doc C's range (0.4% to 2.5%), before any Friday program that families ask about in Doc D."
+      ],
+      missing: [
+        "Friday meals for students who rely on school breakfast and lunch.",
+        "What students think. There is no student survey.",
+        "Special education services and therapy schedules.",
+        "Whether the change must be negotiated with employee groups."
+      ],
+      questions: [
+        "What would a Friday program cost, and who pays? That number decides whether the $646,000 is real.",
+        "How many classified employees lose hours, and how much pay each year?",
+        "Do state rules on instructional days and minutes allow this calendar? Ask the state agency and counsel.",
+        "Can we get actual retention data from districts our size that switched, not stated intentions?",
+        "How would Friday meals reach the students who depend on them?",
+        "What do students think?"
+      ]
+    },
+    start: {
+      decision: "Decision: whether to move the high school start from 7:25 to 8:45 a.m., and which bus option to use.",
+      pro: [
+        ["Health guidance: secondary schools should start no earlier than 8:30; teens need 8 to 10 hours of sleep.", "Doc A", "Professional association position. Covers adolescents only."],
+        ["Our students report 6 hours 41 minutes of sleep on school nights.", "Doc D", "Self-report, n = 1,906."],
+        ["74% of high school students support a later start.", "Doc D", "Survey, n = 1,906."],
+        ["Another district saw first-period tardies drop 37% and attendance rise 1.2 points.", "Doc E", "One district, one year, from presentation slides, not a study."],
+        ["Option 1 needs no new buses and is cost neutral for transportation.", "Doc B", "Staff analysis."]
+      ],
+      con: [
+        ["Elementary would start 50 minutes earlier, with first pickups about 7:00 a.m.", "Doc B", "Staff analysis of Option 1."],
+        ["Elementary dismissal moves to 2:25, so more families need after-school care.", "Doc B", "Schedule fact; care need not measured."],
+        ["Varsity athletes would miss about 22 class periods a season, up from 9.", "Doc C", "Athletic director's estimate."],
+        ["Lighting one practice field would cost about $180,000.", "Doc C", "Estimate for one of two unlit fields."],
+        ["41% of students work after school, and a 3:40 dismissal cuts their hours.", "Doc D", "Self-report."]
+      ],
+      disagree: [
+        "\"Cost neutral\" (Doc B) covers buses only. The $180,000 for lights (Doc C) and the after-care need from a 2:25 elementary dismissal are not in that number.",
+        "23% of high schoolers care for younger siblings after school (Doc D). Under Option 1 those siblings are out at 2:25, while the high schooler is in class until 3:40.",
+        "Doc A's guidance is about adolescents; no document weighs the effect of a 7:00 a.m. pickup on six-year-olds."
+      ],
+      missing: [
+        "What elementary families think. Only high school students were surveyed.",
+        "Middle school start times.",
+        "Whether Doc E's district saw any change in grades, or only tardies and attendance.",
+        "Whether six more drivers can be hired for Option 2."
+      ],
+      questions: [
+        "What do elementary families think? No document asks them.",
+        "What is the full cost of Option 1, including lights and after-care?",
+        "Can the athletic conference move game times? If not, are 22 missed periods acceptable?",
+        "Did Doc E's district see changes in grades, and what happened in year two?",
+        "What happens for the 23% of students who pick up younger siblings?",
+        "Could Option 2 even be staffed, given the driver market?"
+      ]
+    }
+  }
+};
+
+// AI boundary. Canned today; to go live, replace this body with a call to a model
+// (send PROMPTS[task] + the input text, return the model's text). Nothing else changes.
+async function respond(task, input) {
+  await new Promise(r => setTimeout(r, 700)); // feels like generation; remove when live
+  return CANNED[task][input.id];
+}
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function claimCard([text, src, ev]) {
+  return `<div class="claim"><p>${esc(text)}</p><div class="ev"><span class="src">${esc(src)}</span>${esc(ev)}</div>
+    <button class="verify" aria-pressed="false">⚠ Verify before use</button></div>`;
+}
+
+function renderBrief(b) {
+  const total = b.pro.length + b.con.length;
+  return `<p class="decision">${esc(b.decision)}</p>
+    <div class="tiles"><div class="tile"><b>${total}</b>claims, each with its source</div>
+      <div class="tile warn" id="checked-tile"><b id="checked-n">0 of ${total}</b>checked against the original</div>
+      <div class="tile"><b>${b.disagree.length}</b>places the documents conflict</div>
+      <div class="tile"><b>${b.questions.length}</b>questions still to ask</div></div>
+    <div class="sides">
+      <div class="side pro"><h3>Arguments for (${b.pro.length})</h3>${b.pro.map(claimCard).join("")}</div>
+      <div class="side con"><h3>Arguments against (${b.con.length})</h3>${b.con.map(claimCard).join("")}</div>
+    </div>
+    <h3 class="sec">⚠ Where the documents disagree or depend on each other</h3>
+    ${b.disagree.map(d => `<div class="flag"><p>${esc(d)}</p></div>`).join("")}
+    <h3 class="sec">Not in any document</h3>
+    <ul class="gaps">${b.missing.map(m => `<li>${esc(m)}</li>`).join("")}</ul>
+    <h3 class="sec">Questions to ask before deciding</h3>
+    <ol class="qs">${b.questions.map(q => `<li>${esc(q)}</li>`).join("")}</ol>`;
+}
+
+// Clicking a claim's marker records that a person checked it against the source document.
+function updateChecked() {
+  const all = document.querySelectorAll("#out .verify");
+  const done = document.querySelectorAll('#out .verify[aria-pressed="true"]').length;
+  document.getElementById("checked-n").textContent = `${done} of ${all.length}`;
+  document.getElementById("checked-tile").className = "tile " + (done === all.length ? "done" : "warn");
+}
+document.getElementById("out").addEventListener("click", e => {
+  const btn = e.target.closest(".verify");
+  if (!btn) return;
+  const on = btn.getAttribute("aria-pressed") !== "true";
+  btn.setAttribute("aria-pressed", on);
+  btn.textContent = on ? "✓ Checked against source" : "⚠ Verify before use";
+  btn.parentElement.classList.toggle("checked", on);
+  updateChecked();
+});
+
+let runId = 0;
+async function show(id) {
+  const run = ++runId;
+  const input = INPUTS[id];
+  document.querySelectorAll("[data-input]").forEach(b => b.setAttribute("aria-pressed", b.dataset.input === id));
+  document.getElementById("in-meta").textContent = input.meta;
+  document.getElementById("in-docs").innerHTML = input.docs.map(([h, t]) => `<div class="doc"><b>${esc(h)}</b>${esc(t)}</div>`).join("");
+  const out = document.getElementById("out");
+  out.innerHTML = '<p class="drafting">Reading the documents and drafting the brief…</p>';
+  const brief = await respond("brief", input);
+  if (run === runId) out.innerHTML = renderBrief(brief);
+}
+
+document.querySelectorAll("[data-input]").forEach(b => b.addEventListener("click", () => show(b.dataset.input)));
+const toggle = document.getElementById("toggle-prompt");
+toggle.addEventListener("click", () => {
+  const box = document.getElementById("prompt");
+  box.hidden = !box.hidden;
+  toggle.setAttribute("aria-pressed", !box.hidden);
+  toggle.textContent = box.hidden ? "Show the prompt" : "Hide the prompt";
+});
+document.getElementById("prompt-text").textContent = PROMPTS.brief;
+show("fourday");
+</script>
+</body>
+</html>

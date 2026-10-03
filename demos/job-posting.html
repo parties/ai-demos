@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Job Postings, Flagged and Fixed</title>
+<style>
+  :root {
+    --bg: #fcfcfb; --ink: #0b0b0b; --muted: #52514e; --line: #d9d8d3;
+    --card: #ffffff; --accent: #1c5cab; --accent-ink: #ffffff; --soft: #eef4fc;
+    --jar-bg: #fff4d6; --jar: #8a5a00; --pool-bg: #fde8e6; --pool: #a3221a; --legal-bg: #f1eafd; --legal: #5b33a0;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 20px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1500px; margin: 0 auto; padding: 24px 16px 40px; }
+  h1 { font-size: 2.1rem; margin: 0; line-height: 1.2; }
+  .sub { color: var(--muted); margin: 6px 0 20px; font-size: 1.15rem; }
+  .controls { display: flex; flex-wrap: wrap; gap: 14px 22px; align-items: center; margin-bottom: 18px; }
+  .group { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .group > span { color: var(--muted); margin-right: 4px; font-weight: 600; }
+  button { font: inherit; font-weight: 600; padding: 10px 22px; min-height: 52px; cursor: pointer; border-radius: 10px;
+    background: var(--card); color: var(--ink); border: 2px solid var(--accent); }
+  button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+  #toggle-prompt { border-color: var(--line); }
+  .prompt { background: #f3f2ee; border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px; margin: 0 0 18px;
+    white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; font-size: 1rem; }
+  .cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.45fr); gap: 16px; align-items: start; }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; }
+  .panel > h2 { font-size: 1rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 10px; }
+  .paste { background: #f3f2ee; border-radius: 8px; padding: 12px 14px; margin: 0; white-space: pre-wrap; overflow-wrap: anywhere;
+    font: .92rem/1.5 ui-monospace, Menlo, Consolas, monospace; }
+  .drafting { color: var(--muted); font-weight: 600; padding: 20px 0; }
+  .drafting::after { content: " ●"; animation: blink 1s infinite; }
+  @keyframes blink { 50% { opacity: .2; } }
+  @media (prefers-reduced-motion: reduce) { .drafting::after { animation: none; } }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; }
+  .chip { border-radius: 999px; padding: 4px 14px; font-weight: 700; font-size: 1rem; border: 2px solid; }
+  .chip.jargon { background: var(--jar-bg); color: var(--jar); border-color: var(--jar); }
+  .chip.pool { background: var(--pool-bg); color: var(--pool); border-color: var(--pool); }
+  .chip.legal { background: var(--legal-bg); color: var(--legal); border-color: var(--legal); }
+  .chip.ok { background: #e7f4ec; color: #145c37; border-color: #145c37; }
+  .posting h3 { font-size: 1.5rem; margin: 0 0 4px; }
+  .hook { font-size: 1.1rem; margin: 0 0 12px; }
+  .kept { font-size: 1rem; color: var(--muted); border-left: 4px solid var(--line); padding-left: 10px; margin: 0 0 12px; }
+  .posting h4 { font-size: 1.1rem; margin: 16px 0 6px; padding-bottom: 2px; border-bottom: 2px solid var(--soft); }
+  .posting ul { margin: 0; padding-left: 22px; }
+  .posting li { margin: 4px 0; }
+  .hl { padding: 0 3px; border-radius: 4px; }
+  .hl.jargon { background: var(--jar-bg); } .hl.pool { background: var(--pool-bg); } .hl.legal { background: var(--legal-bg); }
+  .flag { margin: 6px 0 10px; padding: 8px 12px; border-left: 5px solid; border-radius: 0 8px 8px 0; font-size: .95rem; }
+  .flag.jargon { background: var(--jar-bg); border-color: var(--jar); }
+  .flag.pool { background: var(--pool-bg); border-color: var(--pool); }
+  .flag.legal { background: var(--legal-bg); border-color: var(--legal); }
+  .flag b.k { display: block; }
+  .flag.jargon b.k { color: var(--jar); } .flag.pool b.k { color: var(--pool); } .flag.legal b.k { color: var(--legal); }
+  .flag p { margin: 2px 0 0; }
+  .accepted { font-weight: 600; color: #145c37; }
+  footer { color: var(--muted); font-size: 1rem; margin-top: 20px; }
+  .cols > .panel:first-child { position: sticky; top: 12px; }
+  @media (max-width: 900px) { .cols { grid-template-columns: 1fr; } .cols > .panel:first-child { position: static; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Job postings, flagged and fixed</h1>
+  <p class="sub">Paste the duties list you already have. Get a posting in district format, with every bit of jargon and every requirement that shrinks your applicant pool flagged, and why.</p>
+
+  <div class="controls">
+    <div class="group" role="group" aria-label="Duties list">
+      <span>Duties list</span>
+      <button data-preset="bus" aria-pressed="true">Bus driver</button>
+      <button data-preset="para" aria-pressed="false">SpEd paraprofessional</button>
+      <button data-preset="payroll" aria-pressed="false">Payroll specialist</button>
+    </div>
+    <div class="group" role="group" aria-label="View">
+      <span>View</span>
+      <button data-view="flagged" aria-pressed="true">Flagged draft</button>
+      <button data-view="clean" aria-pressed="false">Suggestions accepted</button>
+    </div>
+    <button id="toggle-prompt" aria-pressed="false">Show the prompt</button>
+  </div>
+  <pre class="prompt" id="prompt" hidden></pre>
+
+  <div class="cols">
+    <section class="panel"><h2>What you paste in</h2><pre class="paste" id="input"></pre></section>
+    <section class="panel"><h2>What comes back</h2><div id="out" aria-live="polite"></div></section>
+  </div>
+
+  <footer>
+    HR reviews every flag, fills in the pay range, and confirms legal requirements before anything posts; the AI never removes a requirement on its own.
+    Every output was generated ahead of time so this page works with no internet.
+  </footer>
+</main>
+
+<script>
+const PROMPTS = {
+  posting: `Rewrite the duties list below as a job posting in our district's format: Title, a two-sentence hook, About the job, What you'll do, What you need, Pay and schedule, How to apply.
+
+Write for someone who has never worked in a school: plain words, warm and direct, about an 8th-grade reading level. Spell out acronyms unless every applicant for this job would already know them, and tell me which ones you kept on purpose.
+
+Then flag, directly under the line it affects:
+1. JARGON — any internal term you rewrote, and what my list said before.
+2. SHRINKS THE APPLICANT POOL — any requirement stricter than the law or the work actually needs. Say why it narrows the pool and suggest a rewrite.
+3. LEGAL / EQUITY CHECK — any wording that could raise discrimination, ADA, or wage-and-hour concerns, with a suggested rewrite.
+
+Do not delete any requirement yourself; flag it and let HR decide. Leave pay figures as [blanks] and do not invent numbers or policies.
+
+Context: we are a public K-12 school district. This posting goes on our careers page and on job boards, where most applicants have never worked in a school.
+
+Duties list:
+[paste here]`
+};
+
+const INPUTS = {
+  bus: { id: "bus", text: `POSITION: Bus Driver (Route) - Transportation Dept
+Reports to: Transp. Supervisor / Dispatch
+FTE: 0.75 (split shift AM/PM), 180-day calendar
+Classified Grade C-4, Step placement per CBA
+
+Duties:
+- operate district vehicle on assigned AM/PM routes + activity runs as needed
+- pre-trip/post-trip inspections per DOT, log defects in fleet system
+- maintain student mgmt per transportation conduct matrix, write referrals to bldg admin
+- ensure 504/IEP transport accommodations followed (lift bus, harness, aide on board)
+- radio comms w/ dispatch, follow emergency evac procedures, conduct 2x/yr evac drills
+- keep bus clean, fuel per schedule
+- other duties as assigned
+
+Requirements:
+- valid CDL Class B w/ P and S endorsements REQUIRED at time of application
+- 5 yrs commercial driving exp
+- clean driving record (no violations ever)
+- HS diploma
+- pass DOT physical, drug/alcohol testing (pre-employment + random)
+- must be able to lift 75 lbs
+- must be available for all extra-curricular trips incl. weekends
+- fluent English speaker` },
+
+  para: { id: "para", text: `Para - SpEd (Resource/Self-Contained) - Lincoln MS
+1.0 FTE, 7 hrs/day, student-contact days only
+Classified Grade B-2
+
+- support SDI delivery under direction of case mgr per IEP goals
+- data collection for progress monitoring (IEP goals, BIP), enter in SIS
+- implement BIPs, use CPI/de-escalation strategies, may require restraint per district policy after training
+- assist w/ ADLs incl. toileting, feeding, lifts/transfers
+- push-in support in gen ed (LRE), small group re-teach
+- lunch/recess duty per bldg schedule
+- maintain confidentiality per FERPA
+
+Quals:
+- Bachelor's degree required
+- 2+ yrs exp working w/ students w/ disabilities in a school setting
+- CPI certification required prior to start
+- must be able to lift 50 lbs and run after students
+- prefer recent college grad` },
+
+  payroll: { id: "payroll", text: `Payroll/Benefits Spec II - Business Office - Central Office
+260-day, 1.0 FTE, Admin Support Grade 7, exempt? (check w/ HR)
+
+- process semi-monthly payroll for ~1,400 employees in ERP (certificated + classified)
+- reconcile payroll to GL, prepare journal entries
+- process retro pay, step/column movement, stipends per CBA/MOUs
+- administer leave accruals, FMLA tracking, coord w/ TPA on LOAs
+- benefits open enrollment, COBRA notices, ACA reporting (1095-C)
+- state retirement system reporting (monthly), resolve exceptions
+- respond to employee inquiries re: pay/deductions
+- other duties as assigned
+
+Reqs:
+- Bachelor's in Accounting or Finance REQUIRED
+- CPP certification required
+- 5+ yrs school district payroll experience
+- expert in ERP payroll modules
+- must be able to work extended hours during peak periods w/o exception` }
+};
+
+const PAY_WHY = "Applicants can't look up your internal salary grade. Postings that show a pay range draw more applicants, and some states now require one.";
+
+const CANNED = { posting: {
+  bus: {
+    title: "School Bus Driver — Paid CDL Training",
+    hook: "Get 60 students to school safely every morning and home every afternoon. Split shift, summers off, and we pay for your commercial license training.",
+    sections: [
+      { h: "About the job", items: [
+        { t: "Split shift: a morning run and an afternoon run, about 6 hours a day, with mid-day hours free.",
+          f: { k: "jargon", was: "FTE: 0.75 (split shift AM/PM)", why: "\"FTE\" is a budgeting term. Applicants want to know hours per day." } },
+        { t: "180 work days that follow the school calendar: winter break, spring break, and summers off." },
+        { t: "You report to the Transportation Supervisor and stay in radio contact with Dispatch." } ] },
+      { h: "What you'll do", items: [
+        { t: "Drive your assigned morning and afternoon routes, plus field trip and activity runs." },
+        { t: "Inspect your bus before and after every route, following federal safety rules, and report any problems." },
+        { t: "Keep riders safe and respectful, and report serious behavior problems to the school principal.",
+          f: { k: "jargon", was: "maintain student mgmt per transportation conduct matrix, write referrals to bldg admin", why: "\"Conduct matrix\" and \"bldg admin\" are internal shorthand. The plain version says what the job actually is." } },
+        { t: "Follow each rider's transportation plan, including wheelchair lifts, safety harnesses, and riding with an aide.",
+          f: { k: "jargon", was: "ensure 504/IEP transport accommodations followed", why: "\"504/IEP\" means nothing to most career-changers. Naming the equipment also tells applicants what the job involves." } },
+        { t: "Talk with Dispatch by radio, follow emergency procedures, and run two evacuation drills a year." },
+        { t: "Keep your bus clean and fueled on schedule." } ] },
+      { h: "What you need", items: [
+        { t: "A valid Commercial Driver's License (Class B) with Passenger and School Bus endorsements at the time you apply.",
+          f: { k: "pool", why: "The single biggest barrier in bus driver hiring. Most people who would make good drivers don't hold a CDL yet; districts that train in-house hire from a far larger pool.",
+               fix: "No CDL yet? We pay for your training and testing. Already licensed with Passenger and School Bus endorsements? You can start sooner." } },
+        { t: "Five years of commercial driving experience.",
+          f: { k: "pool", why: "No law requires it for a school bus driver. It rules out parents, retirees from other careers, and anyone new to commercial driving: the people most likely to want a split shift.",
+               fix: "No commercial driving experience needed. We train you." } },
+        { t: "A clean driving record with no violations, ever.",
+          f: { k: "pool", why: "\"Ever\" excludes someone with one speeding ticket from twenty years ago. Your insurance carrier sets the real standard, usually a set number of years.",
+               fix: "A driving record that meets our insurance standard (no major violations in the past [__] years; confirm with the carrier)." } },
+        { t: "High school diploma.",
+          f: { k: "pool", why: "Listing only a diploma can turn away applicants with a GED, who are fully qualified.",
+               fix: "High school diploma or GED." } },
+        { t: "Pass a DOT physical and drug and alcohol testing, before hire and at random during employment." },
+        { t: "Fluent English speaker.",
+          f: { k: "legal", why: "\"Fluent speaker\" can read as a national-origin preference. Federal rules do require CDL drivers to read and speak English well enough for the job, so name that real need instead.",
+               fix: "Read and speak English well enough to talk with Dispatch, read road signs, and complete reports (the federal CDL standard)." } },
+        { t: "Able to lift 75 pounds.",
+          f: { k: "legal", why: "Physical requirements must match the job's essential tasks. If 75 pounds came from an old description rather than the actual work, it can screen out qualified people and raise ADA questions.",
+               fix: "Able to help riders evacuate in an emergency, including lifting or moving up to [__] pounds (confirm the number from the job's actual tasks)." } },
+        { t: "Available for all extra trips, including weekends.",
+          f: { k: "pool", why: "Required weekend availability turns away parents and people with a second job: the core of a split-shift applicant pool.",
+               fix: "Extra trips and weekend runs are optional and paid on top of your route." } } ] },
+      { h: "Pay and schedule", items: [
+        { t: "Pay: $[__] to $[__] per hour, based on experience. Benefits: [confirm eligibility with Benefits].",
+          f: { k: "jargon", was: "Classified Grade C-4, Step placement per CBA", why: PAY_WHY } } ] },
+      { h: "How to apply", items: [
+        { t: "Apply on the district careers page. Questions? Call Transportation at [phone]." },
+        { t: "The district is an equal opportunity employer." } ] }
+    ]
+  },
+
+  para: {
+    title: "Special Education Paraprofessional — Lincoln Middle School",
+    hook: "Help students with disabilities learn, grow more independent, and have a good day at school. School-day hours, school calendar, and full training provided.",
+    sections: [
+      { h: "About the job", items: [
+        { t: "Full-time, 7 hours a day, on student days only: you follow the school calendar.",
+          f: { k: "jargon", was: "1.0 FTE, 7 hrs/day, student-contact days only", why: "\"1.0 FTE\" and \"student-contact days\" are budget terms. The plain version answers the applicant's real question: when do I work?" } },
+        { t: "You'll work in a special education classroom and in general education classes alongside the teacher." } ] },
+      { h: "What you'll do", items: [
+        { t: "Work with students one-on-one and in small groups, following each student's learning plan, under the direction of the special education teacher.",
+          f: { k: "jargon", was: "support SDI delivery under direction of case mgr per IEP goals", why: "Four pieces of jargon in one line. Your biggest pool, parents and people new to schools, won't know SDI, case manager, or IEP." } },
+        { t: "Keep simple, accurate daily records of student progress and behavior, and enter them in the student information system.",
+          f: { k: "jargon", was: "data collection for progress monitoring (IEP goals, BIP), enter in SIS", why: "\"Progress monitoring,\" \"BIP,\" and \"SIS\" are special-ed and IT terms. The plain version describes the task." } },
+        { t: "Follow each student's behavior plan and use calm de-escalation. In rare emergencies this can include physical intervention, only after district training and only as district policy allows.",
+          f: { k: "jargon", was: "implement BIPs, use CPI/de-escalation strategies, may require restraint per district policy after training", why: "Kept the restraint duty and said it plainly. Applicants should know before they apply; surprises here drive early resignations." } },
+        { t: "Help students with daily living tasks, including eating, toileting, and moving between a wheelchair and other seating.",
+          f: { k: "jargon", was: "assist w/ ADLs incl. toileting, feeding, lifts/transfers", why: "\"ADLs\" is clinical shorthand. Being specific helps applicants decide honestly whether the job fits." } },
+        { t: "Support students in general education classes and re-teach skills in small groups.",
+          f: { k: "jargon", was: "push-in support in gen ed (LRE)", why: "\"Push-in\" and \"LRE\" are school jargon." } },
+        { t: "Supervise lunch and recess on the school's schedule." },
+        { t: "Keep student information private, as federal law requires." } ] },
+      { h: "What you need", items: [
+        { t: "A bachelor's degree.",
+          f: { k: "pool", why: "Stricter than federal rules. For Title I programs, paraprofessionals need an associate's degree, two years of college, or a passing score on an approved assessment. A bachelor's requirement screens out many parents and career-changers who qualify.",
+               fix: "An associate's degree, two years of college, or a passing score on the paraprofessional assessment (we help you schedule it)." } },
+        { t: "Two or more years working with students with disabilities in a school.",
+          f: { k: "pool", why: "\"In a school\" excludes strong related experience: camp counselors, home-care aides, parents of children with disabilities.",
+               fix: "Experience with children or adults with disabilities (school, camp, home care, or family) is a plus. We train you." } },
+        { t: "Crisis prevention certification before your first day.",
+          f: { k: "pool", why: "Your own duties list says this training is provided. Requiring it up front blocks applicants over training the district gives anyway.",
+               fix: "We provide crisis-prevention and de-escalation training before you work with students." } },
+        { t: "Able to lift 50 pounds and run after students.",
+          f: { k: "legal", why: "\"Run after students\" is vague and can screen out applicants with disabilities who could do the job. Physical requirements should describe the essential tasks.",
+               fix: "Able to help with student lifts and transfers (with a partner and equipment) and move quickly to keep students safe." } },
+        { t: "Recent college graduates preferred.",
+          f: { k: "legal", why: "Age-coded language. Federal law protects applicants 40 and older, and \"recent graduate\" preferences are a known discrimination risk.",
+               fix: "(Removed. Nothing replaces it.)" } } ] },
+      { h: "Pay and schedule", items: [
+        { t: "Pay: $[__] to $[__] per hour. Benefits: [confirm eligibility with Benefits].",
+          f: { k: "jargon", was: "Classified Grade B-2", why: PAY_WHY } } ] },
+      { h: "How to apply", items: [
+        { t: "Apply on the district careers page. Questions? Call Human Resources at [phone]." },
+        { t: "The district is an equal opportunity employer." } ] }
+    ]
+  },
+
+  payroll: {
+    title: "Payroll and Benefits Specialist — Central Office",
+    hook: "Make sure 1,400 teachers and staff are paid correctly and on time, every time. A year-round role on the district's Business Office team.",
+    kept: "Kept on purpose: GL, journal entries, FMLA, COBRA, ACA and Form 1095-C. Payroll professionals use these every day; spelling them out would read as if we don't know the field.",
+    sections: [
+      { h: "About the job", items: [
+        { t: "Full-time and year-round (260 days)." },
+        { t: "[Exempt / non-exempt: decide before posting.]",
+          f: { k: "legal", why: "Your notes say \"exempt? (check w/ HR).\" FLSA status decides overtime eligibility and must be settled before the job posts, not after an offer.",
+               fix: "Settle FLSA status with HR, then state it here." } } ] },
+      { h: "What you'll do", items: [
+        { t: "Run semi-monthly payroll for about 1,400 teachers and support staff." },
+        { t: "Reconcile payroll to the general ledger (GL) and prepare journal entries." },
+        { t: "Process raises, back pay, and stipends exactly as the employee contracts require.",
+          f: { k: "jargon", was: "process retro pay, step/column movement, stipends per CBA/MOUs", why: "\"Step/column\" and \"CBA/MOU\" are school-district terms. Payroll pros from hospitals, cities, and private companies are your biggest pool; don't lose them on vocabulary they'd learn in a week." } },
+        { t: "Track leave balances and FMLA, and coordinate leaves of absence with our outside leave administrator.",
+          f: { k: "jargon", was: "coord w/ TPA on LOAs", why: "\"TPA\" and \"LOA\" vary from employer to employer." } },
+        { t: "Run benefits open enrollment, send COBRA notices, and prepare ACA reporting (Forms 1095-C)." },
+        { t: "Submit monthly reports to the state retirement system and fix any errors it returns." },
+        { t: "Answer employee questions about pay and deductions clearly and kindly." } ] },
+      { h: "What you need", items: [
+        { t: "Bachelor's degree in accounting or finance.",
+          f: { k: "pool", why: "Many strong payroll specialists came up through experience, not an accounting degree. Requiring one screens them out.",
+               fix: "Bachelor's degree in accounting, finance, or a related field, or equivalent payroll experience." } },
+        { t: "National payroll certification (CPP) required.",
+          f: { k: "pool", why: "Only a fraction of working payroll specialists hold this certification. As a requirement it shrinks the pool sharply; as a preference it still signals what you value.",
+               fix: "Payroll certification (such as CPP) preferred." } },
+        { t: "Five or more years of school district payroll experience.",
+          f: { k: "pool", why: "\"School district\" rules out public-sector, hospital, and private payroll professionals whose skills transfer directly. The contract-specific parts are teachable. HR sets the number of years.",
+               fix: "Three or more years of payroll experience; school or public-sector experience a plus." } },
+        { t: "Expert in our ERP system's payroll modules.",
+          f: { k: "pool", why: "Only people from districts on the same system can be \"expert\" in it on day one.",
+               fix: "Experience with a large payroll or ERP system. We train you on ours." } },
+        { t: "Able to work extended hours during peak periods, without exception.",
+          f: { k: "legal", why: "\"Without exception\" can conflict with leave and disability-accommodation obligations, and reads as a warning sign to applicants.",
+               fix: "Able to work extended hours during peak periods (year-end close, open enrollment), scheduled in advance." } } ] },
+      { h: "Pay and schedule", items: [
+        { t: "Pay: $[__] to $[__] per year. Full district benefits.",
+          f: { k: "jargon", was: "Admin Support Grade 7", why: PAY_WHY } } ] },
+      { h: "How to apply", items: [
+        { t: "Apply on the district careers page. Questions? Call Human Resources at [phone]." },
+        { t: "The district is an equal opportunity employer." } ] }
+    ]
+  }
+} };
+
+// AI boundary. Canned today; to go live, replace this body with a call to a model
+// (send PROMPTS[task] + the input text, return the model's text). Nothing else changes.
+async function respond(task, input) {
+  await new Promise(r => setTimeout(r, 700)); // feels like generation; remove when live
+  return CANNED[task][input.id];
+}
+
+const KIND = { jargon: "✎ Jargon rewritten", pool: "⚠ Shrinks the applicant pool", legal: "⚖ Legal / equity check" };
+const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+const state = { preset: "bus", view: "flagged", result: null };
+const out = document.getElementById("out");
+let run = 0;
+
+function renderPosting(p) {
+  const flags = p.sections.flatMap(s => s.items).filter(i => i.f);
+  const n = k => flags.filter(i => i.f.k === k).length;
+  const clean = state.view === "clean";
+  let html = clean
+    ? `<div class="chips"><span class="chip ok">✓ ${n("pool") + n("legal")} suggestions applied — HR still approves each one</span></div>`
+    : `<div class="chips"><span class="chip jargon">${n("jargon")} jargon terms rewritten</span><span class="chip pool">${n("pool")} requirements shrink the pool</span><span class="chip legal">${n("legal")} legal / equity checks</span></div>`;
+  html += `<div class="posting"><h3>${esc(p.title)}</h3><p class="hook">${esc(p.hook)}</p>`;
+  if (p.kept && !clean) html += `<p class="kept">${esc(p.kept)}</p>`;
+  for (const s of p.sections) {
+    html += `<h4>${esc(s.h)}</h4><ul>`;
+    for (const it of s.items) {
+      const f = it.f;
+      if (clean) {
+        const fixed = f && f.fix;
+        if (fixed && f.fix.startsWith("(Removed")) continue;
+        html += `<li${fixed ? ' class="accepted"' : ""}>${esc(fixed ? f.fix : it.t)}</li>`;
+        continue;
+      }
+      html += `<li>${f ? `<span class="hl ${f.k}">${esc(it.t)}</span>` : esc(it.t)}`;
+      if (f) {
+        html += `<div class="flag ${f.k}"><b class="k">${KIND[f.k]}</b>`;
+        if (f.was) html += `<p>Your list said: <i>“${esc(f.was)}”</i></p>`;
+        html += `<p>${esc(f.why)}</p>`;
+        if (f.fix) html += `<p><b>Try:</b> ${esc(f.fix)}</p>`;
+        html += `</div>`;
+      }
+      html += `</li>`;
+    }
+    html += `</ul>`;
+  }
+  out.innerHTML = html + `</div>`;
+}
+
+async function generate() {
+  const input = INPUTS[state.preset];
+  document.getElementById("input").textContent = input.text;
+  out.innerHTML = `<div class="drafting">Drafting…</div>`;
+  const my = ++run;
+  const result = await respond("posting", input);
+  if (my !== run) return;
+  state.result = result;
+  renderPosting(result);
+}
+
+document.querySelectorAll("[data-preset]").forEach(b => b.addEventListener("click", () => {
+  state.preset = b.dataset.preset;
+  document.querySelectorAll("[data-preset]").forEach(x => x.setAttribute("aria-pressed", x === b));
+  generate();
+}));
+document.querySelectorAll("[data-view]").forEach(b => b.addEventListener("click", () => {
+  state.view = b.dataset.view;
+  document.querySelectorAll("[data-view]").forEach(x => x.setAttribute("aria-pressed", x === b));
+  if (state.result) renderPosting(state.result);
+}));
+const tp = document.getElementById("toggle-prompt"), pr = document.getElementById("prompt");
+pr.textContent = PROMPTS.posting;
+tp.addEventListener("click", () => {
+  pr.hidden = !pr.hidden;
+  tp.setAttribute("aria-pressed", !pr.hidden);
+  tp.textContent = pr.hidden ? "Show the prompt" : "Hide the prompt";
+});
+generate();
+</script>
+</body>
+</html>

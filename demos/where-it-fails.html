@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Where It Fails, and How You Catch It</title>
+<style>
+  :root {
+    --bg: #fcfcfb; --ink: #0b0b0b; --muted: #52514e; --line: #d9d8d3;
+    --card: #ffffff; --accent: #1c5cab; --accent-ink: #ffffff; --soft: #eef4fc;
+    --bad: #a3271b; --bad-soft: #fde4e0;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 20px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1500px; margin: 0 auto; padding: 24px 16px 40px; }
+  h1 { font-size: 2.1rem; margin: 0; line-height: 1.2; }
+  .sub { color: var(--muted); margin: 6px 0 20px; font-size: 1.15rem; }
+  .controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 18px; }
+  .controls > span { color: var(--muted); font-weight: 600; }
+  button { font: inherit; font-weight: 600; padding: 10px 22px; min-height: 52px; cursor: pointer;
+    background: var(--card); color: var(--ink); border: 2px solid var(--accent); border-radius: 10px; }
+  button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+  #check { background: var(--bad); border-color: var(--bad); color: #fff; }
+  #check[aria-pressed="true"] { background: var(--card); color: var(--bad); }
+  #toggle-prompt { border-color: var(--line); }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .col { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; min-width: 0; }
+  .col h2 { font-size: 1rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 8px; }
+  .ask { font-weight: 600; margin: 0 0 12px; }
+  .source { background: #f3f2ee; border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; font-size: 1rem; overflow-x: auto; }
+  .source p { margin: 0 0 6px; }
+  table { border-collapse: collapse; width: 100%; font-size: .95rem; }
+  th, td { padding: 4px 8px; border-bottom: 1px solid var(--line); text-align: right; }
+  th:first-child, td:first-child { text-align: left; }
+  .answer { white-space: pre-wrap; margin: 0 0 14px; min-height: 3em; }
+  .answer mark { background: none; color: inherit; }
+  .checked .answer mark { background: var(--bad-soft); outline: 2px solid var(--bad); border-radius: 3px; }
+  .checked .answer mark::after { content: attr(data-n); display: inline-block; margin-left: 4px; padding: 0 7px;
+    border-radius: 999px; background: var(--bad); color: #fff; font-size: .8rem; font-weight: 700; vertical-align: 2px; }
+  .drafting { color: var(--muted); font-style: italic; }
+  .verdict { font-weight: 700; color: var(--bad); margin: 0 0 10px; }
+  .findings { list-style: none; padding: 0; margin: 18px 0 0; display: grid; gap: 12px; }
+  .findings li { background: var(--card); border: 1px solid var(--line); border-left: 6px solid var(--bad);
+    border-radius: 10px; padding: 12px 16px; display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; }
+  .num { grid-row: span 3; width: 36px; height: 36px; border-radius: 50%; background: var(--bad); color: #fff;
+    font-weight: 700; display: grid; place-items: center; }
+  .habit { justify-self: start; background: var(--soft); color: var(--accent); font-weight: 700; padding: 2px 12px; border-radius: 999px; }
+  .truth { color: var(--muted); }
+  .habits { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 22px; }
+  .habits div { border: 2px solid var(--line); border-radius: 10px; padding: 10px 14px; font-size: 1rem; }
+  .habits div.used { border-color: var(--accent); background: var(--soft); }
+  .habits strong { display: block; font-size: 1.1rem; }
+  pre { white-space: pre-wrap; background: #f3f2ee; border: 1px solid var(--line); border-radius: 10px;
+    padding: 14px 18px; font: 1rem/1.5 ui-monospace, Menlo, Consolas, monospace; margin: 0 0 18px; }
+  footer { color: var(--muted); font-size: 1rem; margin-top: 20px; }
+  @media (max-width: 900px) { .cols, .habits { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Where it fails, and how you catch it</h1>
+  <p class="sub">Each answer below looks finished. Each one has a problem planted in it. Read it, then press "Check it."</p>
+
+  <div class="controls" role="group" aria-label="Task">
+    <span>Task</span>
+    <button data-preset="policy" aria-pressed="true">Summarize a policy</button>
+    <button data-preset="budget" aria-pressed="false">Total a budget</button>
+    <button data-preset="law" aria-pressed="false">Answer a law question</button>
+    <button id="toggle-prompt" aria-pressed="false">Show the prompt</button>
+  </div>
+
+  <pre id="prompt" hidden></pre>
+
+  <div class="cols">
+    <section class="col">
+      <h2>What you paste in</h2>
+      <p class="ask" id="ask"></p>
+      <div class="source" id="source"></div>
+    </section>
+    <section class="col" id="out-col">
+      <h2>What comes back</h2>
+      <p class="answer" id="answer"></p>
+      <p class="verdict" id="verdict" hidden></p>
+      <button id="check" aria-pressed="false" hidden>Check it</button>
+    </section>
+  </div>
+
+  <ol class="findings" id="findings" hidden></ol>
+
+  <div class="habits" id="habits">
+    <div data-habit="source"><strong>Ask for the source</strong>"Where exactly does that come from?" Then open it yourself.</div>
+    <div data-habit="compare"><strong>Compare against the original</strong>Read the answer beside what you pasted, line by line.</div>
+    <div data-habit="recompute"><strong>Recompute</strong>Redo every number it calculated, in a spreadsheet.</div>
+    <div data-habit="date"><strong>Check the date</strong>"As of when?" Its knowledge stops at a training date.</div>
+  </div>
+
+  <footer>
+    Trust is earned with a checking habit, not assumed: a person verifies every citation, number, and legal claim before anything is used.
+    Every output was generated ahead of time so this page works with no internet.
+  </footer>
+</main>
+
+<script>
+const PROMPTS = {
+  summarize: "Summarize the attendance policy below for principals.\nFormat: 4 to 6 bullets, then one line that starts \"Exceptions:\" and names every exception in the policy.\nVoice: plain and direct, for busy building leaders.\nContext: principals will use this summary to decide when to call a family, hold a meeting, or file a truancy referral, so thresholds and exceptions matter more than brevity. Use only the text below; do not add citations that are not in it.\n\n[policy text pasted here]",
+  budget: "Compare the two budget columns below.\nFormat: 3 to 4 sentences giving the FY27 total, the dollar and percent change from FY26, and the line that drives most of the change.\nVoice: neutral, for the board finance committee.\nContext: the board has asked that transportation grow no more than 3% this year, so say whether the proposal meets that limit.\n\n[budget table pasted here]",
+  law: "Answer this question for a district communications director: how many business days do we have to respond to a public records request under our state's law, and can we charge for copies?\nFormat: a direct answer in 2 to 3 sentences, then the citation you relied on.\nVoice: plain language, no legalese.\nContext: we are updating the records-request page on the district website, so the answer has to be current."
+};
+
+// AI output. A string is plain text; [n, text] is a span that check #n will flag.
+const CANNED = {
+  summarize: {
+    policy: [
+      "• A student is chronically absent after missing 10% of enrolled days, for any reason.\n",
+      "• At 5 unexcused absences, the attendance team calls the family and logs the call.\n",
+      "• ", [1, "At 10 absences"], ", the principal holds a family meeting and writes an attendance plan.\n",
+      "• A truancy referral is allowed only after 15 unexcused absences with a plan on file.\n",
+      "• Excused: illness, medical appointments, bereavement, religious observance, and court dates, if the family notifies the school within 2 school days, ",
+      [2, "per Administrative Regulation 5113.2"], ".\n\n",
+      [3, "Exceptions: None noted."]
+    ]
+  },
+  budget: {
+    budget: [
+      "The proposed FY27 transportation budget is ", [1, "$4,109,700"], ", ",
+      [2, "up $108,250 (2.7%)"], " from $4,001,450 in FY26. ",
+      [2, "That keeps transportation within the board's 3% growth limit."], " ",
+      "The largest driver of the increase is ", [3, "fuel, which continues to climb"],
+      ". Contracted special-education routes and bus maintenance account for most of the rest."
+    ]
+  },
+  law: {
+    law: [
+      "You have ", [1, "10 business days"], " to respond to a public records request under the state Public Records Act. ",
+      "You may charge a reasonable fee for copies, generally up to $0.25 per page, but not for staff time spent searching. ",
+      "Courts have enforced the deadline strictly; see ", [2, "Harmon v. Eastfield School District (2018)"], ".\n\n",
+      "Citation: State Public Records Act, ", [1, "as amended 2019"], "."
+    ]
+  }
+};
+
+// AI boundary. Canned today; to go live, replace this body with a call to a model
+// (send PROMPTS[task] + the input text, return the model's text). Nothing else changes.
+async function respond(task, input) {
+  await new Promise(r => setTimeout(r, 700)); // feels like generation; remove when live
+  return CANNED[task][input.id];
+}
+
+const BUDGET_ROWS = [
+  ["Driver salaries and benefits", "2,418,600", "2,512,300"],
+  ["Fuel", "486,200", "471,900"],
+  ["Bus maintenance and parts", "312,750", "338,400"],
+  ["Contracted special-ed routes", "655,000", "742,500"],
+  ["Insurance", "128,900", "134,600"]
+];
+
+const PRESETS = {
+  policy: {
+    task: "summarize",
+    ask: "Summarize this attendance policy for principals.",
+    source: "<p><strong>Board Policy 5113, Student Attendance (revised June 2026)</strong></p>" +
+      "<p>1. A student is chronically absent after missing 10% of enrolled school days for any reason.</p>" +
+      "<p>2. After 5 unexcused absences, the school attendance team calls the family and documents the call.</p>" +
+      "<p>3. After 10 unexcused absences, the principal convenes a family meeting to create an attendance plan.</p>" +
+      "<p>4. A truancy referral may be made only after 15 unexcused absences and a documented attendance plan.</p>" +
+      "<p>5. Exception: absences tied to a student's IEP or Section 504 plan, including therapy and medical appointments listed in the plan, are excused and do not count toward steps 2 to 4.</p>" +
+      "<p>6. Absences are excused for illness, medical appointments, bereavement, religious observance, and court appearances, with family notice within 2 school days.</p>",
+    checks: [
+      { habit: "compare", problem: "\"At 10 absences\" dropped the word unexcused.", truth: "Policy step 3 says 10 unexcused. As written, a student home with the flu gets a principal meeting." },
+      { habit: "source", problem: "Administrative Regulation 5113.2 is not in the text you pasted.", truth: "The AI invented a citation that looks exactly like a real one. If you cannot open it, it is not real." },
+      { habit: "compare", problem: "The one exception that matters is gone, and the summary says there are none.", truth: "Step 5 excuses absences tied to an IEP or 504 plan. A principal following this summary could start a truancy referral over a student's scheduled therapy." }
+    ]
+  },
+  budget: {
+    task: "budget",
+    ask: "What is the FY27 total, how much did it grow, and are we under the board's 3% limit?",
+    source: "<p><strong>Transportation budget, FY26 actual vs. FY27 proposed ($)</strong></p><table><tr><th>Line</th><th>FY26</th><th>FY27</th></tr>" +
+      BUDGET_ROWS.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join("") + "</table>",
+    checks: [
+      { habit: "recompute", problem: "The FY27 total is wrong by $90,000.", truth: "The column adds to $4,199,700. One digit in the answer is off." },
+      { habit: "recompute", problem: "The growth figure is wrong, so the conclusion flips.", truth: "Real growth is $198,250, or 5.0%. The proposal is over the board's 3% limit, not under it." },
+      { habit: "compare", problem: "Fuel did not climb. It went down.", truth: "Fuel fell $14,300. The biggest dollar increase is driver salaries (+$93,700); the biggest percent increase is contracted routes (+13.4%)." }
+    ]
+  },
+  law: {
+    task: "law",
+    ask: "How many business days do we have to respond to a public records request, and can we charge for copies?",
+    source: "<p><strong>No document pasted.</strong></p><p>Just the question. The answer comes from what the AI learned in training, which stops at a fixed date.</p>",
+    checks: [
+      { habit: "date", problem: "The deadline is out of date.", truth: "In this example, the legislature shortened it to 5 business days in its 2026 session, effective July 1, 2026. The AI answered from older training data and did not say so." },
+      { habit: "source", problem: "Harmon v. Eastfield School District does not exist.", truth: "The case name, year, and holding are invented. Ask for the source, then look it up yourself or ask district counsel." }
+    ]
+  }
+};
+
+const HABIT_NAMES = { source: "Ask for the source", compare: "Compare against the original", recompute: "Recompute", date: "Check the date" };
+
+const $ = id => document.getElementById(id);
+const outCol = $("out-col"), answer = $("answer"), check = $("check"), findings = $("findings"), verdict = $("verdict");
+let current = "policy";
+let run = 0;
+
+function setChecked(on) {
+  const p = PRESETS[current];
+  outCol.classList.toggle("checked", on);
+  check.setAttribute("aria-pressed", on);
+  check.textContent = on ? "Hide the checks" : "Check it";
+  findings.hidden = verdict.hidden = !on;
+  const used = new Set(on ? p.checks.map(c => c.habit) : []);
+  document.querySelectorAll("[data-habit]").forEach(d => d.classList.toggle("used", used.has(d.dataset.habit)));
+}
+
+async function load(id) {
+  current = id;
+  const p = PRESETS[id], mine = ++run;
+  document.querySelectorAll("[data-preset]").forEach(b => b.setAttribute("aria-pressed", b.dataset.preset === id));
+  $("ask").textContent = p.ask;
+  $("source").innerHTML = p.source;
+  $("prompt").textContent = PROMPTS[p.task];
+  setChecked(false);
+  check.hidden = true;
+  answer.innerHTML = '<span class="drafting">Drafting…</span>';
+
+  const segments = await respond(p.task, { id });
+  if (mine !== run) return; // a newer preset was chosen while this one was drafting
+  answer.textContent = "";
+  for (const s of segments) {
+    if (typeof s === "string") { answer.append(s); continue; }
+    const m = document.createElement("mark");
+    m.dataset.n = s[0];
+    m.textContent = s[1];
+    answer.append(m);
+  }
+  verdict.textContent = `${p.checks.length} problems in an answer that looked finished.`;
+  findings.innerHTML = "";
+  p.checks.forEach((c, i) => {
+    const li = document.createElement("li");
+    li.innerHTML = `<span class="num">${i + 1}</span><span class="habit"></span><strong></strong><span class="truth"></span>`;
+    li.querySelector(".habit").textContent = "Caught by: " + HABIT_NAMES[c.habit];
+    li.querySelector("strong").textContent = c.problem;
+    li.querySelector(".truth").textContent = c.truth;
+    findings.append(li);
+  });
+  check.hidden = false;
+}
+
+document.querySelectorAll("[data-preset]").forEach(b => b.addEventListener("click", () => load(b.dataset.preset)));
+check.addEventListener("click", () => setChecked(check.getAttribute("aria-pressed") !== "true"));
+
+const togglePrompt = $("toggle-prompt");
+togglePrompt.addEventListener("click", () => {
+  const box = $("prompt");
+  box.hidden = !box.hidden;
+  togglePrompt.setAttribute("aria-pressed", !box.hidden);
+  togglePrompt.textContent = box.hidden ? "Show the prompt" : "Hide the prompt";
+});
+
+load("policy");
+</script>
+</body>
+</html>

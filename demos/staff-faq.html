@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The August Question Flood</title>
+<style>
+  :root {
+    --bg: #fcfcfb; --ink: #0b0b0b; --muted: #52514e; --line: #d9d8d3;
+    --card: #ffffff; --accent: #1c5cab; --accent-ink: #ffffff; --soft: #eef4fc;
+    --gap: #8a5a00; --gap-bg: #fff4d6; --hit: #ffe58a;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 20px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1500px; margin: 0 auto; padding: 24px 16px 40px; }
+  h1 { font-size: 2.1rem; margin: 0; line-height: 1.2; }
+  .sub { color: var(--muted); margin: 6px 0 20px; font-size: 1.15rem; }
+  .controls { display: flex; flex-wrap: wrap; gap: 14px 22px; align-items: center; margin-bottom: 18px; }
+  .group { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .group > span { color: var(--muted); margin-right: 4px; font-weight: 600; }
+  button { font: inherit; font-weight: 600; padding: 10px 22px; min-height: 52px; cursor: pointer; border-radius: 10px;
+    background: var(--card); color: var(--ink); border: 2px solid var(--accent); }
+  button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+  #toggle-prompt { border-color: var(--line); }
+  .prompt { background: #f3f2ee; border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px; margin: 0 0 18px;
+    white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; font-size: 1rem; }
+  .cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 16px; align-items: start; }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; }
+  .cols > .panel:first-child { position: sticky; top: 12px; }
+  .panel > h2 { font-size: 1rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 10px; }
+  .packet { position: relative; background: #f3f2ee; border-radius: 8px; padding: 12px 14px; max-height: 78vh; overflow-y: auto; font-size: .88rem; line-height: 1.45; }
+  .packet .aud { font-weight: 700; margin: 0 0 8px; }
+  .packet .doc { font-weight: 700; text-transform: uppercase; letter-spacing: .04em; margin: 0 0 8px; }
+  .packet p.sec { margin: 0 0 8px; padding: 2px 4px; border-radius: 4px; transition: background .3s; text-align: justify; }
+  .packet p.sec.hit { background: var(--hit); outline: 2px solid var(--gap); }
+  .drafting { color: var(--muted); font-weight: 600; padding: 20px 0; }
+  .drafting::after { content: " ●"; animation: blink 1s infinite; }
+  @keyframes blink { 50% { opacity: .2; } }
+  @media (prefers-reduced-motion: reduce) { .drafting::after { animation: none; } .packet p.sec { transition: none; } }
+  .tiles { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 12px; }
+  .tile { border: 1px solid var(--line); border-radius: 10px; padding: 6px 14px; background: #f8f8f6; font-size: 1rem; }
+  .tile b { display: block; font-size: 1.4rem; }
+  .tile.gap { background: var(--gap-bg); border-color: var(--gap); }
+  .bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 0 0 6px; }
+  .bar .hint { color: var(--muted); font-size: 1rem; }
+  h3.grp { font-size: 1.15rem; margin: 16px 0 6px; color: var(--accent); }
+  details { border: 1px solid var(--line); border-radius: 10px; margin: 0 0 8px; background: var(--card); }
+  summary { cursor: pointer; font-weight: 700; padding: 12px 16px; min-height: 52px; list-style: none; display: flex; gap: 10px; align-items: baseline; }
+  summary::-webkit-details-marker { display: none; }
+  summary::before { content: "+"; color: var(--accent); font-weight: 800; width: 1em; flex: none; }
+  details[open] summary::before { content: "–"; }
+  summary .n { color: var(--muted); font-weight: 700; flex: none; }
+  summary .flag { margin-left: auto; flex: none; font-size: .85rem; background: var(--gap-bg); color: var(--gap); border: 1px solid var(--gap); border-radius: 999px; padding: 0 10px; }
+  details .a { padding: 0 16px 12px 46px; }
+  details .a p { margin: 0 0 8px; }
+  details.isgap .a p { border-left: 4px solid var(--gap); padding-left: 10px; }
+  button.cite { min-height: 44px; padding: 4px 14px; font-size: .95rem; border-width: 2px; }
+  footer { color: var(--muted); font-size: 1rem; margin-top: 20px; }
+  @media (max-width: 900px) { .cols { grid-template-columns: 1fr; } .cols > .panel:first-child { position: static; } .packet { max-height: 60vh; } details .a { padding-left: 16px; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>The August question flood</h1>
+  <p class="sub">The benefits and onboarding packet nobody reads becomes the 20 answers HR gives every August, each one tied to the packet section it came from.</p>
+
+  <div class="controls">
+    <div class="group" role="group" aria-label="Audience">
+      <span>Write it for</span>
+      <button data-preset="cert" aria-pressed="true">New teachers</button>
+      <button data-preset="class" aria-pressed="false">New support staff</button>
+    </div>
+    <button id="toggle-prompt" aria-pressed="false">Show the prompt</button>
+  </div>
+  <pre class="prompt" id="prompt" hidden></pre>
+
+  <div class="cols">
+    <section class="panel"><h2>What you paste in</h2><div class="packet" id="input"></div></section>
+    <section class="panel"><h2>What comes back</h2><div id="out" aria-live="polite"></div></section>
+  </div>
+
+  <footer>
+    Benefits and Payroll check every answer against the current plan year before it goes to staff; the AI answers only from the packet and says so when it can't.
+    Every output was generated ahead of time so this page works with no internet.
+  </footer>
+</main>
+
+<script>
+const PROMPTS = {
+  faq: `Turn the benefits and onboarding packet below into a staff FAQ.
+
+Format: the 20 questions new employees in the audience named below ask HR most often in their first weeks, grouped under Benefits, Pay, Leave, and First week. Write each answer in 1–3 sentences, then cite the packet section it came from, like [§4.2].
+
+Voice: friendly, plain English, about an 8th-grade reading level, written to a new employee on their first day. Lead with the answer, then the deadline or condition. Use numbers, not words, for days, dates, and dollars.
+
+Context: we are a public school district, and this FAQ goes in the welcome email and on the staff intranet. Answer only from the packet. If the packet does not answer a question, write "The packet doesn't say" and name the office and extension to ask. Never guess about benefits, pay, or deadlines.
+
+[paste the audience line and the packet here]`
+};
+
+const PACKET = [
+  ["1.1", "Eligibility.", "Employees regularly scheduled for 0.75 FTE or greater (for classified employees, not less than thirty (30) hours per week; for certificated employees, a contract of 0.75 or greater) are eligible for District-sponsored medical, dental, and vision coverage. Employees scheduled at 0.50–0.74 FTE are eligible for a prorated District contribution pursuant to the applicable collective bargaining agreement. Employees scheduled below 0.50 FTE are not benefits-eligible except as required by law."],
+  ["1.2", "Effective Date of Coverage.", "Coverage becomes effective on the first day of the month following the date of hire, provided enrollment is completed within thirty-one (31) calendar days of the date of hire. Employees whose date of hire falls on the first working day of a month shall have coverage effective on that date."],
+  ["2.1", "Initial Enrollment.", "Elections are made through the Employee Benefits Portal. Employees who fail to submit elections within the thirty-one (31) day window shall be enrolled in employee-only coverage under the Core PPO plan and may not enroll dependents or change plans until the next Open Enrollment period (November 1–30), absent a Qualifying Life Event."],
+  ["2.2", "Qualifying Life Events.", "Mid-year changes are permitted only upon a Qualifying Life Event (QLE), including marriage, divorce, birth, adoption, or loss or gain of other coverage. Requests must be submitted with supporting documentation within thirty-one (31) calendar days of the event; changes are effective the first of the month following receipt, except that coverage for a newborn or newly adopted child is effective as of the date of birth or placement."],
+  ["2.3", "Dependent Eligibility and Verification.", "Eligible dependents include a legal spouse or registered domestic partner and children through the end of the month in which the child attains age twenty-six (26). Documentation (e.g., marriage certificate, birth certificate, domestic partnership registration) must be uploaded to the Benefits Portal within thirty-one (31) days of enrollment; dependents for whom documentation is not received shall be removed from coverage retroactive to the coverage effective date."],
+  ["3.1", "Medical Plan Options and District Contribution.", "The District offers (a) the Core PPO and (b) the Saver HDHP paired with a Health Savings Account (HSA). The District contributes 100% of the employee-only premium for either plan and 70% of the incremental premium for dependent tiers. Employees enrolled in the Saver HDHP receive an annual District HSA contribution of $750 (employee-only) or $1,500 (any dependent tier), deposited in equal installments each pay period."],
+  ["3.2", "Dental and Vision.", "Basic dental coverage is provided at no cost for employee-only coverage; dependent dental and all vision coverage are employee-paid on a pre-tax basis."],
+  ["3.3", "Identification Cards.", "Carriers issue identification cards by mail within ten (10) to fourteen (14) business days after enrollment is processed. Temporary cards may be printed from each carrier's member website once coverage is active."],
+  ["4.1", "Pay Schedule.", "Employees are paid semi-monthly on the 10th and 25th of each month (or the preceding business day). Certificated employees' annual contract salary is paid in twenty-four (24) equal installments, September 25 through September 10 of the following year. Classified employees are paid for hours worked and approved leave during the pay period."],
+  ["4.2", "First Paycheck.", "Employees whose payroll documentation (Form W-4, state withholding certificate, direct deposit authorization, and completed Form I-9) is received and verified by Payroll on or before the 1st of a month shall receive initial pay on the 25th of that month. Documentation verified after the 1st shall be processed in the following pay cycle, with all earned wages paid retroactively."],
+  ["4.3", "Direct Deposit.", "Direct deposit is a condition of employment. Initial deposits are subject to a pre-notification period of one (1) pay cycle, during which pay is issued on a District pay card."],
+  ["4.4", "Timekeeping (Classified).", "Classified employees record hours in the Time and Attendance System. Timesheets must be submitted by 12:00 p.m. on the Monday following the end of each work week; late submissions are paid in the next pay cycle."],
+  ["5.1", "Sick Leave.", "Certificated employees are credited with twelve (12) days of sick leave at the start of each contract year. Classified employees accrue one (1) day of sick leave per month of service, prorated by FTE. Unused sick leave accumulates without limit."],
+  ["5.2", "Personal Leave.", "Employees are granted two (2) days of personal leave per year. Personal leave may not be used on the workday immediately preceding or following a holiday or scheduled break without the prior approval of the Superintendent or designee. Unused personal leave converts to sick leave at year end."],
+  ["5.3", "Absence Reporting.", "Certificated employees shall record absences in the Substitute Management System no later than 6:00 a.m. on the day of absence, or as soon as practicable in an emergency. Classified employees shall notify their immediate supervisor directly no later than one (1) hour before the start of their shift."],
+  ["5.4", "Family and Medical Leave.", "Eligibility for leave under the Family and Medical Leave Act requires twelve (12) months of employment and at least 1,250 hours worked during the twelve (12) months preceding the leave. Requests are submitted to Human Resources at least thirty (30) days in advance when foreseeable."],
+  ["6.1", "Retirement.", "Membership in the State Retirement System is mandatory for all employees in eligible positions, effective the first day of employment. Certificated employees participate in the Teachers' Plan; classified employees participate in the Public Employees' Plan. The employee contribution rate is 9.0% of reportable earnings, deducted on a pre-tax basis. Voluntary 403(b) and 457(b) plans are available; enrollment may begin or change at any time via the Benefits Portal."],
+  ["6.2", "Life Insurance.", "Basic term life insurance of $50,000 is provided at no cost. Supplemental life coverage may be elected within thirty-one (31) days of hire, up to $200,000, without evidence of insurability."],
+  ["7.1", "Background Clearance.", "Fingerprint-based background clearance must be completed and approved prior to the first day of service. The fingerprinting fee ($48.50) is advanced by the employee and reimbursed on the first regular paycheck upon submission of the receipt to Human Resources."],
+  ["7.2", "Employment Eligibility (Form I-9).", "Section 1 of Form I-9 must be completed no later than the first day of employment. Original documents establishing identity and employment authorization, as listed on the Form I-9 Lists of Acceptable Documents, must be presented in person to Human Resources within three (3) business days of the first day of employment."],
+  ["7.3", "Required Training.", "All employees must complete the following modules in the Staff Training Portal within thirty (30) calendar days of hire: Mandated Reporter; Bloodborne Pathogens; Title IX and Harassment Prevention; Student Data Privacy. Completion is a condition of continued employment."],
+  ["7.4", "Licensure (Certificated).", "Certificated employees must have a valid state license on file with Human Resources before the first contract day. Employees holding an out-of-state license or a pending application must provide documentation of the application and are subject to the conditions of any emergency or provisional license."],
+  ["7.5", "Identification Badges.", "Employee identification badges are issued at Central Office, Room 104, upon background clearance. Badge photographs are taken Tuesdays and Thursdays, 8:00–11:00 a.m. and 1:00–3:30 p.m."],
+  ["8.1", "Employee Assistance Program.", "The EAP provides up to six (6) confidential counseling sessions per issue per year at no cost to employees and members of their household. The District does not receive information identifying EAP users."],
+  ["9.1", "Contacts.", "Benefits, ext. 4410. Payroll, ext. 4420. Licensure and Onboarding, ext. 4430."]
+];
+const PACKET_TEXT = "NEW EMPLOYEE BENEFITS AND ONBOARDING PACKET, 2026–27\n\n" + PACKET.map(([n, h, b]) => `§${n} ${h} ${b}`).join("\n\n");
+
+const INPUTS = {
+  cert: { id: "cert", audience: "Audience: new teachers (certificated staff)", text: "Audience: new teachers (certificated staff)\n\n" + PACKET_TEXT },
+  class: { id: "class", audience: "Audience: new support staff (classified: paraprofessionals, bus drivers, custodians, nutrition, office staff)", text: "Audience: new support staff (classified)\n\n" + PACKET_TEXT }
+};
+
+// Shared answers, then the ones that differ by audience.
+const A = {
+  start: { q: "When does my health insurance start?", a: "On the 1st of the month after you're hired, as long as you enroll within 31 days. Hired on the first working day of a month? Coverage starts that day.", s: "1.2" },
+  miss: { q: "What happens if I miss the 31-day enrollment deadline?", a: "You're automatically put on employee-only coverage in the Core PPO. You can't add family or switch plans until open enrollment (November 1–30) unless you have a major life event.", s: "2.1" },
+  family: { q: "How do I add my spouse or kids, and what do I need?", a: "Add them when you enroll, then upload a marriage certificate, birth certificate, or domestic partnership registration within 31 days. If the document doesn't arrive, that person is removed from coverage all the way back to day one.", s: "2.3" },
+  baby: { q: "Can I change my coverage later if I get married or have a baby?", a: "Yes. Send the request with documents within 31 days of the event. A newborn or newly adopted child is covered from the date of birth or placement.", s: "2.2" },
+  cost: { q: "How much does the district pay toward my insurance?", a: "100% of the employee-only premium on either medical plan, plus 70% of the extra cost to cover family. Choose the Saver HDHP and the district also deposits $750 a year into your HSA ($1,500 if you cover dependents).", s: "3.1" },
+  which: { q: "Should I pick the PPO or the HDHP?", a: "The packet doesn't say which plan fits you. That depends on your family's expected medical costs. Benefits can walk through the numbers with you: ext. 4410.", s: "3.1", gap: true },
+  card: { q: "When will I get my insurance card?", a: "By mail, 10 to 14 business days after your enrollment is processed. Need it sooner? Print a temporary card from the carrier's member website once coverage starts.", s: "3.3" },
+  first: { q: "When is my first paycheck?", a: "If Payroll has your W-4, state withholding form, direct deposit form, and I-9 by the 1st of the month, you're paid on the 25th. If not, you're paid the next cycle, with all the pay you've earned.", s: "4.2" },
+  paycard: { q: "Why did my first pay come on a pay card?", a: "Direct deposit is required, but the bank takes one pay cycle to verify your account. Your first pay goes on a district pay card; after that, it goes straight to your bank.", s: "4.3" },
+  personal: { q: "Can I take a personal day the Friday before a break?", a: "Only with advance approval from the Superintendent or designee. You get 2 personal days a year, and any you don't use turn into sick days.", s: "5.2" },
+  eap: { q: "Is there free, confidential counseling?", a: "Yes. The Employee Assistance Program gives you and anyone in your household up to 6 free sessions per issue each year. The district never learns who uses it.", s: "8.1" },
+  prints: { q: "Do I need fingerprints before my first day? Who pays?", a: "Yes. Your background clearance must be approved before your first day. You pay the $48.50 fee up front; turn the receipt in to HR and it's repaid on your first regular paycheck.", s: "7.1" },
+  i9: { q: "What do I bring for the I-9?", a: "Original documents from the Form I-9 Lists of Acceptable Documents, shown in person to HR within 3 business days of your first day. Fill out Section 1 by day one.", s: "7.2" },
+  training: { q: "What training do I have to finish, and by when?", a: "Four online modules in the Staff Training Portal within 30 days of hire: Mandated Reporter, Bloodborne Pathogens, Title IX and Harassment Prevention, and Student Data Privacy. They're required to keep your job.", s: "7.3" },
+  badge: { q: "Where do I get my ID badge?", a: "Central Office, Room 104, once your background clearance is approved. Photos are taken Tuesdays and Thursdays, 8–11 a.m. and 1–3:30 p.m.", s: "7.5" }
+};
+const faq = (pay, leave, week) => ({ groups: [
+  { h: "Benefits", items: [A.start, A.miss, A.family, A.baby, A.cost, A.which, A.card] },
+  { h: "Pay", items: pay },
+  { h: "Leave", items: leave },
+  { h: "First week", items: week }
+] });
+
+const CANNED = { faq: {
+  cert: faq(
+    [A.first,
+     { q: "How often am I paid? Do I get paid in the summer?", a: "Twice a month, on the 10th and 25th. Your yearly salary is split into 24 equal checks from September 25 through September 10, so pay continues through the summer.", s: "4.1" },
+     A.paycard,
+     { q: "How much comes out for retirement? Can I opt out?", a: "No opt-out: the Teachers' Plan of the State Retirement System is mandatory from day one. 9.0% of your pay comes out before taxes. Want to save more? 403(b) and 457(b) plans are open any time in the Benefits Portal.", s: "6.1" },
+     { q: "When does my master's degree move me up the salary schedule?", a: "The packet doesn't say. Salary schedule placement comes from the teachers' agreement, not this packet. Ask Licensure and Onboarding: ext. 4430.", s: "9.1", gap: true }],
+    [{ q: "How many sick days do I get?", a: "12 days, credited at the start of each school year. Unused days carry over with no limit.", s: "5.1" },
+     A.personal,
+     { q: "How do I call in sick?", a: "Enter the absence in the Substitute Management System by 6:00 a.m., or as soon as you can in an emergency.", s: "5.3" },
+     A.eap],
+    [A.prints, A.i9, A.training,
+     { q: "My license is from another state. Can I still start?", a: "You need a valid state license on file with HR before the first contract day. If you've applied for one, bring proof of the application; any emergency or provisional license may come with conditions.", s: "7.4" }]
+  ),
+  class: faq(
+    [A.first,
+     { q: "How often am I paid?", a: "Twice a month, on the 10th and 25th, for the hours you worked and any approved leave in that pay period.", s: "4.1" },
+     { q: "When is my timesheet due?", a: "By noon on the Monday after each work week, in the Time and Attendance System. A late timesheet is paid one cycle later.", s: "4.4" },
+     { q: "How much comes out for retirement? Can I opt out?", a: "No opt-out: the Public Employees' Plan of the State Retirement System is mandatory from day one. 9.0% of your pay comes out before taxes. Want to save more? 403(b) and 457(b) plans are open any time in the Benefits Portal.", s: "6.1" },
+     { q: "I work a school-year schedule. Can my pay be spread over the summer?", a: "The packet doesn't say. It covers how hours are paid, not summer pay options. Ask Payroll: ext. 4420.", s: "4.1", gap: true }],
+    [{ q: "How many sick days do I get?", a: "1 day for every month you work, prorated if you're part-time. Unused days carry over with no limit.", s: "5.1" },
+     A.personal,
+     { q: "How do I call in sick?", a: "Call your supervisor directly at least 1 hour before your shift starts.", s: "5.3" },
+     A.eap],
+    [A.prints, A.i9, A.training, A.badge]
+  )
+} };
+
+// AI boundary. Canned today; to go live, replace this body with a call to a model
+// (send PROMPTS[task] + the input text, return the model's text). Nothing else changes.
+async function respond(task, input) {
+  await new Promise(r => setTimeout(r, 700)); // feels like generation; remove when live
+  return CANNED[task][input.id];
+}
+
+const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+const SEC = Object.fromEntries(PACKET.map(([n, h]) => [n, h.replace(/\.$/, "")]));
+const out = document.getElementById("out"), inp = document.getElementById("input");
+let preset = "cert", run = 0;
+
+function renderInput(input) {
+  inp.innerHTML = `<p class="aud">${esc(input.audience)}</p><p class="doc">New Employee Benefits and Onboarding Packet, 2026–27</p>` +
+    PACKET.map(([n, h, b]) => `<p class="sec" id="sec-${n}"><b>§${n} ${esc(h)}</b> ${esc(b)}</p>`).join("");
+}
+
+function render(f) {
+  const all = f.groups.flatMap(g => g.items);
+  const gaps = all.filter(i => i.gap).length;
+  const secs = new Set(all.map(i => i.s)).size;
+  let n = 0, html = `<div class="tiles"><div class="tile"><b>${all.length}</b>questions answered</div>
+    <div class="tile"><b>${all.length - gaps}</b>answered from the packet</div>
+    <div class="tile gap"><b>${gaps}</b>"packet doesn't say" → right office</div>
+    <div class="tile"><b>${secs}</b>packet sections cited</div></div>
+    <div class="bar"><button id="all" aria-pressed="false">Open all</button><span class="hint">Click a question, then its § button to see the source.</span></div>`;
+  for (const g of f.groups) {
+    html += `<h3 class="grp">${esc(g.h)}</h3>`;
+    for (const it of g.items) {
+      n++;
+      html += `<details${it.gap ? ' class="isgap"' : ""}${n === 1 ? " open" : ""}><summary><span class="n">${n}.</span><span>${esc(it.q)}</span>${it.gap ? '<span class="flag">not in packet</span>' : ""}</summary>
+        <div class="a"><p>${esc(it.a)}</p><button class="cite" data-sec="${it.s}">§${it.s} ${esc(SEC[it.s])}</button></div></details>`;
+    }
+  }
+  out.innerHTML = html;
+  const allBtn = document.getElementById("all");
+  allBtn.addEventListener("click", () => {
+    const open = allBtn.getAttribute("aria-pressed") !== "true";
+    out.querySelectorAll("details").forEach(d => d.open = open);
+    allBtn.setAttribute("aria-pressed", open);
+    allBtn.textContent = open ? "Close all" : "Open all";
+  });
+  out.querySelectorAll("button.cite").forEach(b => b.addEventListener("click", () => {
+    inp.querySelectorAll(".hit").forEach(x => x.classList.remove("hit"));
+    const el = document.getElementById("sec-" + b.dataset.sec);
+    el.classList.add("hit");
+    inp.scrollTop = el.offsetTop - 12; // scroll only the packet box, not the page
+  }));
+}
+
+async function generate() {
+  const input = INPUTS[preset];
+  renderInput(input);
+  out.innerHTML = `<div class="drafting">Drafting…</div>`;
+  const my = ++run;
+  const result = await respond("faq", input);
+  if (my !== run) return;
+  render(result);
+}
+
+document.querySelectorAll("[data-preset]").forEach(b => b.addEventListener("click", () => {
+  preset = b.dataset.preset;
+  document.querySelectorAll("[data-preset]").forEach(x => x.setAttribute("aria-pressed", x === b));
+  generate();
+}));
+const tp = document.getElementById("toggle-prompt"), pr = document.getElementById("prompt");
+pr.textContent = PROMPTS.faq;
+tp.addEventListener("click", () => {
+  pr.hidden = !pr.hidden;
+  tp.setAttribute("aria-pressed", !pr.hidden);
+  tp.textContent = pr.hidden ? "Show the prompt" : "Hide the prompt";
+});
+generate();
+</script>
+</body>
+</html>

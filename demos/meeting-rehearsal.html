@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rehearse a Hard Meeting</title>
+<style>
+  :root {
+    --bg: #fcfcfb; --ink: #0b0b0b; --muted: #52514e; --line: #d9d8d3;
+    --card: #ffffff; --accent: #1c5cab; --accent-ink: #ffffff; --soft: #eef4fc;
+    --paper: #f3f2ee; --warn-bg: #fff3d6; --warn-line: #c98500; --good: #1b7a4a; --good-bg: #e7f4ec;
+    --them: #7a2a1c; --them-bg: #fbecea;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 20px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1500px; margin: 0 auto; padding: 24px 16px 40px; }
+  h1 { font-size: 2.1rem; margin: 0; line-height: 1.2; }
+  .sub { color: var(--muted); margin: 6px 0 20px; font-size: 1.15rem; }
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 12px; }
+  .controls > span { color: var(--muted); font-weight: 600; margin-right: 4px; min-width: 4.2em; }
+  button { font: inherit; font-weight: 600; padding: 10px 22px; min-height: 52px; cursor: pointer;
+    background: var(--card); color: var(--ink); border: 2px solid var(--accent); border-radius: 10px; }
+  button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+  #toggle-prompt { border-color: var(--line); }
+  .prompt { background: var(--soft); border: 2px solid var(--accent); border-radius: 12px; padding: 14px 18px; margin: 6px 0 18px; }
+  .prompt h2 { font-size: 1rem; margin: 0 0 6px; }
+  pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; }
+  .prompt pre { font-size: 1rem; }
+  .cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); gap: 16px; align-items: start; margin-top: 8px; }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; }
+  .panel.in { background: var(--paper); }
+  .panel > h2 { font-size: 1rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 8px; }
+  .panel.in h3 { font-size: 1.05rem; margin: 10px 0 4px; }
+  .panel.in p { margin: 0; }
+  .panel.in ul { margin: 0; padding-left: 1.2em; font-size: .95rem; }
+  .panel.in li { margin: 3px 0; }
+  .progress { font-weight: 700; color: var(--muted); margin: 0 0 10px; }
+  .msg { border-radius: 14px; padding: 10px 16px; margin: 0 0 12px; max-width: 88%; }
+  .msg .who { display: block; font-size: .85rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+  .msg.them { background: var(--them-bg); border: 2px solid var(--them); }
+  .msg.them .who { color: var(--them); }
+  .msg.them p { margin: 0; font-size: 1.15rem; font-weight: 600; }
+  .msg.me { background: var(--soft); border: 2px solid var(--accent); margin-left: auto; }
+  .msg.me .who { color: var(--accent); }
+  .msg.me.draft { border-style: dashed; }
+  .msg.me p { margin: 0; }
+  .coach { background: var(--good-bg); border: 2px solid var(--good); border-radius: 12px; padding: 10px 16px; margin: 0 0 14px; }
+  .coach h4 { margin: 0 0 4px; color: var(--good); font-size: 1rem; text-transform: uppercase; letter-spacing: .05em; }
+  .coach p { margin: 3px 0; }
+  .coach b { display: inline-block; min-width: 5.6em; }
+  .coach .try { background: var(--card); border-left: 5px solid var(--good); padding: 4px 10px; border-radius: 0 8px 8px 0; }
+  .wrap { background: var(--warn-bg); border: 2px solid var(--warn-line); border-radius: 12px; padding: 12px 16px; margin: 0 0 14px; }
+  .wrap h4 { margin: 0 0 6px; font-size: 1.15rem; }
+  .wrap p { margin: 4px 0; }
+  .wrap .line { font-size: 1.2rem; font-weight: 700; }
+  .drafting { color: var(--muted); font-style: italic; font-size: 1.15rem; margin: 0 0 12px; }
+  #next { background: var(--accent); color: var(--accent-ink); }
+  footer { color: var(--muted); font-size: 1rem; margin-top: 20px; }
+  @media (min-width: 901px) { .panel.in { position: sticky; top: 12px; } }
+  @media (max-width: 900px) { .cols { grid-template-columns: minmax(0, 1fr); } .msg { max-width: 100%; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Rehearse a hard meeting</h1>
+  <p class="sub">AI plays the skeptical board member, the upset parent, or the reporter, and coaches each answer. Practice before the real one.</p>
+
+  <div class="controls" role="group" aria-label="Who you're meeting">
+    <span>Meeting</span>
+    <button data-role="board" aria-pressed="true">Skeptical board member</button>
+    <button data-role="parent" aria-pressed="false">Upset parent</button>
+    <button data-role="reporter" aria-pressed="false">Local reporter</button>
+  </div>
+  <div class="controls" role="group" aria-label="Topic">
+    <span>Topic</span>
+    <button data-topic="budget" aria-pressed="true">Staff cuts in the budget</button>
+    <button data-topic="start" aria-pressed="false">Later high school start</button>
+    <button id="toggle-prompt" aria-pressed="false">Show the prompt</button>
+  </div>
+
+  <section class="prompt" id="prompt" hidden>
+    <h2>The prompt (copy this into any AI chat)</h2>
+    <pre id="prompt-text"></pre>
+  </section>
+
+  <div class="cols">
+    <section class="panel in">
+      <h2>What you paste in</h2>
+      <h3>Who the AI plays</h3>
+      <p id="in-role"></p>
+      <h3>The facts you're working from</h3>
+      <ul id="in-facts"></ul>
+    </section>
+    <section class="panel">
+      <h2>What comes back</h2>
+      <p class="progress" id="progress"></p>
+      <div id="talk"></div>
+      <button id="next">Start the rehearsal</button>
+    </section>
+  </div>
+
+  <footer>
+    The coaching is a starting point: the superintendent decides what's true, what's settled, and what to say, and checks every fact before using it in a real meeting.
+    Every output was generated ahead of time so this page works with no internet.
+  </footer>
+</main>
+
+<script>
+const PROMPTS = {
+  rehearse: `Role-play a hard conversation so I can practice. You are {ROLE}, talking with me, the superintendent, about {TOPIC}.
+
+Format: ask me one tough question at a time, the way this person really would: specific, a little pointed, no softballs. Wait for my answer. After each answer, coach me in three short lines: "Landed:" what worked, "Tighten:" the weakest part, and "Try saying:" one sentence I could use instead. Then ask your next question. After three questions, end with a short debrief and the one line I should memorize.
+
+Voice: stay fully in character for the questions. For the coaching, be a direct, experienced communications coach. Don't flatter me.
+
+Context: these are the facts I'm working from. Push on the weak spots in them, and don't invent facts about our district.
+{FACTS}`
+};
+
+const ROLES = {
+  board: { label: "Board member", desc: "a skeptical school board member who has read the packet closely and worries about cost and public trust" },
+  parent: { label: "Parent", desc: "an upset parent of children in the district who is hearing about this for the first time" },
+  reporter: { label: "Reporter", desc: "a local newspaper reporter on deadline, looking for a quote" }
+};
+
+const TOPICS = {
+  budget: { label: "the staff reductions in the proposed budget", facts: [
+    "General fund budget: $148.3 million, up 3.1%.",
+    "Reduces 14.5 positions: 9.0 by not refilling retirements and resignations, 5.5 by non-renewal.",
+    "Where: central office 2.0 (including one director); elementary art and music 3.0 (two sessions a week to one); secondary electives 2.5; grades 4–5 classroom 4.0 (about one more student per class); aides 3.0.",
+    "Protected: K–3 class sizes, special education, reading intervention.",
+    "Causes: health insurance up 9.4% ($1.6 million), enrollment below projection, one-time federal funds ended.",
+    "Also uses $3.15 million of fund balance. Administration is about 4% of the budget.",
+    "The five-year forecast shows deficits continuing without further changes.",
+    "Budget preview presented in March; two public hearings held. Board votes at the June meeting."] },
+  start: { label: "the proposal to start high school later", facts: [
+    "High school moves from 7:25 to 8:45 a.m.; dismissal 3:40.",
+    "Elementary moves from 8:40 to 7:50 a.m.; dismissal 2:25. First pickups about 7:00 a.m.",
+    "Same buses and drivers: no added transportation cost. A third bus tier would cost about $540,000 a year.",
+    "Lighting one practice field: about $180,000, one time. Elementary after-care cost: still being priced.",
+    "Athletic director estimate: away games mean about 22 missed class periods a season, up from 9.",
+    "Student survey (1,906): 6 hours 41 minutes of sleep on school nights; 74% support.",
+    "One district in the region: first-period tardies down 37% in year one (from its conference slides).",
+    "Community forums November 3 and 10. Board vote in January."] }
+};
+
+// Each script: three questions, the superintendent's practice answers (the human side,
+// not AI output), coaching after each answer, and a closing debrief.
+const SCRIPTS = {
+  "board-budget": {
+    q: ["You're cutting 14.5 positions and spending $3.15 million of savings. So we're cutting people and draining reserves. Which is it: are we in trouble or not?",
+      "Nine of those positions are \"attrition.\" Isn't that just a way to make cuts sound painless? Which classrooms actually get bigger?",
+      "And next year? Your own forecast shows a deficit again. Are you coming back to us with more cuts in twelve months?"],
+    a: ["Well, it's a combination of factors. Health insurance went up 9.4 percent, enrollment came in under projection, and the federal dollars are gone. So we're doing a little of both to balance things out over time.",
+      "Attrition means no one loses their job. Those are retirements and resignations we won't refill. Grades 4 and 5 go up about one student per class. Elementary art and music go from twice a week to once. Everything else stays the same.",
+      "I can't predict the future. A lot depends on the state budget and enrollment."],
+    c: [["You named the three real causes. That's the honest answer.", "\"A combination of factors\" and \"a little of both\" dodge the question she asked: are we in trouble?", "\"We're not in crisis, but we can't keep doing this. Fund balance covers one year; the reductions fix the gap for good.\""],
+      ["Specific and direct. You answered \"which classrooms\" with grades and a number. This is your model answer.", "\"Everything else stays the same\" is a promise a board member will test. Say what you protected instead.", "\"We protected K–3 class sizes, special education, and reading intervention. Here's where it shows up instead.\""],
+      ["You didn't overpromise, which is right.", "\"I can't predict the future\" sounds like a shrug from the person paid to plan.", "\"The forecast says yes unless something changes, so I'll bring you options in January, before we're out of time.\""]],
+    debrief: "Your strongest answer was the second: grades, numbers, what moves. Your weakest moments were the openings. When you hedge first, the board hears doubt even when your facts are solid. Lead with the conclusion, then the reasons.",
+    line: "\"We're not in crisis, but we can't keep doing this, and here's the plan.\""
+  },
+  "parent-budget": {
+    q: ["My daughter is in fourth grade and art is the only class she actually likes. You're cutting it in half. Did anyone even think about kids like her?",
+      "So why not cut central office? How many administrators are you laying off?",
+      "If I come to the board meeting and speak, will it change anything, or is this already decided?"],
+    a: ["I understand your frustration. These were difficult decisions and we had to make tough choices across the board.",
+      "Central office is taking 2.0 of the 14.5 reductions, including a director. Administration is only about 4 percent of the budget, so even cutting all of it wouldn't close the gap. But we did start there.",
+      "The board votes in June, so it's not final. Public comment is part of that process, and board members do listen."],
+    c: [["You acknowledged her. Keep that.", "\"Difficult decisions\" and \"tough choices\" sound like a script. She asked about her daughter.", "\"Yes, we thought about kids like her, and I hate this one. Here's why it was still the least-bad option.\""],
+      ["Real numbers, and \"we did start there\" answers the fairness question underneath. Strong.", "\"Even cutting all of it wouldn't close the gap\" sounds like scoring a debate point. Lead with what you cut.", "\"We cut there first: two positions, including a director. It still wasn't enough to protect art.\""],
+      ["Honest. You didn't pretend it's wide open or already closed.", "\"Part of that process\" is bureaucratic. Tell her how to be effective.", "\"It isn't final until the June vote. Tell them what art does for your daughter; specific stories move boards. Email them before, too.\""]],
+    debrief: "Parents test whether you see their child or a budget line. You got from script to substance by the second answer; get there in the first. Specific beats sympathetic.",
+    line: "\"Yes, we thought about kids like her, and here's what we protected.\""
+  },
+  "reporter-budget": {
+    q: ["Superintendent, how many teachers are losing their jobs?",
+      "Parents I've talked to say this is the first they're hearing about it. Why wasn't this out sooner?",
+      "Off the record: is the board going to approve this?"],
+    a: ["We're reducing 14.5 FTE, but most of that is through attrition, so the actual impact on staff is minimal.",
+      "That's not accurate. We presented the budget preview in March, it's been on the website, and we've had two public hearings.",
+      "I'd rather not speculate on how the board will vote. They've asked good questions, and they'll decide in June."],
+    c: [["You gave the number.", "\"FTE\" is jargon readers won't follow, and \"minimal\" will be quoted back by the first person who loses a job.", "\"Five and a half positions will be non-renewed. The other nine are retirements and resignations we won't refill.\""],
+      ["The record is on your side: March preview, website, hearings.", "Opening with \"that's not accurate\" makes the headline \"Superintendent disputes parents.\"", "\"I hear that, and it tells me we need to reach families differently. The plan has been public since March, but if parents are just hearing now, that's on us to fix.\""],
+      ["You didn't take the bait. There is no safe off-the-record answer to this question.", "Nothing to cut. \"They've asked good questions\" is gracious and safe in print.", "Keep it exactly as is, and treat everything you say to a reporter as on the record."]],
+    debrief: "With a reporter, every phrase is a possible headline. Your third answer was print-ready; your first two each had one word (\"minimal,\" \"not accurate\") that would have become the story. Before you answer, ask yourself which five words they'll quote.",
+    line: "\"If parents are just hearing about this now, that's on us to fix.\""
+  },
+  "board-start": {
+    q: ["Every family I've heard from with elementary kids is upset that their six-year-olds would be at a bus stop at 7 a.m. in January. Did we just move the problem to younger kids?",
+      "Is this really cost neutral? \"Cost neutral\" plans have a way of costing money.",
+      "If we approve this and it goes badly, what's the plan to undo it?"],
+    a: ["The research is really clear on teenagers and sleep. Adolescent biology shifts later, and our students are averaging under seven hours.",
+      "The tier flip uses the same buses and drivers, so transportation doesn't change. What isn't in that number: about $180,000 to light one practice field, and after-care for elementary, which we're still pricing.",
+      "I'm confident it won't go badly."],
+    c: [["The sleep point is real and you'll need it.", "She asked about six-year-olds and you answered about teenagers. That's the moment she decides you're not listening.", "\"That's the biggest trade-off in this plan. Elementary pickups move about 50 minutes earlier, and here's what we're doing about it.\""],
+      ["Excellent. You volunteered the costs that aren't in the headline. That builds more trust than defending \"cost neutral.\"", "Give a date, so \"still pricing\" doesn't sound open-ended.", "\"Buses are cost neutral. Lights and after-care are not, and you'll have both numbers before the January vote.\""],
+      ["Confidence matters. The board needs to see you believe in it.", "Confidence without a plan reads as unprepared, and this was a fair governance question.", "\"We'd review it after one year on attendance, first-period tardies, and athletics conflicts, and I'll bring you the results either way.\""]],
+    debrief: "Board members ask about reversibility to see whether you've thought past the vote. Your middle answer, naming costs before you were asked, was the best moment of the session. Do the same with the trade-offs.",
+    line: "\"We'll review it after one year on three measures, and you'll see the results either way.\""
+  },
+  "parent-start": {
+    q: ["I work at 7:30. If my son's high school starts at 8:45, how does he get there? And who's home for my second-grader at 2:25?",
+      "My son plays soccer. Is he going to miss class every time they have an away game?",
+      "Why does it feel like this is already decided?"],
+    a: ["We'll have before- and after-care options at every elementary school, and high school students can take the bus.",
+      "Athletics will adjust. Most districts that changed start times figured it out.",
+      "Nothing is decided. The board votes in January, and we want to hear from you at the forums on November 3 and 10."],
+    c: [["You pointed to real services. Right instinct.", "After-care is still being priced. If it isn't set, don't promise it; she'll hold you to it.", "\"That's exactly the problem we're working on. The bus still runs for your son. For your second-grader, you'll have an after-care answer before the forums.\""],
+      ["Reassuring tone.", "\"Most districts figured it out\" is vague, and your own athletic director estimates 22 missed periods a season. She'll find that number.", "\"Honestly, yes, more than now: up to 22 class periods a season. We're asking the conference for later game times, and I'll tell you what we get.\""],
+      ["Clear, with dates she can act on.", "Tell her what her input could actually change.", "\"It isn't decided. The November forums will shape two things still open: after-care and the elementary bell time.\""]],
+    debrief: "This parent isn't against sleep science; she's doing schedule math for two kids. Answers that start with her schedule land; answers that start with the policy don't. Never promise a service that isn't funded yet.",
+    line: "\"That's exactly the problem we're working on, and here's when you'll have an answer.\""
+  },
+  "reporter-start": {
+    q: ["The district calls this cost neutral. Isn't that misleading if you'll need new field lights?",
+      "What do you say to elementary parents who say their kids are being sacrificed for teenagers?",
+      "What's the evidence this will actually help? Can you point to results?"],
+    a: ["The transportation plan is cost neutral. Field lighting would be a separate decision, about $180,000 one time. We'll share both.",
+      "I'd say that's not a fair characterization. We care about all our kids.",
+      "A district in our region saw first-period tardies drop 37 percent. And our own students tell us they sleep about six hours and forty minutes on school nights."],
+    c: [["Precise and quotable. You separated the two costs without getting defensive.", "Lead with the whole picture so the quote can't be clipped to \"cost neutral.\"", "\"The bus plan costs nothing extra. Lights for one field would cost about $180,000 once, and we'll be upfront about that.\""],
+      ["You defended the district's intent.", "Denying the reporter's word still puts \"sacrificed\" in your quote, and \"we care about all our kids\" is a line every reader has seen.", "\"Their concern about early bus stops is real, and it's the trade-off we're working hardest on. Families will see the options at the November forums.\""],
+      ["Concrete numbers, and your own students' survey makes it local.", "The 37% comes from one district's slides, not a study. Label it before the reporter does.", "\"One district near us saw tardies drop by about a third in its first year. It's one district, so we'll measure our own.\""]],
+    debrief: "Your factual answers were clean. The one stumble was repeating a loaded word. With reporters, never repeat the frame; answer the concern underneath it. And label your evidence honestly before someone else does.",
+    line: "\"It's one district, so we'll measure our own.\""
+  }
+};
+
+// Canned AI turns, keyed "<role>-<topic>-<turn>". Turn 0 opens; each later turn coaches
+// the previous answer and asks the next question; turn 3 ends with the debrief.
+const CANNED = { rehearse: {} };
+for (const [key, s] of Object.entries(SCRIPTS)) {
+  for (let t = 0; t <= 3; t++) {
+    CANNED.rehearse[`${key}-${t}`] = {
+      coach: t > 0 ? s.c[t - 1] : null,
+      question: t < 3 ? s.q[t] : null,
+      debrief: t === 3 ? s.debrief : null,
+      line: t === 3 ? s.line : null
+    };
+  }
+}
+
+// AI boundary. Canned today; to go live, replace this body with a call to a model
+// (send PROMPTS[task] + the input text, return the model's text). Nothing else changes.
+async function respond(task, input) {
+  await new Promise(r => setTimeout(r, 700)); // feels like generation; remove when live
+  return CANNED[task][input.id];
+}
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const talk = document.getElementById("talk");
+const next = document.getElementById("next");
+const state = { role: "board", topic: "budget", turn: 0, done: false, busy: false };
+let runId = 0;
+
+function add(html) {
+  talk.insertAdjacentHTML("beforeend", html);
+  talk.lastElementChild.scrollIntoView({ block: "nearest", behavior: "smooth" });
+}
+
+function promptText() {
+  return PROMPTS.rehearse.replace("{ROLE}", ROLES[state.role].desc).replace("{TOPIC}", TOPICS[state.topic].label)
+    .replace("{FACTS}", TOPICS[state.topic].facts.map(f => "- " + f).join("\n"));
+}
+
+function reset() {
+  runId++;
+  Object.assign(state, { turn: 0, done: false, busy: false });
+  document.querySelectorAll("[data-role]").forEach(b => b.setAttribute("aria-pressed", b.dataset.role === state.role));
+  document.querySelectorAll("[data-topic]").forEach(b => b.setAttribute("aria-pressed", b.dataset.topic === state.topic));
+  document.getElementById("in-role").textContent = "You are " + ROLES[state.role].desc + ".";
+  document.getElementById("in-facts").innerHTML = TOPICS[state.topic].facts.map(f => `<li>${esc(f)}</li>`).join("");
+  document.getElementById("prompt-text").textContent = promptText();
+  document.getElementById("progress").textContent = "3 questions · coaching after each answer";
+  talk.innerHTML = "";
+  next.textContent = "Start the rehearsal";
+}
+
+async function advance() {
+  if (state.busy) return;
+  if (state.done) { reset(); return; }
+  state.busy = true;
+  const run = runId, key = `${state.role}-${state.topic}`, t = state.turn;
+  const draft = talk.querySelector(".msg.me.draft");
+  if (draft) { draft.classList.remove("draft"); draft.querySelector(".who").textContent = "You"; }
+  add(`<p class="drafting">${t === 0 ? "Getting into character…" : "Coaching your answer…"}</p>`);
+  const r = await respond("rehearse", { id: `${key}-${t}`, answer: t > 0 ? SCRIPTS[key].a[t - 1] : "" });
+  if (run !== runId) return;
+  talk.querySelector(".drafting").remove();
+  if (r.coach) add(`<div class="coach"><h4>Coaching on answer ${t}</h4>
+    <p><b>Landed:</b> ${esc(r.coach[0])}</p><p><b>Tighten:</b> ${esc(r.coach[1])}</p>
+    <p class="try"><b>Try saying:</b> ${esc(r.coach[2])}</p></div>`);
+  if (r.question) {
+    add(`<div class="msg them"><span class="who">${ROLES[state.role].label} (played by AI) · question ${t + 1} of 3</span><p>${esc(r.question)}</p></div>`);
+    add(`<div class="msg me draft"><span class="who">Your answer (typed or said aloud)</span><p>${esc(SCRIPTS[key].a[t])}</p></div>`);
+    next.textContent = "Send my answer for coaching";
+    document.getElementById("progress").textContent = `Question ${t + 1} of 3`;
+  } else {
+    add(`<div class="wrap"><h4>Debrief</h4><p>${esc(r.debrief)}</p><p>Memorize this line:</p><p class="line">${esc(r.line)}</p></div>`);
+    next.textContent = "Run it again";
+    document.getElementById("progress").textContent = "Done · 3 of 3";
+    state.done = true;
+  }
+  state.turn = t + 1;
+  state.busy = false;
+}
+
+document.querySelectorAll("[data-role]").forEach(b => b.addEventListener("click", () => { state.role = b.dataset.role; reset(); }));
+document.querySelectorAll("[data-topic]").forEach(b => b.addEventListener("click", () => { state.topic = b.dataset.topic; reset(); }));
+next.addEventListener("click", advance);
+const toggle = document.getElementById("toggle-prompt");
+toggle.addEventListener("click", () => {
+  const box = document.getElementById("prompt");
+  box.hidden = !box.hidden;
+  toggle.setAttribute("aria-pressed", !box.hidden);
+  toggle.textContent = box.hidden ? "Show the prompt" : "Hide the prompt";
+});
+reset();
+</script>
+</body>
+</html>

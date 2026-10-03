@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Adoption Review, Side by Side</title>
+<style>
+  :root {
+    --bg: #fcfcfb; --ink: #0b0b0b; --muted: #52514e; --line: #d9d8d3;
+    --card: #ffffff; --accent: #1c5cab; --accent-ink: #ffffff; --soft: #eef4fc;
+    --s4: #1e6b34; --s3: #d9eedd; --s2: #fff0c7; --s1: #fbdcd9; --mark: #ffe58a;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 20px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1500px; margin: 0 auto; padding: 24px 16px 40px; }
+  h1 { font-size: 2.1rem; margin: 0; line-height: 1.2; }
+  .sub { color: var(--muted); margin: 6px 0 20px; font-size: 1.15rem; }
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 18px; }
+  .controls > span { color: var(--muted); font-weight: 600; margin-right: 4px; }
+  button { font: inherit; font-weight: 600; padding: 10px 22px; min-height: 52px; cursor: pointer;
+    background: var(--card); color: var(--ink); border: 2px solid var(--accent); border-radius: 10px; }
+  button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+  #toggle-prompt { border-color: var(--line); }
+  #toggle-prompt[aria-pressed="true"] { border-color: var(--accent); }
+  .prompt { background: var(--soft); border: 1px solid var(--accent); border-radius: 10px; padding: 14px 18px; margin-bottom: 18px; }
+  .prompt pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: .9rem/1.5 ui-monospace, Menlo, Consolas, monospace; }
+  .label { font-size: 1rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 8px; }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; margin-bottom: 18px; min-width: 0; }
+  .panel.input { background: #f3f2ee; }
+  .rubric { margin: 0 0 14px; padding-left: 1.6em; columns: 2; column-gap: 32px; font-size: 1rem; }
+  .three { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+  .excerpt { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font-size: 1rem; }
+  .excerpt h3, .pubcol h3 { margin: 0 0 6px; font-size: 1.15rem; }
+  .excerpt h3 small { display: block; font-weight: 400; color: var(--muted); font-size: .9rem; }
+  .excerpt p { margin: 0; }
+  mark { background: var(--mark); color: var(--ink); padding: 0 2px; border-radius: 3px; }
+  .drafting { color: var(--muted); font-style: italic; font-size: 1.2rem; }
+  .sg { display: grid; grid-template-columns: 210px repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--line); }
+  .sg > div { border-bottom: 1px solid var(--line); padding: 10px 10px; font-size: .95rem; }
+  .sg .hd { font-weight: 800; font-size: 1.1rem; background: #f3f2ee; }
+  .sg .crit { font-weight: 700; font-size: 1rem; }
+  .pn { display: none; font-weight: 700; }
+  .score { display: inline-block; min-width: 2.4em; text-align: center; font-weight: 800; font-size: 1.2rem; border-radius: 8px; padding: 0 8px; margin-right: 6px; border: 1px solid var(--line); }
+  .score.s4 { background: var(--s4); color: #fff; border-color: var(--s4); }
+  .score.s3 { background: var(--s3); }
+  .score.s2 { background: var(--s2); }
+  .score.s1 { background: var(--s1); }
+  .score.s0 { background: #ecebe7; font-size: 1rem; }
+  .ev { display: block; margin: 4px 0 2px; background: #fff9de; border-left: 4px solid #c98500; padding: 2px 8px; }
+  .why { color: var(--muted); }
+  .total { font-size: 1.15rem; font-weight: 800; background: var(--soft); }
+  .asks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 16px; }
+  .asks div { border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; font-size: 1rem; }
+  .asks h3 { margin: 0 0 4px; font-size: 1.05rem; }
+  .asks ul { margin: 0; padding-left: 1.2em; }
+  .bottom { margin-top: 16px; border-left: 6px solid var(--accent); background: var(--soft); padding: 10px 14px; border-radius: 8px; }
+  footer { color: var(--muted); font-size: 1rem; margin-top: 20px; }
+  @media (max-width: 900px) {
+    .three, .asks { grid-template-columns: 1fr; }
+    .rubric { columns: 1; }
+    .sg { grid-template-columns: 1fr; }
+    .sg .hd { display: none; }
+    .sg .crit { background: #f3f2ee; margin-top: 10px; }
+    .pn { display: inline; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Adoption review, side by side</h1>
+  <p class="sub">Three publishers' public samples scored against the district rubric. Every score cites the sentence it came from, so the committee can check it.</p>
+
+  <div class="controls" role="group" aria-label="Adoption">
+    <span>Adoption</span>
+    <button data-input="math3" aria-pressed="true">Grade 3 Math</button>
+    <button data-input="sci7" aria-pressed="false">Grade 7 Science</button>
+    <button id="toggle-prompt" aria-pressed="false">Show the prompt</button>
+  </div>
+
+  <section class="prompt" id="prompt" hidden>
+    <p class="label">The prompt (copy it, fill in the brackets)</p>
+    <pre id="prompt-text"></pre>
+  </section>
+
+  <section class="panel input">
+    <p class="label">What you paste in: the district rubric (1 to 4 each) and each publisher's public sample</p>
+    <ol class="rubric" id="rubric"></ol>
+    <div class="three" id="excerpts"></div>
+  </section>
+
+  <section class="panel">
+    <p class="label">What comes back <span id="hl-note"></span></p>
+    <div id="out"></div>
+  </section>
+
+  <footer>
+    The committee still reads the full materials, checks each quote in context, and makes the decision; a sample is not the whole program.
+    Every output was generated ahead of time so this page works with no internet.
+  </footer>
+</main>
+
+<script>
+const RUBRIC = [
+  "Standards alignment: standards named and actually taught",
+  "Instructional design: modeling, practice, student reasoning",
+  "Multilingual learner supports",
+  "Accessibility and differentiation",
+  "Assessment: frequent checks tied to the standard",
+  "Teacher usability: pacing, prep, materials"
+];
+const SHORT = ["Standards alignment", "Instructional design", "Multilingual learners", "Accessibility", "Assessment", "Teacher usability"];
+
+const INPUTS = {
+  math3: {
+    id: "math3",
+    publishers: [
+      { name: "Northwind Learning", product: "Number Paths, Grade 3",
+        text: "Lesson 4.2: Multiply with Equal Groups (MATH.3.4). Warm-up (5 min): Show 4 rows of 3 dots. Ask, \"How many? How do you know?\" and record student strategies. Launch (10 min): Teacher models drawing equal groups for 3 × 5, thinking aloud. Practice (20 min): Partners solve six problems. Language support: sentence frame \"There are __ groups of __.\" Differentiation: small-group reteach with counters; challenge problems on page 118. Exit ticket: two problems, scored with the 3-point rubric in the Teacher Guide. Student pages include read-aloud audio." },
+      { name: "Bluebird Press", product: "Math Quest 3",
+        text: "Unit 6 Adventure: The Multiplication Kingdom! Students join Captain Count on a quest to rescue the Times-Table Treasure. Our award-winning, research-based program is aligned to all standards and engages every learner. Day 1: Students watch the Captain Count video (8 min) and complete the Kingdom Map worksheet (24 multiplication facts). Early finishers play Treasure Dash on the app. Day 2: Fact fluency race in teams. Assessment: online unit test at the end of the unit, auto-scored. A Spanish edition of student pages is available." },
+      { name: "Summit Path Education", product: "Thinking Math 3",
+        text: "Investigation 9: How Many Wheels? (MATH.3.4, MATH.3.5). In groups of four, students figure out how many wheels are in a model parking lot. No procedure is given; students invent their own strategies. Teacher circulates and asks questions from the Questioning Card (p. 41). Groups then compare strategies in a gallery walk. Visual vocabulary cards (equal groups, rows, product) show pictures with English and Spanish labels. All student pages work with screen readers. Assessment: observation checklist; no written check in this investigation. Pacing: about 2 to 3 class periods; varies by class." }
+    ]
+  },
+  sci7: {
+    id: "sci7",
+    publishers: [
+      { name: "Northwind Learning", product: "Science Explorers 7",
+        text: "Lesson 3.1: Where Does Food Energy Go? (SCI.7.4). Students read a two-page article on food chains and answer 10 comprehension questions. Key vocabulary (producer, consumer, decomposer) is defined in the glossary. Check for understanding: five multiple-choice questions. The Teacher Guide includes an answer key. Suggested pacing: one class period." },
+      { name: "Bluebird Press", product: "Discovery Science 7",
+        text: "Ecosystem Escape Room! Students solve six puzzle locks about food webs to escape before time runs out. Includes printable lock cards, a teacher video walkthrough, and a 12-question quiz aligned to SCI.7.4 and SCI.7.5. Multilingual learner scaffold: picture-supported puzzle cards and a word bank. A reduced-clue version is provided for students with IEPs. Setup time: about 45 minutes per class." },
+      { name: "Summit Path Education", product: "Inquiry Science 7",
+        text: "Investigation 5: Pond in a Jar (SCI.7.1, SCI.7.4, SCI.7.5). Students set up sealed ecosystem jars, record observations for 10 days, and build a model showing how energy and matter move through the system. Final task: a claim-evidence-reasoning write-up scored with the included rubric. Discussion supports: talk moves and sentence starters in English and Spanish. Teacher materials: kit list, setup video, day-by-day plan. Note: requires live snails and aquatic plants; order two weeks ahead." }
+    ]
+  }
+};
+
+const PROMPTS = {
+  score:
+`Score each publisher's sample below against our district adoption rubric, side by side.
+
+FORMAT: A table with one row per rubric criterion and one column per publisher. In each cell give:
+- a score from 1 to 4,
+- the exact sentence or phrase from the sample that justifies it, in quotation marks,
+- one short line explaining the score.
+If the sample gives no evidence for a criterion, write "No evidence in sample" instead of a score. Do not guess or fill in from what you know about the publisher.
+After the table: a total per publisher, 2 or 3 questions to ask each publisher, and a two-sentence bottom line for the committee.
+
+VOICE: A neutral curriculum-office analyst writing for an adoption committee. Treat marketing language ("research-based", "aligned to all standards") as a claim, not as evidence.
+
+CONTEXT: We are adopting [subject and grades]. Our rubric, 1 (weak) to 4 (strong):
+[paste the rubric]
+
+PUBLISHER SAMPLES:
+[paste each publisher's public sample, labeled with the publisher's name]`
+};
+
+// Each cell: [score or null, exact quote from the sample, why]. null = no evidence in sample.
+const CANNED = {
+  score: {
+    math3: {
+      cells: [
+        [
+          [4, "Lesson 4.2: Multiply with Equal Groups (MATH.3.4)", "Standard named at the lesson level."],
+          [4, "Teacher models drawing equal groups for 3 × 5, thinking aloud.", "Explicit modeling after a sense-making warm-up."],
+          [3, "Language support: sentence frame", "One sentence frame; no visuals or home-language support in this sample."],
+          [3, "small-group reteach with counters", "Reteach plan plus read-aloud audio; no IEP-specific guidance shown."],
+          [4, "Exit ticket: two problems, scored with the 3-point rubric", "Daily check for understanding with a scoring guide."],
+          [3, "Warm-up (5 min)", "Minute-by-minute timing; no materials list in the sample."]
+        ],
+        [
+          [2, "aligned to all standards", "A claim, not a correlation: no standard codes anywhere in the sample."],
+          [1, "complete the Kingdom Map worksheet (24 multiplication facts)", "Fact drill on Day 1, before any work on what multiplication means."],
+          [2, "A Spanish edition of student pages is available.", "Translation only; no language supports inside the lesson."],
+          [null, "", "Nothing in the sample. \"Early finishers\" is enrichment, not support for students who struggle."],
+          [2, "online unit test at the end of the unit, auto-scored", "Only an end-of-unit test; no daily check."],
+          [3, "watch the Captain Count video (8 min)", "Low prep: video and worksheet are ready to use."]
+        ],
+        [
+          [4, "(MATH.3.4, MATH.3.5)", "Two standards named."],
+          [3, "No procedure is given; students invent their own strategies.", "Strong reasoning and discussion; no modeling for students who need it."],
+          [4, "Visual vocabulary cards (equal groups, rows, product) show pictures with English and Spanish labels.", "Visual and home-language support for key terms."],
+          [2, "All student pages work with screen readers.", "Accessible format, but no reteach or extension plan."],
+          [2, "observation checklist; no written check in this investigation", "Hard to compare results across classrooms or buildings."],
+          [2, "about 2 to 3 class periods; varies by class", "Open-ended pacing makes a shared district calendar hard."]
+        ]
+      ],
+      asks: [
+        ["Do any lessons offer language supports beyond sentence frames?", "Send the materials list and prep time for Unit 4."],
+        ["Send the standards correlation for Unit 6, by code.", "Which study does \"research-based\" refer to: grade, sample size, results?", "Show the supports for students working below grade level."],
+        ["Is there a short written check teachers could use to compare results?", "Is there a pacing guide that fits a 180-day calendar?"]
+      ],
+      bottom: "Northwind and Summit Path show enough evidence to advance to full committee review. Bluebird scored lowest, but one criterion had no evidence at all, so request the three items above before ruling it out."
+    },
+    sci7: {
+      cells: [
+        [
+          [3, "(SCI.7.4)", "Standard named, but it asks students to model energy flow; this lesson only reads about it."],
+          [2, "Students read a two-page article on food chains and answer 10 comprehension questions.", "Reading and recall; no investigation or modeling."],
+          [2, "defined in the glossary", "Glossary definitions only."],
+          [null, "", "Nothing on IEPs or students reading below grade level, which matters in a reading-heavy lesson."],
+          [2, "five multiple-choice questions", "Checks recall, not the modeling the standard asks for."],
+          [4, "Suggested pacing: one class period.", "Fits one period; answer key included."]
+        ],
+        [
+          [3, "SCI.7.4 and SCI.7.5", "Codes named for the quiz; the puzzles themselves are not tied to standards."],
+          [2, "solve six puzzle locks about food webs", "High engagement, but puzzles reward recall, not modeling or data."],
+          [3, "picture-supported puzzle cards and a word bank", "Visual and vocabulary supports built into the activity."],
+          [3, "A reduced-clue version is provided for students with IEPs.", "A planned modification, not just extra time."],
+          [3, "12-question quiz", "Aligned quiz; no check during the activity."],
+          [2, "Setup time: about 45 minutes per class.", "Across five sections, that is most of a planning day."]
+        ],
+        [
+          [4, "(SCI.7.1, SCI.7.4, SCI.7.5)", "Three standards named, and the task matches them."],
+          [4, "build a model showing how energy and matter move through the system", "Students collect data and build the model the standard asks for."],
+          [4, "talk moves and sentence starters in English and Spanish", "Discussion supports in two languages."],
+          [null, "", "Nothing on IEPs, reading supports, or students who miss days of a 10-day observation."],
+          [4, "a claim-evidence-reasoning write-up scored with the included rubric", "Performance task with a scoring guide."],
+          [2, "requires live snails and aquatic plants; order two weeks ahead", "Strong teacher materials, but live supplies add cost and lead time."]
+        ]
+      ],
+      asks: [
+        ["Do later Unit 3 lessons have students build a model, or is it all reading?", "What supports exist for students reading below grade level?"],
+        ["Are the puzzles tied to standards, or only the quiz?", "Is there a lower-prep version than 45 minutes per class?"],
+        ["Show the accessibility and IEP supports for this investigation.", "What do live materials cost per building each year?"]
+      ],
+      bottom: "Summit Path has the strongest instruction and assessment, with accessibility unscored; get those supports and the live-materials cost before the committee meets. Northwind is easy to run but reading-heavy, and Bluebird is engaging but needs more than a puzzle to meet SCI.7.4."
+    }
+  }
+};
+
+// AI boundary. Canned today; to go live, replace this body with a call to a model
+// (send PROMPTS[task] + the input text, return the model's text). Nothing else changes.
+async function respond(task, input) {
+  await new Promise(r => setTimeout(r, 700)); // feels like generation; remove when live
+  return CANNED[task][input.id];
+}
+
+const $ = id => document.getElementById(id);
+const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+let run = 0;
+
+// Highlight each cited quote inside its sample text (non-overlapping ranges).
+function highlight(text, quotes) {
+  const ranges = quotes.filter(Boolean).map(q => [text.indexOf(q), q.length]).filter(r => r[0] >= 0).sort((a, b) => a[0] - b[0]);
+  let html = "", at = 0;
+  for (const [start, len] of ranges) {
+    if (start < at) continue;
+    html += esc(text.slice(at, start)) + "<mark>" + esc(text.slice(start, start + len)) + "</mark>";
+    at = start + len;
+  }
+  return html + esc(text.slice(at));
+}
+
+function showInputs(input, out) {
+  $("excerpts").innerHTML = input.publishers.map((p, i) =>
+    `<div class="excerpt"><h3>${esc(p.name)}<small>${esc(p.product)}, public sample</small></h3>
+     <p>${out ? highlight(p.text, out.cells[i].map(c => c[1])) : esc(p.text)}</p></div>`).join("");
+}
+
+function render(input, out) {
+  const pubs = input.publishers;
+  let html = `<div class="sg"><div class="hd">Rubric</div>${pubs.map(p => `<div class="hd">${esc(p.name)}</div>`).join("")}`;
+  SHORT.forEach((crit, r) => {
+    html += `<div class="crit">${crit}</div>`;
+    pubs.forEach((p, i) => {
+      const [score, quote, why] = out.cells[i][r];
+      html += `<div><span class="pn">${esc(p.name)}: </span>` + (score === null
+        ? `<span class="score s0">No evidence</span><span class="why">${esc(why)}</span>`
+        : `<span class="score s${score}">${score}</span><span class="ev">"${esc(quote)}"</span><span class="why">${esc(why)}</span>`) + `</div>`;
+    });
+  });
+  html += `<div class="crit total">Total (of 24)</div>`;
+  pubs.forEach((p, i) => {
+    const scores = out.cells[i].map(c => c[0]);
+    const missing = scores.filter(s => s === null).length;
+    html += `<div class="total"><span class="pn">${esc(p.name)}: </span>${scores.reduce((a, s) => a + (s || 0), 0)}${missing ? ` <span class="why">(${missing} not scorable)</span>` : ""}</div>`;
+  });
+  html += `</div><div class="asks">${pubs.map((p, i) => `<div><h3>Ask ${esc(p.name)}</h3><ul>${out.asks[i].map(q => `<li>${esc(q)}</li>`).join("")}</ul></div>`).join("")}</div>`;
+  html += `<p class="bottom"><b>Bottom line for the committee:</b> ${esc(out.bottom)}</p>`;
+  $("out").innerHTML = html;
+  $("hl-note").textContent = "· cited sentences are now highlighted in the samples above";
+  showInputs(input, out);
+}
+
+async function choose(id) {
+  const mine = ++run;
+  const input = INPUTS[id];
+  document.querySelectorAll("[data-input]").forEach(b => b.setAttribute("aria-pressed", b.dataset.input === id));
+  showInputs(input);
+  $("hl-note").textContent = "";
+  $("out").innerHTML = `<p class="drafting">Drafting…</p>`;
+  const out = await respond("score", input);
+  if (mine === run) render(input, out);
+}
+
+document.querySelectorAll("[data-input]").forEach(b => b.addEventListener("click", () => choose(b.dataset.input)));
+$("toggle-prompt").addEventListener("click", e => {
+  const box = $("prompt");
+  box.hidden = !box.hidden;
+  e.currentTarget.setAttribute("aria-pressed", !box.hidden);
+  e.currentTarget.textContent = box.hidden ? "Show the prompt" : "Hide the prompt";
+});
+$("prompt-text").textContent = PROMPTS.score;
+$("rubric").innerHTML = RUBRIC.map(r => `<li>${esc(r)}</li>`).join("");
+choose("math3");
+</script>
+</body>
+</html>

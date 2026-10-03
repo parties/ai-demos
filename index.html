@@ -16,35 +16,202 @@
   a.card { display: block; text-decoration: none; color: inherit; background: var(--card);
     border: 2px solid var(--line); border-radius: 14px; padding: 20px 22px; }
   a.card:hover, a.card:focus-visible { border-color: var(--accent); }
-  a.card h2 { font-size: 1.4rem; margin: 0 0 6px; color: var(--accent); }
+  section { margin-top: 34px; }
+  section h2 { font-size: 1.15rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 12px; }
+  a.card h3 { font-size: 1.4rem; margin: 0 0 6px; color: var(--accent); }
   a.card p { margin: 0; }
-  .tag { display: inline-block; margin-top: 12px; font-size: .9rem; color: var(--muted); }
   footer { margin-top: 32px; color: var(--muted); font-size: 1rem; }
 </style>
 </head>
 <body>
 <main>
   <h1>AI demos for school and district staff</h1>
-  <p class="sub">Interactive examples of what AI does to the work that repeats. Every record is fabricated; every page works offline.</p>
+  <p class="sub">Interactive examples of what AI does to the work that repeats. 30 demos, grouped by who does the work. Every record is fabricated; every page works offline.</p>
 
-  <div class="cards">
-    <a class="card" href="demos/communications.html">
-      <h2>One message, every family</h2>
-      <p>One district notice at three reading levels, in two tones, in English and Spanish, side by side.</p>
-      <span class="tag">Communications · family engagement</span>
-    </a>
-    <a class="card" href="demos/deidentified-patterns.html">
-      <h2>De-identified patterns</h2>
-      <p>An attendance, behavior and wellness export, de-identified on screen, then turned into patterns by time and place.</p>
-      <span class="tag">Data · attendance · wellness</span>
-    </a>
-    <!-- Relative so it resolves to the sibling Pages site without an absolute URL. -->
-    <a class="card" href="../ai-workshop/">
-      <h2>Teacher workshop gallery</h2>
-      <p>Classroom-facing demos and the materials from the teacher AI workshop.</p>
-      <span class="tag">Teaching · curriculum</span>
-    </a>
-  </div>
+  <section>
+    <h2>Everyone</h2>
+    <div class="cards">
+      <a class="card" href="demos/where-it-fails.html">
+        <h3>Where it fails, and how you catch it</h3>
+        <p>Three finished-looking answers with planted mistakes; one click shows each flaw and the habit that catches it.</p>
+      </a>
+      <a class="card" href="demos/interview-then-build.html">
+        <h3>Make it ask you questions first</h3>
+        <p>The same request asked plainly, then with five questions first: a template full of blanks versus a letter you can send.</p>
+      </a>
+    </div>
+  </section>
+
+  <section>
+    <h2>Superintendent</h2>
+    <div class="cards">
+      <a class="card" href="demos/board-memo-draft.html">
+        <h3>Board memo first drafts</h3>
+        <p>Bullet notes plus last month&#x27;s memo become a draft in the board&#x27;s house format, with uncertain figures flagged.</p>
+      </a>
+      <a class="card" href="demos/board-packet-brief.html">
+        <h3>Board packet in one page</h3>
+        <p>A 148-page public packet becomes decisions due, dollars, and the items likely to draw questions, each with a page number.</p>
+      </a>
+      <a class="card" href="demos/decision-brief.html">
+        <h3>Evidence before a decision</h3>
+        <p>The documents on a decision become a sourced pro/con brief, where they conflict, and the questions still to ask.</p>
+      </a>
+      <a class="card" href="demos/meeting-rehearsal.html">
+        <h3>Rehearse a hard meeting</h3>
+        <p>AI plays a skeptical board member, an upset parent, or a reporter, and coaches each answer.</p>
+      </a>
+    </div>
+  </section>
+
+  <section>
+    <h2>Human capital and HR</h2>
+    <div class="cards">
+      <a class="card" href="demos/job-posting.html">
+        <h3>Job postings, flagged and fixed</h3>
+        <p>A duties list becomes a posting, with jargon and requirements that shrink the applicant pool flagged and rewritten.</p>
+      </a>
+      <a class="card" href="demos/interview-kit.html">
+        <h3>Interview kits, same for everyone</h3>
+        <p>One posting becomes structured questions and a scoring rubric identical for every candidate. Humans screen; AI never ranks.</p>
+      </a>
+      <a class="card" href="demos/staff-faq.html">
+        <h3>The August question flood</h3>
+        <p>A dense benefits packet becomes the 20 questions HR answers every year, each answer citing its section.</p>
+      </a>
+      <a class="card" href="demos/contract-language.html">
+        <h3>Contract language, read closely</h3>
+        <p>A clause in plain English, or every contradiction between the handbook and a negotiated agreement, side by side.</p>
+      </a>
+    </div>
+  </section>
+
+  <section>
+    <h2>Information services</h2>
+    <div class="cards">
+      <a class="card" href="demos/vendor-privacy-review.html">
+        <h3>Vendor privacy review</h3>
+        <p>A vendor&#x27;s privacy policy checked against the district&#x27;s own list, every finding tied to a quoted line. The decision stays yours.</p>
+      </a>
+      <a class="card" href="demos/helpdesk-howto.html">
+        <h3>Repeat help-desk tickets</h3>
+        <p>A technician&#x27;s terse fix notes become a numbered how-to any staff member can follow.</p>
+      </a>
+      <a class="card" href="demos/outage-notice.html">
+        <h3>Change and outage notices</h3>
+        <p>A jargon-heavy maintenance plan becomes a calm staff notice: what changes, when, and what to do.</p>
+      </a>
+      <a class="card" href="demos/spreadsheet-formulas.html">
+        <h3>Spreadsheet formulas</h3>
+        <p>Describe a result and get the formula, or paste an inherited formula or script and get it explained line by line, risks included.</p>
+      </a>
+    </div>
+  </section>
+
+  <section>
+    <h2>Curriculum and instructional technology</h2>
+    <div class="cards">
+      <a class="card" href="demos/standards-alignment.html">
+        <h3>Standards coverage check</h3>
+        <p>A course outline and a standards list become a coverage grid with every gap, repeat, and partial standard flagged.</p>
+      </a>
+      <a class="card" href="demos/adoption-review.html">
+        <h3>Adoption review, side by side</h3>
+        <p>Three publishers&#x27; samples scored against the adoption rubric, every score quoting the sentence it came from.</p>
+      </a>
+      <a class="card" href="demos/pd-followthrough.html">
+        <h3>PD session follow-through</h3>
+        <p>One session&#x27;s messy notes become a handout, an exit question, and the follow-up email.</p>
+      </a>
+      <a class="card" href="demos/catalog-descriptions.html">
+        <h3>Course catalog, one voice</h3>
+        <p>Descriptions written in a dozen voices rewritten to one format at a family reading level, missing facts flagged.</p>
+      </a>
+    </div>
+  </section>
+
+  <section>
+    <h2>Wellness</h2>
+    <div class="cards">
+      <a class="card" href="demos/deidentified-patterns.html">
+        <h3>De-identified patterns</h3>
+        <p>An attendance, behavior and wellness export, de-identified on screen, then turned into patterns by time and place.</p>
+      </a>
+      <a class="card" href="demos/survey-themes.html">
+        <h3>Survey comments to themes</h3>
+        <p>Hundreds of anonymous comments become ranked themes with counts, a chart, and verbatim quotes.</p>
+      </a>
+      <a class="card" href="demos/resource-guide.html">
+        <h3>Community resource guide</h3>
+        <p>A messy agency list becomes a family guide sorted by need, with missing hours and phone numbers flagged.</p>
+      </a>
+    </div>
+  </section>
+
+  <section>
+    <h2>Teaching, learning and culture — secondary</h2>
+    <div class="cards">
+      <a class="card" href="demos/data-meeting-prep.html">
+        <h3>Data meeting prep</h3>
+        <p>A de-identified data summary becomes a timed agenda and guiding questions for a principals&#x27; data meeting.</p>
+      </a>
+      <a class="card" href="demos/directive-to-building.html">
+        <h3>Directive to building brief</h3>
+        <p>One dense central-office directive becomes a principal&#x27;s brief and five minutes of staff-meeting talking points.</p>
+      </a>
+      <a class="card" href="demos/intervention-templates.html">
+        <h3>Tiered intervention templates</h3>
+        <p>Four buildings&#x27; different practices become one comparison and blank Tier 1, 2 and 3 forms.</p>
+      </a>
+    </div>
+  </section>
+
+  <section>
+    <h2>Communications</h2>
+    <div class="cards">
+      <a class="card" href="demos/communications.html">
+        <h3>One message, every family</h3>
+        <p>One district notice at three reading levels, in two tones, in English and Spanish, side by side.</p>
+      </a>
+      <a class="card" href="demos/newsletter-assembly.html">
+        <h3>Eight voices, one newsletter</h3>
+        <p>Eight department submissions in eight voices become one newsletter, with conflicts to check before sending.</p>
+      </a>
+      <a class="card" href="demos/holding-statement.html">
+        <h3>Holding statement in minutes</h3>
+        <p>Confirmed facts become a holding statement plus the questions reporters will ask next, known and not yet known.</p>
+      </a>
+      <a class="card" href="demos/every-channel.html">
+        <h3>One announcement, every channel</h3>
+        <p>One memo becomes a website post, a social post, and a text alert, each counted against its limit.</p>
+      </a>
+    </div>
+  </section>
+
+  <section>
+    <h2>Programs and operations</h2>
+    <div class="cards">
+      <a class="card" href="demos/schedule-conflicts.html">
+        <h3>Draft schedule, conflicts found</h3>
+        <p>Rooms, presenters and constraints become a schedule grid and the conflicts that need your decision.</p>
+      </a>
+      <a class="card" href="demos/program-report.html">
+        <h3>Numbers to report narrative</h3>
+        <p>A program data table becomes grant-report sections; click any sentence to see the numbers behind it.</p>
+      </a>
+    </div>
+  </section>
+
+  <section>
+    <h2>Classroom</h2>
+    <div class="cards">
+      <!-- Relative so it resolves to the sibling Pages site without an absolute URL. -->
+      <a class="card" href="../ai-workshop/">
+        <h3>Teacher workshop gallery</h3>
+        <p>Classroom-facing demos and the materials from the teacher AI workshop.</p>
+      </a>
+    </div>
+  </section>
 
   <footer>Eric Ogden · AI training for schools</footer>
 </main>

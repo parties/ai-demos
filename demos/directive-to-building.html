@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Directive to Building Brief</title>
+<style>
+  :root {
+    --bg: #fcfcfb; --ink: #0b0b0b; --muted: #52514e; --line: #d9d8d3;
+    --card: #ffffff; --accent: #1c5cab; --accent-ink: #ffffff; --soft: #eef4fc;
+    --paper: #f3f2ee; --warn-bg: #fff3d6; --warn-line: #c98500; --good: #1b7a4a;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 20px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1600px; margin: 0 auto; padding: 24px 16px 40px; }
+  h1 { font-size: 2.1rem; margin: 0; line-height: 1.2; }
+  .sub { color: var(--muted); margin: 6px 0 20px; font-size: 1.15rem; }
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 18px; }
+  .controls > span { color: var(--muted); font-weight: 600; margin-right: 4px; }
+  button { font: inherit; font-weight: 600; padding: 10px 22px; min-height: 52px; cursor: pointer;
+    background: var(--card); color: var(--ink); border: 2px solid var(--accent); border-radius: 10px; }
+  button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+  #toggle-prompt { border-color: var(--line); }
+  .prompt { background: var(--soft); border: 2px solid var(--accent); border-radius: 12px; padding: 14px 18px; margin-bottom: 18px; }
+  .prompt h3 { font-size: 1rem; margin: 10px 0 4px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .prompt pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; font-size: 1rem; }
+  .cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: start; }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; }
+  .panel.in { background: var(--paper); }
+  .panel > h2 { font-size: 1rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 8px; }
+  .memo { font-family: Georgia, "Times New Roman", serif; font-size: .95rem; line-height: 1.5; }
+  .memo .hdr { margin: 0 0 10px; padding-bottom: 8px; border-bottom: 2px solid var(--ink); }
+  .memo .hdr div { margin: 0; }
+  .memo p { margin: 0; text-align: justify; hyphens: auto; }
+  .wc { color: var(--muted); font-size: .95rem; margin: 10px 0 0; font-family: system-ui, sans-serif; }
+  .drafting { color: var(--muted); font-style: italic; font-size: 1.15rem; }
+  .out h3 { font-size: 1.15rem; margin: 14px 0 4px; }
+  .out h3:first-child { margin-top: 0; }
+  .bottom { font-size: 1.1rem; font-weight: 600; padding: 8px 12px; background: var(--soft); border-left: 5px solid var(--accent); border-radius: 0 8px 8px 0; margin: 0; }
+  .out ul { margin: 0; padding-left: 22px; }
+  .out li { margin-bottom: 4px; }
+  ul.checks { list-style: none; padding-left: 0; }
+  ul.checks li::before { content: "☐ "; font-weight: 700; }
+  .dates { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; }
+  .dates dt { font-weight: 700; color: var(--accent); white-space: nowrap; }
+  .dates dd { margin: 0; }
+  .ask { background: var(--warn-bg); border: 2px solid var(--warn-line); border-radius: 10px; padding: 10px 14px; margin-top: 14px; }
+  .ask h3 { margin: 0 0 4px; }
+  ol.say { margin: 0; padding-left: 1.4em; }
+  ol.say li { margin-bottom: 10px; }
+  ol.say b { display: block; }
+  .fill { background: var(--warn-bg); border: 1px dashed var(--warn-line); border-radius: 4px; padding: 0 4px; font-weight: 600; }
+  .qa { border-top: 1px solid var(--line); padding: 8px 0; }
+  .qa .q { font-weight: 700; }
+  .length { color: var(--muted); font-size: 1rem; margin: 0 0 8px; }
+  footer { color: var(--muted); font-size: 1rem; margin-top: 20px; }
+  @media (max-width: 1250px) { .cols { grid-template-columns: repeat(2, minmax(0, 1fr)); } .panel.in { grid-column: 1 / -1; } }
+  @media (max-width: 900px) { .cols { grid-template-columns: minmax(0, 1fr); } .memo p { text-align: left; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>One directive, ready for the building</h1>
+  <p class="sub">Paste a dense central-office memo; get the principal's one-page brief and the five minutes they'll say at the staff meeting.</p>
+
+  <div class="controls" role="group" aria-label="Directive">
+    <span>Directive</span>
+    <button data-input="devices" aria-pressed="true">Phone and device procedure</button>
+    <button data-input="benchmark" aria-pressed="false">Fall benchmark testing</button>
+    <button id="toggle-prompt" aria-pressed="false">Show the prompt</button>
+  </div>
+
+  <section class="prompt" id="prompt" hidden>
+    <h2 style="font-size:1rem;margin:0 0 6px">The prompts (copy either into any AI chat)</h2>
+    <h3>Principal brief</h3><pre id="prompt-brief"></pre>
+    <h3>Staff-meeting talking points</h3><pre id="prompt-talking"></pre>
+  </section>
+
+  <div class="cols">
+    <section class="panel in">
+      <h2>What you paste in</h2>
+      <div class="memo" id="in-memo"></div>
+    </section>
+    <section class="panel">
+      <h2>What comes back: principal brief</h2>
+      <div class="out" id="out-brief"></div>
+    </section>
+    <section class="panel">
+      <h2>What comes back: staff talking points</h2>
+      <div class="out" id="out-talking"></div>
+    </section>
+  </div>
+
+  <footer>
+    The principal checks every date and requirement against the original directive, fills in the local details, and gets answers to the flagged questions before the staff meeting.
+    Every output was generated ahead of time so this page works with no internet.
+  </footer>
+</main>
+
+<script>
+const PROMPTS = {
+  brief: `Turn this central-office directive into a one-page brief for a building principal.
+
+Format: one bottom-line sentence. Then "What changes" (3 bullets at most), "Deadlines" as a dated list in date order, "You do" and "Staff do" as checklists, and last, "Ask Central Office": every place the directive is silent, unclear, or contradicts itself, each marked with ⚠. Copy dates exactly as written. Do not invent any date, rule, or answer.
+
+Voice: plain and direct, for a busy principal reading on a phone between meetings. No legal phrasing and no policy numbers unless they are needed.
+
+Context: this directive went to every secondary principal in our district. The principal must act on it and explain it to staff; they did not write it and may not agree with it.
+
+Directive:
+[paste the directive here]`,
+  talking: `Turn this central-office directive into talking points for a 5-minute staff meeting.
+
+Format: 4 or 5 numbered talking points a principal can say out loud, in this order: what's changing, why, what staff do, what does not change. Then the 4 questions staff are most likely to ask, each with a short, honest answer. Where the building has to supply a local detail, write [Fill in: ...] instead of guessing. If the directive does not answer a likely question, say "we've asked Central Office" instead of inventing an answer.
+
+Voice: a principal talking to their own staff: calm, direct, on the staff's side. No jargon, no policy numbers, no legal phrasing.
+
+Context: staff have heard rumors but have not read the directive. The goal is that every adult in the building handles this the same way on day one.
+
+Directive:
+[paste the directive here]`
+};
+
+const INPUTS = [
+  { id: "devices",
+    hdr: ["TO: Secondary Building Principals", "FROM: Office of Teaching, Learning & Curriculum, Central Office", "RE: Implementation of Administrative Procedure 5.14 (Revised), Student Use of Personal Electronic Communication Devices", "DATE: October 1"],
+    body: "Pursuant to Board Policy 5.14 as amended at the September regular meeting, and consistent with the procedures adopted thereunder, all secondary buildings shall implement the revised administrative procedure governing student possession and use of personal electronic communication devices (PECDs) effective Monday, November 3. Under the revised procedure, PECDs, including but not limited to cellular telephones, smart watches with messaging capability, and wireless earbuds, shall be powered off or silenced and stored in the student's locker or in a building-designated storage location for the duration of the instructional day, defined for purposes of this procedure as the first bell through the final dismissal bell, inclusive of passing periods and lunch. Exceptions shall be made for students whose IEP, Section 504 plan, or individualized health plan documents a need for device access, and such exceptions shall be documented by the building administrator no later than October 24. Building principals shall designate storage locations and submit a building implementation plan, utilizing the template provided by Central Office, no later than October 17. Violations shall be addressed in accordance with the progressive response framework set forth in Appendix B: first instance, device held in the main office until the end of the instructional day; second instance, parent/guardian retrieval required; third and subsequent instances, administrative conference and documentation in the student information system. Staff shall model compliance during instructional time. Communication to families shall be issued from the building utilizing the district-approved template no later than October 27. Questions regarding this procedure shall be directed to the Office of Teaching, Learning & Curriculum." },
+  { id: "benchmark",
+    hdr: ["TO: Secondary Building Principals and Building Test Coordinators", "FROM: Office of Assessment and Office of Teaching, Learning & Curriculum, Central Office", "RE: Administration of Fall Interim Benchmark Assessments, Grades 6–10, and Associated Data Submission Requirements", "DATE: October 2"],
+    body: "In furtherance of the district assessment calendar as approved for the current academic year, all secondary buildings shall administer the fall interim benchmark assessments in reading and mathematics to all enrolled students in grades 6 through 10 during the window of October 20 through November 7, inclusive. Administration shall occur within regularly scheduled English language arts and mathematics class periods and shall not exceed two class periods per content area per student. Students receiving designated supports or accommodations pursuant to an IEP or Section 504 plan shall receive such supports in accordance with said plans; building test coordinators shall verify accommodation settings within the Northwind Learning assessment platform no later than October 15. Students identified as English learners at proficiency levels 1 and 2 may be administered the mathematics assessment with approved translated glossaries; the reading assessment shall be administered as scheduled. Make-up sessions shall be completed within the window. All staff administering assessments shall complete the online test-security acknowledgment prior to administration. Building test coordinators shall submit a completion report, disaggregated by grade and content area, to the Office of Assessment no later than November 12. Results shall not be used in the calculation of course grades. Building leaders shall facilitate a review of results with grade-level and content teams no later than December 5, utilizing the district data protocol." }
+];
+
+const CANNED = {
+  brief: {
+    devices: {
+      bottom: "Starting Monday, November 3, student phones, smartwatches, and earbuds are put away from the first bell to the last bell, including passing time and lunch.",
+      changes: [
+        "Phones, messaging smartwatches, and earbuds are off or silent and stored in a locker or a spot you choose, all day.",
+        "\"All day\" now includes passing periods and lunch.",
+        "One district-wide response to violations: office until end of day, then parent pickup, then a conference and a record."
+      ],
+      deadlines: [
+        ["Oct 17", "Submit your building implementation plan (Central Office template), including storage locations."],
+        ["Oct 24", "Document every student exception (IEP, 504, or health plan)."],
+        ["Oct 27", "Send the family letter (district template)."],
+        ["Nov 3", "Procedure starts."]
+      ],
+      you: [
+        "Pick storage locations, especially for students without lockers.",
+        "Work with case managers and the nurse to list exceptions by Oct 24.",
+        "Set up the main-office process for holding and returning devices.",
+        "Brief staff before the family letter goes out on Oct 27."
+      ],
+      staff: [
+        "Send devices to the office; don't hold them in the classroom.",
+        "Keep their own phones away during instructional time.",
+        "Know which students in their classes have a documented exception."
+      ],
+      ask: [
+        "Lunch is included. Many students pay for lunch or check bus times on their phones. Is there a plan for that?",
+        "Who pays for storage (pouches, lockers, cabinets) if the building needs it?",
+        "Second instance requires a parent to pick up the device. What if no one can come that day: does the office keep it overnight?",
+        "Activities that start before the final bell (athletics release, field trips): are students covered?",
+        "How should families reach a student in an emergency? Families will ask this first, and the directive doesn't say."
+      ]
+    },
+    benchmark: {
+      bottom: "Every student in grades 6–10 takes the fall reading and math benchmarks between October 20 and November 7, in regular ELA and math classes, with make-ups done inside the window.",
+      changes: [
+        "One window for all buildings: Oct 20 – Nov 7, make-ups included.",
+        "No more than two class periods per subject per student.",
+        "Results may not be used for course grades."
+      ],
+      deadlines: [
+        ["Oct 15", "Test coordinator verifies accommodation settings in the Northwind Learning platform."],
+        ["Before testing", "Every proctor completes the online test-security acknowledgment."],
+        ["Oct 20 – Nov 7", "Testing window, including make-ups."],
+        ["Nov 12", "Completion report (by grade and subject) due to the Office of Assessment."],
+        ["Dec 5", "Grade-level and content teams review results using the district data protocol."]
+      ],
+      you: [
+        "Confirm your test coordinator has the Oct 15 accommodation check on the calendar.",
+        "Approve a testing schedule that keeps each subject to two class periods.",
+        "Plan make-up sessions for the last week of the window, not after it.",
+        "Put the Dec 5 team data review on the calendar now."
+      ],
+      staff: [
+        "Complete the test-security acknowledgment before proctoring.",
+        "Give accommodations exactly as each student's plan says.",
+        "Use approved translated glossaries in math for English learners at levels 1–2."
+      ],
+      ask: [
+        "The two-period limit conflicts with extended-time accommodations. Which rule wins when a plan calls for more time?",
+        "Students in grades 9–10 who don't have a math class this semester: where and when do they test?",
+        "Make-ups must finish by Nov 7. What happens with a student absent that whole final week?",
+        "English learners at levels 1–2 take reading as scheduled. Do their results count in the building's completion report?"
+      ]
+    }
+  },
+  talking: {
+    devices: {
+      length: "About 5 minutes. Say these in order.",
+      points: [
+        { h: "What's changing", say: "Starting Monday, November 3, student phones, smartwatches, and earbuds are away from the first bell to the last bell. That includes passing time and lunch." },
+        { h: "Why", say: "The board updated the policy in September. Our job is to make it the same in every room, so no one of us is the bad guy." },
+        { h: "Where devices go", say: "Lockers, or [Fill in: our storage spot] for students without one." },
+        { h: "What you do", say: "If you see a device, send it to the main office. Don't keep it in your room, and don't get into a standoff. A refusal goes to the office like any other refusal." },
+        { h: "What doesn't change", say: "Students with a health, IEP, or 504 need keep access. You'll get a confidential list by [Fill in: date after Oct 24]. And yes, our phones go away during class too." }
+      ],
+      qa: [
+        { q: "What if a parent needs to reach their kid in an emergency?", a: "Families call the main office, which can get a message to any student. [Fill in: confirm the family letter says this.]" },
+        { q: "Do I have to physically take the phone?", a: "No. Ask the student to take it to the office. If they won't, call the office." },
+        { q: "Can students use earbuds during independent work?", a: "No, earbuds are covered too, unless a student's plan says otherwise." },
+        { q: "What about lunch? Kids pay with their phones.", a: "Good question. We've asked Central Office and will tell you as soon as we hear." }
+      ]
+    },
+    benchmark: {
+      length: "About 5 minutes. Say these in order.",
+      points: [
+        { h: "What's happening", say: "Between October 20 and November 7, every student in grades 6–10 takes the fall reading and math benchmarks in their regular ELA and math classes." },
+        { h: "Why it matters", say: "This is the baseline we'll use in our team data reviews before December 5. It does not count toward grades." },
+        { h: "What you do before", say: "Everyone proctoring completes the online test-security acknowledgment first. Our testing schedule is [Fill in: link or location of building schedule]." },
+        { h: "What you do during", say: "Each subject takes no more than two class periods. Give every accommodation exactly as the plan says. In math, English learners at levels 1–2 may use the approved glossaries." },
+        { h: "Make-ups", say: "Make-ups happen inside the window, not after. Our make-up days are [Fill in: dates in the week of Nov 3]." }
+      ],
+      qa: [
+        { q: "Does this count toward the student's grade?", a: "No. The directive says results can't be used in course grades." },
+        { q: "What about students with extended time who need more than two periods?", a: "Follow the student's plan. We've asked Central Office how that fits the two-period limit." },
+        { q: "When will we see results?", a: "In our grade-level and content team review, before December 5." },
+        { q: "Who do I tell if a student misses a session?", a: "[Fill in: test coordinator's name] so they're on the make-up list." }
+      ]
+    }
+  }
+};
+
+// AI boundary. Canned today; to go live, replace this body with a call to a model
+// (send PROMPTS[task] + the input text, return the model's text). Nothing else changes.
+async function respond(task, input) {
+  await new Promise(r => setTimeout(r, 700)); // feels like generation; remove when live
+  return CANNED[task][input.id];
+}
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const fills = s => esc(s).replace(/\[Fill in: [^\]]*\]/g, m => `<span class="fill">${m}</span>`);
+const $ = id => document.getElementById(id);
+let runId = 0;
+
+function renderBrief(r) {
+  $("out-brief").innerHTML = `
+    <p class="bottom">${esc(r.bottom)}</p>
+    <h3>What changes</h3><ul>${r.changes.map(c => `<li>${esc(c)}</li>`).join("")}</ul>
+    <h3>Deadlines</h3><dl class="dates">${r.deadlines.map(([d, w]) => `<dt>${esc(d)}</dt><dd>${esc(w)}</dd>`).join("")}</dl>
+    <h3>You do</h3><ul class="checks">${r.you.map(c => `<li>${esc(c)}</li>`).join("")}</ul>
+    <h3>Staff do</h3><ul class="checks">${r.staff.map(c => `<li>${esc(c)}</li>`).join("")}</ul>
+    <div class="ask"><h3>⚠ Ask Central Office before the staff meeting</h3>
+      <ul>${r.ask.map(a => `<li>${esc(a)}</li>`).join("")}</ul></div>`;
+}
+
+function renderTalking(r) {
+  $("out-talking").innerHTML = `
+    <p class="length">${esc(r.length)}</p>
+    <ol class="say">${r.points.map(p => `<li><b>${esc(p.h)}</b>${fills(p.say)}</li>`).join("")}</ol>
+    <h3>Questions staff will ask</h3>
+    ${r.qa.map(x => `<div class="qa"><div class="q">${esc(x.q)}</div><div>${fills(x.a)}</div></div>`).join("")}`;
+}
+
+async function run(input) {
+  const my = ++runId;
+  document.querySelectorAll("[data-input]").forEach(b => b.setAttribute("aria-pressed", b.dataset.input === input.id));
+  const words = input.body.split(/\s+/).length;
+  $("in-memo").innerHTML = `<div class="hdr">${input.hdr.map(h => `<div>${esc(h)}</div>`).join("")}</div>
+    <p>${esc(input.body)}</p><p class="wc">${words} words, one paragraph</p>`;
+  $("out-brief").innerHTML = $("out-talking").innerHTML = `<p class="drafting">Drafting…</p>`;
+  const [brief, talking] = await Promise.all([respond("brief", input), respond("talking", input)]);
+  if (my !== runId) return;
+  renderBrief(brief);
+  renderTalking(talking);
+}
+
+document.querySelectorAll("[data-input]").forEach(b =>
+  b.addEventListener("click", () => run(INPUTS.find(i => i.id === b.dataset.input))));
+
+$("prompt-brief").textContent = PROMPTS.brief;
+$("prompt-talking").textContent = PROMPTS.talking;
+$("toggle-prompt").addEventListener("click", () => {
+  const box = $("prompt");
+  box.hidden = !box.hidden;
+  $("toggle-prompt").setAttribute("aria-pressed", !box.hidden);
+  $("toggle-prompt").textContent = box.hidden ? "Show the prompt" : "Hide the prompt";
+});
+
+run(INPUTS[0]);
+</script>
+</body>
+</html>

@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PD Session Follow-Through</title>
+<style>
+  :root {
+    --bg: #fcfcfb; --ink: #0b0b0b; --muted: #52514e; --line: #d9d8d3;
+    --card: #ffffff; --accent: #1c5cab; --accent-ink: #ffffff; --soft: #eef4fc; --mark: #ffe58a;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 20px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1500px; margin: 0 auto; padding: 24px 16px 40px; }
+  h1 { font-size: 2.1rem; margin: 0; line-height: 1.2; }
+  .sub { color: var(--muted); margin: 6px 0 20px; font-size: 1.15rem; }
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 18px; }
+  .controls > span { color: var(--muted); font-weight: 600; margin-right: 4px; }
+  button { font: inherit; font-weight: 600; padding: 10px 22px; min-height: 52px; cursor: pointer;
+    background: var(--card); color: var(--ink); border: 2px solid var(--accent); border-radius: 10px; }
+  button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+  #toggle-prompt, #toggle-notes { border-color: var(--line); }
+  #toggle-prompt[aria-pressed="true"] { border-color: var(--accent); }
+  .prompt { background: var(--soft); border: 1px solid var(--accent); border-radius: 10px; padding: 14px 18px; margin-bottom: 18px; }
+  .prompt pre { margin: 0 0 14px; white-space: pre-wrap; overflow-wrap: anywhere; font: .9rem/1.5 ui-monospace, Menlo, Consolas, monospace; }
+  .prompt h3 { margin: 0 0 4px; font-size: 1.05rem; }
+  .label { font-size: 1rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 8px; }
+  .notes { background: #f3f2ee; border: 1px solid var(--line); border-radius: 12px; padding: 14px 20px; margin-bottom: 18px; }
+  .notes pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: .9rem/1.5 ui-monospace, Menlo, Consolas, monospace; columns: 2; column-gap: 36px; }
+  .cols { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) minmax(0, 1.15fr); gap: 16px; align-items: start; }
+  .col { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; min-width: 0; }
+  .col > h2 { margin: 0 0 2px; font-size: 1.35rem; }
+  .col > .label { margin-bottom: 10px; }
+  .doc { font-size: 1rem; }
+  .doc h4 { margin: 14px 0 4px; font-size: 1.1rem; }
+  .doc h4:first-child { margin-top: 0; font-size: 1.25rem; }
+  .doc ul { margin: 0; padding-left: 1.2em; }
+  .doc li { margin-bottom: 4px; }
+  .doc p { margin: 0 0 8px; }
+  .doc .subject { background: var(--soft); border-radius: 8px; padding: 6px 10px; font-weight: 700; }
+  .doc .big { font-size: 1.25rem; font-weight: 700; border-left: 6px solid var(--accent); padding-left: 12px; }
+  .confirm { background: var(--mark); border-radius: 4px; padding: 0 4px; font-weight: 700; }
+  .drafting { color: var(--muted); font-style: italic; font-size: 1.2rem; }
+  footer { color: var(--muted); font-size: 1rem; margin-top: 20px; }
+  @media (max-width: 900px) { .cols { grid-template-columns: 1fr; } .notes pre { columns: 1; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>PD follow-through</h1>
+  <p class="sub">One session's messy notes become a handout, an exit question, and the follow-up email, before the room is empty.</p>
+
+  <div class="controls" role="group" aria-label="Session">
+    <span>Session</span>
+    <button data-input="grading" aria-pressed="true">Grading for Learning</button>
+    <button data-input="aiguide" aria-pressed="false">AI Guidance for Tech Leads</button>
+    <button id="toggle-notes" aria-pressed="true">Hide notes</button>
+    <button id="toggle-prompt" aria-pressed="false">Show the prompt</button>
+  </div>
+
+  <section class="prompt" id="prompt" hidden>
+    <p class="label">The prompts (one per output; copy them, fill in the brackets)</p>
+    <h3>Handout</h3><pre id="p-handout"></pre>
+    <h3>Exit question</h3><pre id="p-exit"></pre>
+    <h3>Follow-up email</h3><pre id="p-email"></pre>
+  </section>
+
+  <section class="notes" id="notes">
+    <p class="label">What you paste in: the director's notes, typed during the session</p>
+    <pre id="in-notes"></pre>
+  </section>
+
+  <p class="label">What comes back</p>
+  <div class="cols">
+    <article class="col"><h2>One-page handout</h2><p class="label">For everyone in the room and those who missed it</p><div class="doc" id="o-handout"></div></article>
+    <article class="col"><h2>Exit question</h2><p class="label">Ask in the last 2 minutes</p><div class="doc" id="o-exit"></div></article>
+    <article class="col"><h2>Follow-up email</h2><p class="label">Ready to send the same afternoon</p><div class="doc" id="o-email"></div></article>
+  </div>
+
+  <footer>
+    You still check every date, owner, and decision against what was actually agreed; the highlighted CONFIRM items are what the AI could not tell from the notes.
+    Every output was generated ahead of time so this page works with no internet.
+  </footer>
+</main>
+
+<script>
+const INPUTS = {
+  grading: {
+    id: "grading",
+    notes:
+`PD 10/1 - Grading for Learning (sec dept chairs) 3:30-5 Library
+~22 ppl, HS + both MS. sci chairs late (bus duty), missed opener
+- opened w/ "two students same avg" scenario: A got 50 then
+  100s, B got 75 steady. both = 75. room split ~50/50 on
+  whether thats fair. good convo
+- 3 shifts: (1) grades = evidence of learning not compliance
+  (2) most recent evidence counts more (3) separate behaviors
+  (late, HW completion) from academic grade -> report separately
+- Q from MS math: what about HW?? -> HW = practice, 10% max or
+  0% in pilot. didnt land well w/ a couple ppl ("kids won't do
+  it"). PARKED
+- pilot: 4 depts volunteer for spring. need names by 10/24!!
+- minimum 50 debate -- NOT deciding today. board policy 5121,
+  tbd. don't promise anything
+- reassessment: 1 retake per summative, student does a
+  "learning plan" first. chairs want a template, I said I'd send
+- gradebook: IT says categories can be set per course, no new
+  software
+- next mtg Nov 12 same time/place
+- todo: send slides, retake template, pilot signup form,
+  research one-pager (not done yet)
+- parking lot: HW, late work, how to explain to parents,
+  sped/504 accommodations (ask Student Services)`
+  },
+  aiguide: {
+    id: "aiguide",
+    notes:
+`Tech leads mtg - AI guidance for teachers - 9/30 (virtual, ~18 on)
+- walked thru draft guidance v0.3 (the 1-pager). green/yellow/red
+  GREEN = teacher uses AI for planning, rubrics, parent letter
+  drafts. NO student info
+  YELLOW = students use it w/ teacher-designed task, use
+  disclosed. MS/HS only for now
+  RED = student names/IEP/grades into any tool. AI detectors as
+  only evidence of cheating
+- BIG Q: detectors. several leads say teachers using free
+  detectors -> told them NOT reliable, can't be sole evidence.
+  need this in writing!!
+- only district-approved accounts. IS sending approved list
+  ~Oct 15?? check w/ IS
+- elem leads: K-5 students no direct use this yr. teachers yes
+- "what do I tell parents" came up 3x
+- ask: each lead runs a 20 min segment at a staff mtg before
+  Nov 1 using my slides
+- feedback form on v0.3 due 10/10
+- someone asked if AI-written lesson plans count for eval ->
+  HR question, parked`
+  }
+};
+
+const PROMPTS = {
+  handout:
+`Turn the session notes below into a one-page handout for participants.
+
+FORMAT: A title line, then short sections with headings: the key ideas (3 at most, one line each, plus what it looks like in a classroom on Monday), what was decided, what was NOT decided, next steps with dates, and open questions. Under 250 words. Bullets, not paragraphs.
+
+VOICE: Clear and collegial, written for [audience] who were in the room and colleagues who missed it.
+
+CONTEXT: These are my raw notes from [session name and date]. Use only what is in the notes. Do not present anything as decided unless the notes say it was decided. Mark anything you cannot confirm from the notes as [CONFIRM: ...].
+
+NOTES:
+[paste notes]`,
+  exit:
+`Write one exit question for the last two minutes of this session.
+
+FORMAT: The question itself (answerable in under two minutes), one quick 1-to-4 rating item, and 3 bullets on how to sort the answers so I can plan the next step.
+
+VOICE: Direct and plain, addressed to [audience].
+
+CONTEXT: The question should reveal whether people understood the main idea and what they need before the next step. It should not test recall. Session notes:
+[paste notes]`,
+  email:
+`Draft the follow-up email I will send to everyone who attended this session.
+
+FORMAT: A subject line that names the most urgent deadline, then a body under 200 words: a one-sentence thank-you, the key takeaways, action items with due dates, what is attached or coming, the next meeting, and the parked questions. Short headed sections with bullets.
+
+VOICE: Warm and professional, from a district [your title] to [audience]. No jargon.
+
+CONTEXT: Use only facts in the notes. If a date, owner, or attachment is unclear, write [CONFIRM: ...] instead of inventing one. If something was explicitly not decided, say so plainly so no one repeats it as a decision.
+
+NOTES:
+[paste notes]`
+};
+
+const CANNED = {
+  handout: {
+    grading:
+`## Grading for Learning: Where We Landed
+Oct. 1 · Secondary department chairs, high school and both middle schools
+
+## Three shifts
+- **Grades show learning, not compliance.** Monday: look at one gradebook category. Does it measure what students know, or whether they turned something in?
+- **Recent evidence counts more.** Monday: a student who masters a skill in week 6 shouldn't be held down by a week 2 score.
+- **Behaviors are reported separately.** Monday: late work and homework completion still get tracked, just not mixed into the academic grade.
+
+## Decided
+- Spring pilot with 4 volunteer departments.
+- Pilot retakes: 1 per summative, after the student completes a learning plan.
+- Gradebook categories can be set per course. No new software.
+
+## Not decided (please don't promise these yet)
+- Minimum-50 grading: depends on board policy 5121.
+- How much homework counts.
+
+## Next steps
+- Pilot department names due **Oct. 24**.
+- Retake learning-plan template: coming from Central Office.
+- Next meeting: **Nov. 12**, 3:30, Library.
+
+## Open questions for Nov. 12
+- Homework and late work
+- Explaining the change to families
+- IEP and 504 accommodations [CONFIRM: is Student Services attending?]`,
+    aiguide:
+`## Using AI at Work: Green, Yellow, Red
+Draft v0.3 · For teachers, shared by your building tech lead
+
+## Green: go ahead
+- Plan lessons, write rubrics, draft parent letters.
+- Use a district-approved account.
+- Never include student information.
+
+## Yellow: with a plan (middle and high school only)
+- Students use AI on a task you designed.
+- Students say how they used it.
+- K-5: teachers yes; students not this year.
+
+## Red: never
+- Student names, IEP details, or grades in any AI tool.
+- An AI detector as the only evidence of cheating. Detectors are not reliable enough.
+
+## Approved tools
+- District accounts only. The approved list comes from Information Services [CONFIRM: by Oct. 15?].
+
+## When families ask
+- Your tech lead will have talking points [CONFIRM: not written yet].
+
+## Still open
+- Whether AI-assisted lesson plans affect evaluation: referred to HR.`
+  },
+  exit: {
+    grading:
+`!!Which of the three shifts will be hardest for your department, and what is one thing you would need to try it in the spring pilot?
+
+## Plus one quick rating
+How ready is your department to pilot this spring?
+- 1 Not this year
+- 2 Maybe, with support
+- 3 Likely
+- 4 Sign us up
+
+## How to use the answers
+- The 3s and 4s are your pilot list. Follow up with them before Oct. 24.
+- Tally which shift is named hardest. The top one leads the Nov. 12 agenda.
+- Group the "one thing I'd need" answers. They become the pilot support list.`,
+    aiguide:
+`!!A teacher asks you, "Can I use this AI detector to prove a student cheated?" What will you say?
+
+## Plus one quick rating
+How ready are you to lead the 20-minute staff segment before Nov. 1?
+- 1 Not yet
+- 2 With help
+- 3 Mostly
+- 4 Ready now
+
+## How to use the answers
+- Any answer that lets a detector decide means the Red rule needs clearer wording in v0.4.
+- Leads who rate 1 or 2 get a co-presenter or a recorded walkthrough before Nov. 1.
+- Keep the words leads actually use. The best ones become the family talking points.`
+  },
+  email: {
+    grading:
+`Subject: Grading for Learning follow-up: pilot sign-up due Oct. 24
+
+Thank you for staying after a long day on Oct. 1. The two students with the same 75 is exactly the conversation we need to keep having. Science chairs: the opening scenario is on the slides, since bus duty kept you.
+
+## The three shifts
+- Grades show learning, not compliance.
+- Recent evidence counts more.
+- Behaviors are reported separately.
+
+## What I need from you
+- **By Oct. 24:** tell me if your department will join the spring pilot (sign-up form attached).
+- Share the slides with your department before Nov. 12.
+
+## Attached
+- Session slides, retake learning-plan template, pilot sign-up form
+- Research one-pager [CONFIRM: not finished; send separately?]
+
+## Next meeting
+Nov. 12, 3:30 to 5:00, Library. We'll take up homework, late work, talking with families, and IEP and 504 accommodations.
+
+One note: nothing has been decided about minimum grading. Please don't share it as a change.
+
+Thank you,
+[Your name], Director of Curriculum`,
+    aiguide:
+`Subject: AI guidance v0.3: feedback by Oct. 10, staff segment by Nov. 1
+
+Thank you all for joining on Sept. 30. Here is where we landed and what I need from you.
+
+## Where we landed
+- Green, yellow, red stays as the structure.
+- AI detectors are never the only evidence of cheating. v0.4 will say so in writing.
+- K-5: teachers may use approved tools; students will not use AI directly this year.
+
+## What I need from you
+- **By Oct. 10:** feedback on v0.3 (form attached).
+- **By Nov. 1:** run a 20-minute segment at a staff meeting with the attached slides.
+
+## Coming from us
+- Approved-tools list from Information Services [CONFIRM: date with IS, Oct. 15?]
+- Family talking points, since "what do I tell parents?" came up three times.
+
+## Parked
+- Whether AI-assisted lesson plans affect evaluation. I've sent it to HR and will share the answer.
+
+Thank you,
+[Your name], Director of Instructional Technology`
+  }
+};
+
+// AI boundary. Canned today; to go live, replace this body with a call to a model
+// (send PROMPTS[task] + the input text, return the model's text). Nothing else changes.
+async function respond(task, input) {
+  await new Promise(r => setTimeout(r, 700)); // feels like generation; remove when live
+  return CANNED[task][input.id];
+}
+
+const $ = id => document.getElementById(id);
+const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+const inline = s => esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/\[CONFIRM[^\]]*\]/g, m => `<span class="confirm">${m}</span>`);
+
+// Tiny formatter for the model's text: "## " heading, "- " bullet, "!!" featured line, "Subject:" line.
+function format(text) {
+  let html = "", list = false;
+  for (const line of text.split("\n")) {
+    const isItem = line.startsWith("- ");
+    if (list && !isItem) { html += "</ul>"; list = false; }
+    if (!line.trim()) continue;
+    if (line.startsWith("## ")) html += `<h4>${inline(line.slice(3))}</h4>`;
+    else if (isItem) { if (!list) { html += "<ul>"; list = true; } html += `<li>${inline(line.slice(2))}</li>`; }
+    else if (line.startsWith("!!")) html += `<p class="big">${inline(line.slice(2))}</p>`;
+    else if (line.startsWith("Subject:")) html += `<p class="subject">${inline(line)}</p>`;
+    else html += `<p>${inline(line)}</p>`;
+  }
+  return html + (list ? "</ul>" : "");
+}
+
+let run = 0;
+async function choose(id) {
+  const mine = ++run;
+  const input = INPUTS[id];
+  document.querySelectorAll("[data-input]").forEach(b => b.setAttribute("aria-pressed", b.dataset.input === id));
+  $("in-notes").textContent = input.notes;
+  await Promise.all(["handout", "exit", "email"].map(async task => {
+    $("o-" + task).innerHTML = `<p class="drafting">Drafting…</p>`;
+    const out = await respond(task, input);
+    if (mine === run) $("o-" + task).innerHTML = format(out);
+  }));
+}
+
+document.querySelectorAll("[data-input]").forEach(b => b.addEventListener("click", () => choose(b.dataset.input)));
+$("toggle-prompt").addEventListener("click", e => {
+  const box = $("prompt");
+  box.hidden = !box.hidden;
+  e.currentTarget.setAttribute("aria-pressed", !box.hidden);
+  e.currentTarget.textContent = box.hidden ? "Show the prompt" : "Hide the prompt";
+});
+$("toggle-notes").addEventListener("click", e => {
+  const box = $("notes");
+  box.hidden = !box.hidden;
+  e.currentTarget.setAttribute("aria-pressed", !box.hidden);
+  e.currentTarget.textContent = box.hidden ? "Show notes" : "Hide notes";
+});
+for (const t of ["handout", "exit", "email"]) $("p-" + t).textContent = PROMPTS[t];
+choose("grading");
+</script>
+</body>
+</html>

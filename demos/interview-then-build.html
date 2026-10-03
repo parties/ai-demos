@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Make It Ask You Questions First</title>
+<style>
+  :root {
+    --bg: #fcfcfb; --ink: #0b0b0b; --muted: #52514e; --line: #d9d8d3;
+    --card: #ffffff; --accent: #1c5cab; --accent-ink: #ffffff; --soft: #eef4fc;
+    --bad: #a3271b; --bad-soft: #fde4e0; --good: #1d6b35;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 20px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1500px; margin: 0 auto; padding: 24px 16px 40px; }
+  h1 { font-size: 2.1rem; margin: 0; line-height: 1.2; }
+  .sub { color: var(--muted); margin: 6px 0 20px; font-size: 1.15rem; }
+  .controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 18px; }
+  .controls > span { color: var(--muted); font-weight: 600; }
+  button { font: inherit; font-weight: 600; padding: 10px 22px; min-height: 52px; cursor: pointer;
+    background: var(--card); color: var(--ink); border: 2px solid var(--accent); border-radius: 10px; }
+  button[aria-pressed="true"], .go { background: var(--accent); color: var(--accent-ink); }
+  #toggle-prompt { border-color: var(--line); }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+  .col { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; min-width: 0; }
+  .col h2 { margin: 0 0 10px; font-size: 1.35rem; }
+  .label { font-size: 1rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 700; margin: 14px 0 6px; }
+  .request { background: #f3f2ee; border: 1px solid var(--line); border-radius: 10px; padding: 10px 16px; margin: 0 0 12px; }
+  .request em { color: var(--accent); font-style: normal; font-weight: 700; }
+  .out { white-space: pre-wrap; margin: 0; }
+  .out .h { display: block; font-weight: 700; margin-top: 8px; }
+  .out mark { background: var(--bad-soft); outline: 2px solid var(--bad); border-radius: 3px; color: var(--ink); }
+  .drafting { color: var(--muted); font-style: italic; }
+  .stat { font-weight: 700; margin: 10px 0 0; }
+  .stat.bad { color: var(--bad); }
+  .stat.good { color: var(--good); }
+  .qs { margin: 0; padding-left: 1.4em; display: grid; gap: 12px; }
+  .qs li { padding-left: 4px; }
+  .qs .a { display: block; margin-top: 4px; padding: 6px 12px; background: var(--soft); border-left: 4px solid var(--accent); border-radius: 6px; }
+  .qs button { margin-top: 6px; min-height: 44px; padding: 6px 18px; }
+  .build { margin-top: 14px; }
+  pre { white-space: pre-wrap; background: #f3f2ee; border: 1px solid var(--line); border-radius: 10px;
+    padding: 14px 18px; font: 1rem/1.5 ui-monospace, Menlo, Consolas, monospace; margin: 0 0 18px; }
+  footer { color: var(--muted); font-size: 1rem; margin-top: 20px; }
+  @media (max-width: 900px) { .cols { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Make it ask you questions first</h1>
+  <p class="sub">Same request, two ways. One line gets a template full of blanks. "Ask me questions first" gets something you can send.</p>
+
+  <div class="controls" role="group" aria-label="Task">
+    <span>Task</span>
+    <button data-preset="letter" aria-pressed="true">Letter to families</button>
+    <button data-preset="board" aria-pressed="false">Board update</button>
+    <button id="toggle-prompt" aria-pressed="false">Show the prompt</button>
+  </div>
+
+  <pre id="prompt" hidden></pre>
+
+  <div class="cols">
+    <section class="col">
+      <h2>Just asked</h2>
+      <div class="label">What you paste in</div>
+      <p class="request" id="req-left"></p>
+      <button class="go" id="send-left">Send</button>
+      <div id="left-out" hidden>
+        <div class="label">What comes back</div>
+        <p class="out" id="left-text"></p>
+        <p class="stat bad" id="left-stat"></p>
+      </div>
+    </section>
+
+    <section class="col">
+      <h2>Asked to interview you first</h2>
+      <div class="label">What you paste in</div>
+      <p class="request" id="req-right"></p>
+      <button class="go" id="send-right">Send</button>
+      <div id="right-q" hidden>
+        <div class="label">What comes back: questions</div>
+        <div id="q-wrap"></div>
+        <button class="go build" id="build" hidden>Write it now</button>
+      </div>
+      <div id="right-out" hidden>
+        <div class="label">What comes back: the draft</div>
+        <p class="out" id="right-text"></p>
+        <p class="stat good" id="right-stat"></p>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    A person still checks every fact, number, and date against the source, and owns what goes out.
+    Every output was generated ahead of time so this page works with no internet.
+  </footer>
+</main>
+
+<script>
+const INTERVIEW_ASK = "Before you write anything, ask me questions first.";
+
+const PROMPTS = {
+  generic: "{request}",
+  interview: "{request}\n\nBefore you write anything, interview me. Ask the 5 questions whose answers would most change what you write: what actually changed, who will read it, the key dates, what I need readers to do, and what they will worry about or push back on. Number the questions and ask them all at once, one short sentence each. Do not draft until I answer.",
+  build: "Here are my answers. Now write it for the audience I described, in plain language, using only the facts I gave you. No placeholders in brackets: if something is still missing, list it at the end instead of inventing it.\n\n{answers}"
+};
+
+const CANNED = {
+  generic: {
+    letter: "Dear Parents and Guardians,\n\nWe are writing to inform you about an important update to our attendance policy, which will take effect on [effective date]. Regular attendance is one of the strongest predictors of student success, and we are committed to partnering with families to ensure every student is present and engaged.\n\nUnder the new policy, [describe key changes]. Students who accumulate [number] absences may be subject to [consequences]. We encourage families to communicate with the school regarding any absences.\n\nTo report an absence, please contact [school name] at [phone number] or [email address].\n\nWe appreciate your continued support in helping our students succeed. If you have any questions, please do not hesitate to reach out.\n\nSincerely,\n[Your Name]\n[Title]",
+    board: "Board Update: Bus Driver Shortage\n\nLike many districts across the country, our district continues to face a significant shortage of qualified school bus drivers. This challenge has affected transportation services and created difficulties for students, families, and staff.\n\nCurrent status: The district currently has [number] driver vacancies out of [number] routes. [Describe impact on routes and schools.]\n\nActions taken: The district has implemented several strategies to address the shortage, including recruitment efforts, [list strategies], and partnerships with [organization].\n\nNext steps: We will continue to monitor the situation closely and explore additional options, such as [options]. We will keep the Board updated as new information becomes available.\n\nThank you for your continued support."
+  },
+  interview: {
+    letter: [
+      "What actually changed: what did the old policy do, and what does the new one do differently?",
+      "Who gets this letter, and in which languages?",
+      "When does it take effect, and does anything reset that day?",
+      "What is the one thing you need families to do after reading it?",
+      "What will families worry about most, and what is the honest answer?"
+    ],
+    board: [
+      "What do you need from the board: information only, or a vote? On what, and when?",
+      "What are the numbers today: routes, drivers, vacancies, and how does that compare to last year?",
+      "What are schools and families actually feeling?",
+      "What have you already tried, and what came of it?",
+      "How long can this be, and what will board members push back on?"
+    ]
+  },
+  build: {
+    letter: "Dear families,\n\nStarting Monday, November 3, the district is changing how we respond when students miss school. The short version: we will reach out sooner, and the first step will always be a phone call to help, not a penalty.\n\n## What's changing\nBefore, nothing happened until a student had 10 unexcused absences, and the next step was a truancy referral. Now, when a student misses 5 days for any reason, someone from your school's attendance team will call you to check in and ask what would help. A referral to the county can happen only after 15 unexcused absences and a meeting with your family first.\n\n## If your child is sick\nSick days count toward the 5-day call, but that call is a check-in, not trouble. No student is referred for an illness you have reported. Absences that are part of an IEP or 504 plan never count.\n\n## What we need from you\n• Report an absence the same morning, before 9:30, by phone or in the family portal.\n• Tell us early if something is getting in the way: rides, health, housing, anything. The earlier we know, the more we can do.\n\nEvery student's count starts at zero on November 3.\n\nQuestions? Call the district attendance line at 555-0142.\n\nWith thanks,\nOffice of the Superintendent",
+    board: "## Bus driver shortage: action requested October 20\n\n## The ask\nApprove raising starting driver pay from $19.50 to $22.00 an hour, plus a $1,500 signing bonus paid after 90 days. Cost for the rest of this year: about $214,000, from the transportation fund balance.\n\n## Where we are\n• 62 routes, 51 drivers, 11 vacancies (6 vacancies last October)\n• 2 routes contracted out; the other 9 run twice every morning\n• 4 elementary schools see buses 20 to 35 minutes late most days\n• 14 field trips cancelled since August\n\n## What we've tried\n• Job fairs: 2 hires\n• District-paid CDL training: 5 enrolled, 3 finished\n• Contracting 2 routes to Northwind Transit at $410 a day each\n\n## Why pay\n7 of the 9 drivers who left cited pay in exit interviews. Neighboring districts start at $21 to $23 an hour, so at $19.50 we are the lowest offer a new CDL holder will see.\n\n## Questions you may have\nWhy not keep contracting? It costs more per route than a district driver, and it covers 2 routes, not 11.\nHow do we know pay is the problem? Exit interviews and the neighboring starting rates above. We will report vacancy numbers back to the board in January."
+  }
+};
+
+// AI boundary. Canned today; to go live, replace this body with a call to a model
+// (send PROMPTS[task] + the input text, return the model's text). Nothing else changes.
+async function respond(task, input) {
+  await new Promise(r => setTimeout(r, 700)); // feels like generation; remove when live
+  return CANNED[task][input.id];
+}
+
+const PRESETS = {
+  letter: {
+    request: "Write a letter to families about the new attendance policy.",
+    answers: [
+      "Old: 10 unexcused absences meant a letter and a truancy referral. New: at 5 absences of any kind, the school attendance team calls the family to help. A referral only after 15 unexcused and a family meeting.",
+      "All K-12 families. English and Spanish; a fluent reviewer checks the Spanish.",
+      "Monday, November 3. Every student's absence count resets to zero that day.",
+      "Report an absence the same morning, before 9:30, by phone or the family portal. Attendance line is 555-0142. And tell us early if rides, health, or housing are getting in the way.",
+      "That a sick kid will get them in trouble. Honest answer: sick days count toward the 5-day call, but the call is a check-in. Nobody is referred for a reported illness, and IEP or 504 absences never count."
+    ]
+  },
+  board: {
+    request: "Write a board update on the bus driver shortage.",
+    answers: [
+      "A vote on October 20: starting pay from $19.50 to $22.00 an hour, plus a $1,500 bonus after 90 days. About $214,000 for the rest of the year from transportation fund balance. We report back in January.",
+      "62 routes, 51 drivers, 11 vacancies. Last October we had 6.",
+      "9 routes double-run every morning. 4 elementary schools see buses 20 to 35 minutes late most days. 14 field trips cancelled since August.",
+      "Job fairs: 2 hires. District-paid CDL training: 5 enrolled, 3 finished. Contracted 2 routes to Northwind Transit at $410 a day each, which costs more than a district driver.",
+      "One page. They'll ask why not keep contracting, and how we know pay is the problem. 7 of 9 departing drivers cited pay; neighbors start at $21 to $23."
+    ]
+  }
+};
+
+const $ = id => document.getElementById(id);
+let current = "letter";
+let run = 0;
+
+// Lines starting "## " become headings; [bracketed blanks] are highlighted. Returns the blank count.
+function renderText(el, text) {
+  el.textContent = "";
+  let blanks = 0;
+  for (const line of text.split("\n")) {
+    if (line.startsWith("## ")) {
+      const h = document.createElement("span");
+      h.className = "h";
+      h.textContent = line.slice(3);
+      el.append(h);
+      continue;
+    }
+    line.split(/(\[[^\]]+\])/).forEach(part => {
+      if (!/^\[[^\]]+\]$/.test(part)) { el.append(part); return; }
+      const m = document.createElement("mark");
+      m.textContent = part;
+      el.append(m);
+      blanks++;
+    });
+    el.append("\n");
+  }
+  return blanks;
+}
+
+function drafting(el) { el.innerHTML = '<span class="drafting">Drafting…</span>'; }
+
+function showPrompt() {
+  const p = PRESETS[current];
+  const answers = p.answers.map((a, i) => `${i + 1}. ${a}`).join("\n");
+  $("prompt").textContent =
+    "LEFT (just asked):\n" + PROMPTS.generic.replace("{request}", p.request) +
+    "\n\nRIGHT, first message:\n" + PROMPTS.interview.replace("{request}", p.request) +
+    "\n\nRIGHT, after the questions:\n" + PROMPTS.build.replace("{answers}", answers);
+}
+
+function load(id) {
+  current = id;
+  run++;
+  const p = PRESETS[id];
+  document.querySelectorAll("[data-preset]").forEach(b => b.setAttribute("aria-pressed", b.dataset.preset === id));
+  $("req-left").textContent = p.request;
+  $("req-right").innerHTML = "";
+  const em = document.createElement("em");
+  em.textContent = INTERVIEW_ASK;
+  $("req-right").append(p.request + " ", em);
+  for (const box of ["left-out", "right-q", "right-out", "build"]) $(box).hidden = true;
+  $("send-left").hidden = $("send-right").hidden = false;
+  showPrompt();
+}
+
+$("send-left").addEventListener("click", async () => {
+  const mine = run;
+  $("send-left").hidden = true;
+  $("left-out").hidden = false;
+  $("left-stat").textContent = "";
+  drafting($("left-text"));
+  const text = await respond("generic", { id: current });
+  if (mine !== run) return;
+  const blanks = renderText($("left-text"), text);
+  $("left-stat").textContent = `${blanks} blanks you still have to fill in yourself.`;
+});
+
+$("send-right").addEventListener("click", async () => {
+  const mine = run, p = PRESETS[current];
+  $("send-right").hidden = true;
+  $("right-q").hidden = false;
+  drafting($("q-wrap"));
+  const questions = await respond("interview", { id: current });
+  if (mine !== run) return;
+  const ol = document.createElement("ol");
+  ol.className = "qs";
+  let answered = 0;
+  questions.forEach((q, i) => {
+    const li = document.createElement("li");
+    li.append(q);
+    const btn = document.createElement("button");
+    btn.textContent = "Answer";
+    btn.addEventListener("click", () => {
+      const a = document.createElement("span");
+      a.className = "a";
+      a.textContent = p.answers[i];
+      btn.replaceWith(a);
+      if (++answered === questions.length) $("build").hidden = false;
+    });
+    li.append(btn);
+    ol.append(li);
+  });
+  $("q-wrap").textContent = "";
+  $("q-wrap").append(ol);
+});
+
+$("build").addEventListener("click", async () => {
+  const mine = run;
+  $("build").hidden = true;
+  $("right-out").hidden = false;
+  $("right-stat").textContent = "";
+  drafting($("right-text"));
+  const text = await respond("build", { id: current });
+  if (mine !== run) return;
+  const blanks = renderText($("right-text"), text);
+  $("right-stat").textContent = `${blanks} blanks. Every fact came from your ${PRESETS[current].answers.length} answers.`;
+});
+
+document.querySelectorAll("[data-preset]").forEach(b => b.addEventListener("click", () => load(b.dataset.preset)));
+
+const togglePrompt = $("toggle-prompt");
+togglePrompt.addEventListener("click", () => {
+  const box = $("prompt");
+  box.hidden = !box.hidden;
+  togglePrompt.setAttribute("aria-pressed", !box.hidden);
+  togglePrompt.textContent = box.hidden ? "Show the prompt" : "Hide the prompt";
+});
+
+load("letter");
+</script>
+</body>
+</html>

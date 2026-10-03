@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Course Catalog, One Voice</title>
+<style>
+  :root {
+    --bg: #fcfcfb; --ink: #0b0b0b; --muted: #52514e; --line: #d9d8d3;
+    --card: #ffffff; --accent: #1c5cab; --accent-ink: #ffffff; --soft: #eef4fc; --mark: #ffe58a;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 20px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1500px; margin: 0 auto; padding: 24px 16px 40px; }
+  h1 { font-size: 2.1rem; margin: 0; line-height: 1.2; }
+  .sub { color: var(--muted); margin: 6px 0 20px; font-size: 1.15rem; }
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 18px; }
+  .controls > span { color: var(--muted); font-weight: 600; margin-right: 4px; }
+  button { font: inherit; font-weight: 600; padding: 10px 22px; min-height: 52px; cursor: pointer;
+    background: var(--card); color: var(--ink); border: 2px solid var(--accent); border-radius: 10px; }
+  button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+  #toggle-prompt { border-color: var(--line); }
+  #toggle-prompt[aria-pressed="true"] { border-color: var(--accent); }
+  .prompt { background: var(--soft); border: 1px solid var(--accent); border-radius: 10px; padding: 14px 18px; margin-bottom: 18px; }
+  .prompt pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: .9rem/1.5 ui-monospace, Menlo, Consolas, monospace; }
+  .label { font-size: 1rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0; }
+  .tiles { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 16px; min-height: 76px; }
+  .tile { border: 1px solid var(--line); border-radius: 10px; padding: 6px 14px; background: var(--card); }
+  .tile b { display: block; font-size: 1.5rem; line-height: 1.2; }
+  .heads, .row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 16px; }
+  .heads { margin-bottom: 8px; }
+  .row { margin-bottom: 14px; }
+  .before, .after { border: 1px solid var(--line); border-radius: 12px; padding: 12px 18px; min-width: 0; }
+  .before { background: #f3f2ee; }
+  .after { background: var(--card); }
+  .before h3, .after h3 { margin: 0 0 4px; font-size: 1.2rem; }
+  .before p { margin: 0; font-size: 1rem; }
+  .after p { margin: 6px 0 0; }
+  .facts { display: inline-block; background: var(--soft); border-radius: 8px; padding: 2px 10px; font-size: .95rem; font-weight: 600; }
+  .meta { color: var(--muted); font-size: .95rem; margin-top: 6px; }
+  .meta b { color: var(--ink); }
+  .fit { font-size: .95rem; }
+  .flag { margin-top: 8px; font-size: .95rem; border-left: 5px solid #c98500; background: #fff9de; padding: 4px 10px; border-radius: 6px; }
+  .flag.ok { border-color: #1e6b34; background: #e8f3ea; }
+  .confirm { background: var(--mark); border-radius: 4px; padding: 0 4px; font-weight: 700; }
+  .drafting { color: var(--muted); font-style: italic; font-size: 1.2rem; margin: 6px 0 0; }
+  footer { color: var(--muted); font-size: 1rem; margin-top: 20px; }
+  @media (max-width: 900px) { .heads { display: none; } .row { grid-template-columns: 1fr; gap: 8px; margin-bottom: 26px; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Course catalog, one voice</h1>
+  <p class="sub">Descriptions written by different teachers in different years, rewritten to one format families can read. Missing facts are flagged, never invented.</p>
+
+  <div class="controls" role="group" aria-label="Catalog section">
+    <span>Catalog section</span>
+    <button data-input="hs" aria-pressed="true">High school</button>
+    <button data-input="ms" aria-pressed="false">Middle school electives</button>
+    <button id="toggle-prompt" aria-pressed="false">Show the prompt</button>
+  </div>
+
+  <section class="prompt" id="prompt" hidden>
+    <p class="label">The prompt (copy it, fill in the brackets)</p>
+    <pre id="prompt-text"></pre>
+  </section>
+
+  <div class="tiles" id="tiles"></div>
+  <div class="heads"><p class="label">What you paste in: this year's catalog text</p><p class="label">What comes back: one format, family reading level</p></div>
+  <div id="rows"></div>
+
+  <footer>
+    Each department confirms its facts (grades, credits, prerequisites, fees) before the catalog prints; the reading level is an automatic estimate, not a guarantee.
+    Every output was generated ahead of time so this page works with no internet.
+  </footer>
+</main>
+
+<script>
+const INPUTS = {
+  hs: {
+    id: "hs",
+    courses: [
+      { name: "Forensic Science", text: "Ever wanted to be a CSI?? This class is SO much fun!!! We do fingerprinting, blood spatter (fake, don't worry), hair and fiber analysis, and a mock crime scene at the end of the year that the whole school talks about. Lots and lots of labs. You must have passed Biology. Chemistry is recommended but not required. Questions? Stop by the science office!" },
+      { name: "Principles of Engineering", text: "This course facilitates students' development of engineering design competencies through project-based learning modalities, integrating STEM content standards with authentic problem-solving contexts. Students engage in iterative design cycles leveraging computer-aided design software, rapid prototyping, and data-driven analysis of mechanisms, energy systems, and statics. Prerequisite: Introduction to Engineering Design; concurrent enrollment in Algebra II or higher. 1.0 cr, weighted. Gr 10-12." },
+      { name: "English 11", text: "ENG 11 CP. Survey of American lit, colonial era to contemporary, w/ emphasis on rhetorical analysis and synthesis of multiple perspectives. Research paper req. Gr 11, 1 cr." },
+      { name: "Personal Finance", text: "Pursuant to state graduation requirements, all students must earn 0.5 credit in Personal Finance prior to graduation. This course addresses the following content areas: budgeting, banking, credit and debt management, taxation, insurance, and investing. Successful completion fulfills the aforementioned graduation requirement." },
+      { name: "Ceramics I", text: "Students in Ceramics I will learn hand-building techniques including pinch, coil, and slab construction and will be introduced to the potter's wheel, glazing, and the kiln firing process, and will also study ceramic traditions from many cultures and maintain a sketchbook throughout the semester (Gr 9-12, 0.5 fine arts credit), and a lab fee applies which covers clay and glazes." }
+    ]
+  },
+  ms: {
+    id: "ms",
+    courses: [
+      { name: "STEM Exploration 7", text: "Students will be exposed to a variety of STEM disciplines via a rotation-based model encompassing robotics, coding, and engineering design challenges, fostering 21st-century competencies such as collaboration, critical thinking, and computational thinking. Quarter course, Gr 7." },
+      { name: "Family and Consumer Sciences", text: "Cooking!! Sewing!! Life skills!! You'll love it. 8th grade." },
+      { name: "Spanish 1A", text: "Spanish 1A is the first half of the Spanish 1 sequence; students completing both 1A (gr 7) and 1B (gr 8) earn one high school world language credit. Communicative approach emphasizing interpersonal, interpretive, and presentational modes at the novice-low to novice-mid proficiency levels. Full year." },
+      { name: "Digital Art and Media", text: "In this class, students explore digital art using industry-standard tools. Projects include photo editing, graphic design, and stop-motion animation. Students build a portfolio. Grades 6-8, semester. Students need a district device." }
+    ]
+  }
+};
+
+const PROMPTS = {
+  rewrite:
+`Rewrite each course description below into one consistent format for our printed and online course catalog.
+
+FORMAT, for every course:
+Line 1: Course name
+Line 2: Grades · Length · Credit · Prerequisite (only the facts the original states)
+Then 2 or 3 short sentences on what students actually do in the course.
+Then one line starting "Good fit for:" (or "Good to know:" when a requirement matters more).
+After each rewrite, one "Check:" line listing any fact the original does not state.
+
+VOICE: Plain, warm, and direct, written for families, at about a 6th-grade reading level. Short sentences. No jargon, no abbreviations, no exclamation points, no "you'll love it."
+
+CONTEXT: This is the [school level] section of our district course catalog. Descriptions were written by different teachers over many years. Never invent a fact: if grades, credit, prerequisite, length, or a fee amount is missing, write [CONFIRM] in that spot and name it on the Check line. Keep every requirement exactly as strict as the original (recommended stays recommended).
+
+DESCRIPTIONS:
+[paste the descriptions, one per course]`
+};
+
+// Each course: name, facts line, body, fit line, and a check note [kind, text].
+const CANNED = {
+  rewrite: {
+    hs: [
+      { name: "Forensic Science", facts: "Grades: [CONFIRM] · Full year · Credit: [CONFIRM] · Prerequisite: Biology",
+        body: "Students use science to solve mock crimes. They take fingerprints, study hair and fiber samples, and look at fake blood patterns in the lab. The year ends with a full mock crime scene that students solve as a team.",
+        fit: "Good fit for: students who like labs, puzzles, and hands-on work. Chemistry is recommended but not required.",
+        check: ["warn", "Original does not say which grades or how much credit. Confirm with the science office."] },
+      { name: "Principles of Engineering", facts: "Grades 10-12 · 1 credit, weighted · Prerequisite: Introduction to Engineering Design, plus Algebra II or higher (before or at the same time)",
+        body: "Students design, build, and test their own devices. They draw ideas on the computer, make models, and test how machines, motors, and structures hold up. Then they use the results to make the design better.",
+        fit: "Good fit for: students who like to build things and want to see how math gets used.",
+        check: ["warn", "\"Weighted\" may mean nothing to families. Add one line on how weighted courses count in GPA, in the district's exact wording."] },
+      { name: "English 11", facts: "Grade 11 · 1 English credit · Prerequisite: [CONFIRM]",
+        body: "Students read American writing from the country's early years to today. They study how writers try to persuade, and they compare different points of view on the same topic. Every student writes a research paper.",
+        fit: "Good fit for: students who like to read, talk about ideas, and write.",
+        check: ["warn", "\"CP\" was removed; if it means a college-prep level, say so in words. Confirm the prerequisite and whether this course is required."] },
+      { name: "Personal Finance", facts: "Grades: [CONFIRM] · 0.5 credit · Required to graduate",
+        body: "Students learn how to manage money in real life. They make a budget, compare bank accounts, and learn how credit cards, loans, taxes, and insurance work. They also learn the basics of saving and investing.",
+        fit: "Good to know: every student must pass this course to graduate.",
+        check: ["warn", "Original does not say which grades can take it. Add before printing."] },
+      { name: "Ceramics I", facts: "Grades 9-12 · One semester · 0.5 fine arts credit · Lab fee: [CONFIRM]",
+        body: "Students make pottery by hand, using pinch, coil, and slab methods. They try the potter's wheel, glaze their work, and fire it in a kiln. They also look at pottery from cultures around the world and keep a sketchbook.",
+        fit: "Good fit for: students who like art and working with their hands.",
+        check: ["warn", "Original says a lab fee applies but not the amount. Add this year's fee."] }
+    ],
+    ms: [
+      { name: "STEM Exploration 7", facts: "Grade 7 · One quarter · No prerequisite listed",
+        body: "Students take turns with three kinds of projects: building robots, writing simple computer code, and solving design challenges. They work in teams to plan, test, and fix their ideas.",
+        fit: "Good fit for: curious students who like to build and figure things out.",
+        check: ["ok", "All key facts were in the original. Only the wording changed."] },
+      { name: "Family and Consumer Sciences", facts: "Grade 8 · Length: [CONFIRM] · Credit: none listed",
+        body: "Students learn skills they will use at home for the rest of their lives. They cook, they sew, and they practice other everyday life skills.",
+        fit: "Good fit for: students who like hands-on work they can use right away.",
+        check: ["warn", "The original is one line. Ask the teacher which life skills are taught so the description can name them. Nothing was added that the original did not say."] },
+      { name: "Spanish 1A", facts: "Grade 7 · Full year · Part 1 of 2 toward 1 high school credit",
+        body: "Students start to speak, read, and write in Spanish. They practice short conversations, read and listen to simple texts, and give short talks about themselves.",
+        fit: "Good to know: students who also finish Spanish 1B in grade 8 earn one high school world language credit.",
+        check: ["ok", "Proficiency terms (\"novice-low\") were removed for families; keep them in the staff version if counselors use them."] },
+      { name: "Digital Art and Media", facts: "Grades 6-8 · One semester · Needs a district device",
+        body: "Students make art on the computer. They edit photos, design graphics, and make short stop-motion animations. By the end, each student has a portfolio of their work.",
+        fit: "Good fit for: students who like art, design, or making videos.",
+        check: ["ok", "Already close to the format; mostly reordered."] }
+    ]
+  }
+};
+
+// AI boundary. Canned today; to go live, replace this body with a call to a model
+// (send PROMPTS[task] + the input text, return the model's text). Nothing else changes.
+async function respond(task, input) {
+  await new Promise(r => setTimeout(r, 700)); // feels like generation; remove when live
+  return CANNED[task][input.id];
+}
+
+// ponytail: Flesch-Kincaid with a vowel-group syllable heuristic; an estimate, good to about one grade.
+function syllables(word) {
+  let w = word.toLowerCase().replace(/[^a-z]/g, "");
+  if (!w) return 0;
+  if (w.length <= 3) return 1;
+  w = w.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/, "").replace(/^y/, "");
+  return Math.max(1, (w.match(/[aeiouy]{1,2}/g) || []).length);
+}
+function measure(text) {
+  const words = text.split(/\s+/).filter(w => /[a-z0-9]/i.test(w));
+  const sentences = text.split(/[.!?]+(?=\s|$)/).filter(s => /[a-z]/i.test(s)).length || 1;
+  const syl = words.reduce((a, w) => a + syllables(w), 0);
+  const grade = 0.39 * words.length / sentences + 11.8 * syl / words.length - 15.59;
+  return { words: words.length, grade: Math.max(1, grade) };
+}
+
+const $ = id => document.getElementById(id);
+const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+const confirmMarks = s => esc(s).replace(/\[CONFIRM\]/g, `<span class="confirm">[CONFIRM]</span>`);
+const meta = m => `<div class="meta"><b>${m.words}</b> words · reading level about grade <b>${m.grade.toFixed(1)}</b></div>`;
+let run = 0;
+
+function beforeCard(c) {
+  return `<div class="before"><h3>${esc(c.name)}</h3><p>${esc(c.text)}</p>${meta(measure(c.text))}</div>`;
+}
+
+function render(input, out) {
+  const b = input.courses.map(c => measure(c.text));
+  const a = out.map(o => measure(o.body + " " + o.fit.replace(/^Good (fit for|to know):/, "")));
+  const avg = list => (list.reduce((s, m) => s + m.grade, 0) / list.length).toFixed(1);
+  const range = list => `${Math.min(...list.map(m => m.words))} to ${Math.max(...list.map(m => m.words))}`;
+  const flags = out.filter(o => o.check[0] === "warn").length;
+  $("tiles").innerHTML =
+    `<div class="tile"><b>${out.length}</b>descriptions</div>
+     <div class="tile"><b>${range(b)} → ${range(a)}</b>words each</div>
+     <div class="tile"><b>Grade ${avg(b)} → ${avg(a)}</b>average reading level</div>
+     <div class="tile"><b>${flags}</b>missing facts flagged</div>`;
+  $("rows").innerHTML = input.courses.map((c, i) => {
+    const o = out[i];
+    return `<div class="row">${beforeCard(c)}<div class="after"><h3>${esc(o.name)}</h3>
+      <span class="facts">${confirmMarks(o.facts)}</span>
+      <p>${esc(o.body)}</p><p class="fit"><b>${esc(o.fit.split(":")[0])}:</b>${esc(o.fit.slice(o.fit.indexOf(":") + 1))}</p>
+      <div class="flag ${o.check[0]}"><b>Check:</b> ${esc(o.check[1])}</div>${meta(a[i])}</div></div>`;
+  }).join("");
+}
+
+async function choose(id) {
+  const mine = ++run;
+  const input = INPUTS[id];
+  document.querySelectorAll("[data-input]").forEach(b => b.setAttribute("aria-pressed", b.dataset.input === id));
+  $("tiles").innerHTML = "";
+  $("rows").innerHTML = input.courses.map(c => `<div class="row">${beforeCard(c)}<div class="after"><p class="drafting">Drafting…</p></div></div>`).join("");
+  const out = await respond("rewrite", input);
+  if (mine === run) render(input, out);
+}
+
+document.querySelectorAll("[data-input]").forEach(b => b.addEventListener("click", () => choose(b.dataset.input)));
+$("toggle-prompt").addEventListener("click", e => {
+  const box = $("prompt");
+  box.hidden = !box.hidden;
+  e.currentTarget.setAttribute("aria-pressed", !box.hidden);
+  e.currentTarget.textContent = box.hidden ? "Show the prompt" : "Hide the prompt";
+});
+$("prompt-text").textContent = PROMPTS.rewrite;
+choose("hs");
+</script>
+</body>
+</html>

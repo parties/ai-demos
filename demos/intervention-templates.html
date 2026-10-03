@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tiered Intervention Templates</title>
+<style>
+  :root {
+    --bg: #fcfcfb; --ink: #0b0b0b; --muted: #52514e; --line: #d9d8d3;
+    --card: #ffffff; --accent: #1c5cab; --accent-ink: #ffffff; --soft: #eef4fc;
+    --paper: #f3f2ee; --warn-bg: #fff3d6; --warn-line: #c98500; --good: #1b7a4a;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 20px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1500px; margin: 0 auto; padding: 24px 16px 40px; }
+  h1 { font-size: 2.1rem; margin: 0; line-height: 1.2; }
+  .sub { color: var(--muted); margin: 6px 0 20px; font-size: 1.15rem; }
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 18px; }
+  .controls > span { color: var(--muted); font-weight: 600; margin-right: 4px; }
+  button { font: inherit; font-weight: 600; padding: 10px 22px; min-height: 52px; cursor: pointer;
+    background: var(--card); color: var(--ink); border: 2px solid var(--accent); border-radius: 10px; }
+  button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+  #toggle-prompt { border-color: var(--line); }
+  .prompt { background: var(--soft); border: 2px solid var(--accent); border-radius: 12px; padding: 14px 18px; margin-bottom: 18px; }
+  .prompt pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; font-size: 1rem; }
+  .cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); gap: 16px; align-items: start; }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; }
+  .panel.in { background: var(--paper); }
+  .panel > h2 { font-size: 1rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 8px; }
+  .notes h3 { font-size: 1.05rem; margin: 12px 0 2px; }
+  .notes p { margin: 0; font-size: .95rem; }
+  .notes .src { color: var(--muted); font-size: .95rem; margin: 0 0 4px; }
+  .drafting { color: var(--muted); font-style: italic; font-size: 1.15rem; }
+  .out > h3 { font-size: 1.2rem; margin: 0 0 8px; }
+  .recon { display: grid; gap: 8px; margin-bottom: 18px; }
+  .rc { border: 1px solid var(--line); border-radius: 10px; padding: 8px 14px; display: grid; grid-template-columns: 9em minmax(0, 1fr) minmax(0, 1.2fr); gap: 4px 14px; align-items: start; }
+  .rc.decide { border: 2px solid var(--warn-line); background: var(--warn-bg); }
+  .rc .topic { font-weight: 700; }
+  .rc .today { color: var(--muted); font-size: .95rem; }
+  .rc .std { font-weight: 600; }
+  .rc .std::before { content: "→ "; color: var(--accent); }
+  .rc .why { grid-column: 2 / -1; font-size: .95rem; font-weight: 600; color: #6b3a00; }
+  .kept { margin: 0 0 18px; padding: 8px 14px; border-left: 5px solid var(--good); background: #e7f4ec; border-radius: 0 8px 8px 0; }
+  .tiers { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 12px; }
+  .form { border: 2px solid var(--ink); border-radius: 4px; padding: 16px 20px; background: #fff; }
+  .form .fhead { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px 16px; border-bottom: 3px solid var(--ink); padding-bottom: 6px; margin-bottom: 4px; }
+  .form .fhead h3 { margin: 0; font-size: 1.3rem; }
+  .form .fhead span { color: var(--muted); font-size: .95rem; }
+  .form .use { font-size: .95rem; color: var(--muted); margin: 4px 0 6px; }
+  .fsec { border-top: 1px solid var(--ink); padding: 8px 0 6px; }
+  .fsec h4 { margin: 0 0 6px; font-size: 1.05rem; text-transform: uppercase; letter-spacing: .04em; }
+  .fld { display: flex; align-items: flex-end; gap: 8px; margin: 6px 0; font-size: 1rem; }
+  .fld .lab { white-space: nowrap; font-weight: 600; }
+  .blank { flex: 1; min-width: 3em; border-bottom: 1.5px solid var(--ink); height: 1.3em; }
+  .row { display: flex; flex-wrap: wrap; gap: 4px 18px; }
+  .row .fld { flex: 1 1 12em; }
+  .area .lab { font-weight: 600; font-size: 1rem; }
+  .area .box { border: 1.5px solid var(--ink); border-radius: 3px; margin: 4px 0 8px; }
+  .checks { margin: 6px 0; font-size: 1rem; }
+  .checks .lab { font-weight: 600; }
+  .checks .opts { display: flex; flex-wrap: wrap; gap: 2px 20px; }
+  .checks .opts span::before { content: "☐ "; font-size: 1.15em; }
+  .frame { margin: 6px 0; font-size: 1rem; line-height: 2.1; }
+  .frame .blank { display: inline-block; width: 7em; height: 1em; vertical-align: baseline; }
+  .grid { margin: 6px 0; font-size: 1rem; }
+  .grid .lab { font-weight: 600; }
+  .grid .cells { display: grid; grid-template-columns: repeat(auto-fill, minmax(5.5em, 1fr)); border-left: 1.5px solid var(--ink); border-top: 1.5px solid var(--ink); margin-top: 4px; }
+  .grid .cells div { border-right: 1.5px solid var(--ink); border-bottom: 1.5px solid var(--ink); height: 3em; padding: 2px 6px; font-size: .85rem; color: var(--muted); }
+  .nodata { color: var(--muted); font-size: .95rem; margin: 8px 0 0; }
+  footer { color: var(--muted); font-size: 1rem; margin-top: 20px; }
+  @media (min-width: 901px) { .panel.in { position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow-y: auto; } }
+  @media (max-width: 1150px) { .rc { grid-template-columns: minmax(0, 1fr); } .rc .why { grid-column: auto; } }
+  @media (max-width: 900px) { .cols { grid-template-columns: minmax(0, 1fr); } .fld { flex-wrap: wrap; } .fld .lab { white-space: normal; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Four buildings, one set of templates</h1>
+  <p class="sub">Paste how each building documents interventions today; get the differences side by side and blank Tier 1, 2, and 3 forms every building can use.</p>
+
+  <div class="controls" role="group" aria-label="Practice notes">
+    <span>Practice</span>
+    <button data-input="behavior" aria-pressed="true">Behavior support</button>
+    <button data-input="reading" aria-pressed="false">Reading intervention</button>
+    <button id="toggle-prompt" aria-pressed="false">Show the prompt</button>
+  </div>
+
+  <section class="prompt" id="prompt" hidden>
+    <h2 style="font-size:1rem;margin:0 0 6px">The prompt (copy this into any AI chat)</h2>
+    <pre id="prompt-text"></pre>
+  </section>
+
+  <div class="cols">
+    <section class="panel in">
+      <h2>What you paste in</h2>
+      <div class="notes" id="in-notes"></div>
+    </section>
+    <section class="panel">
+      <h2>What comes back</h2>
+      <div class="out" id="out"></div>
+      <div id="form-area" hidden>
+        <div class="tiers" role="group" aria-label="Tier">
+          <button data-tier="1" aria-pressed="true">Tier 1 form</button>
+          <button data-tier="2" aria-pressed="false">Tier 2 form</button>
+          <button data-tier="3" aria-pressed="false">Tier 3 form</button>
+        </div>
+        <div id="form"></div>
+        <p class="nodata">Blank templates. Student ID only, never a name; no student data appears on this page.</p>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    The intervention team and principals review every ⚠ standard (those are district decisions, not wording choices) and pilot the forms in one building before rollout.
+    Every output was generated ahead of time so this page works with no internet.
+  </footer>
+</main>
+
+<script>
+const PROMPTS = {
+  templates: `Turn this description of how our buildings document tiered interventions today into one consistent set of fill-in templates for Tier 1, Tier 2, and Tier 3.
+
+Format: first, list every place the buildings differ (team name, entry criteria, review timing, exit criteria, family contact, record keeping), with what each building does today and the single standard you recommend. Mark with ⚠ any standard that is a district decision rather than a wording choice. Then write a blank, one-page form for each tier: labeled fill-in lines, checkboxes for common options, a measurable goal sentence frame, progress-check boxes, a fidelity check (sessions planned vs. delivered), family contact, and a decision section. Keep the same section order on all three tiers so staff learn it once. Where a building already does something well, keep it and say which one.
+
+Voice: practical and neutral, for building intervention teams and principals. A teacher should be able to fill in any form in ten minutes. Give every term of art a plain-word label.
+
+Context: we have four secondary buildings, and each built its own process. We want consistency without throwing out what works. The forms use a student ID only, never a name, and must contain no student data.
+
+Description:
+[paste your notes here]`
+};
+
+const INPUTS = [
+  { id: "behavior", src: "Compiled from September building visits. How each building documents behavior support today.", notes: [
+    ["Lincoln MS", "\"CARE team\" meets every other Tuesday. Tier 2 = check-in/check-out on a paper point sheet; the team reviews it \"when someone remembers.\" Tier 3 referrals go straight to the school psychologist by email. No family-contact step is written down anywhere."],
+    ["Cedar Ridge MS", "\"Student Support Team (SST).\" Shared spreadsheet with a tab per student; columns differ by grade-level team. Tier 2 starts after 3 referrals OR a teacher concern. Progress checked every 2 weeks. Exit criterion: \"doing better.\""],
+    ["North HS", "\"MTSS team,\" weekly. Tier 1 = expectations matrix posted in every room. Tier 2 = mentoring or a social-skills group, no set length. Only data used is office referrals. Tier 3 = functional behavior assessment and behavior plan, but the plan lives in the counselor's files and teachers can't see it."],
+    ["South HS", "\"Intervention team.\" One-page Tier 2 form with goal, start date, and a 6-week review. Tier 3 adds a team meeting with the family within 10 school days. Best documentation of the four, but nothing records whether the intervention was actually delivered as planned."]
+  ]},
+  { id: "reading", src: "Compiled from September principal interviews. How each building documents secondary reading intervention today.", notes: [
+    ["Lincoln MS", "Students below the 25th percentile on the fall benchmark are moved into \"Reading Lab\" in place of an elective. The teacher keeps a gradebook column for lab work. No individual goals. Students stay all year."],
+    ["Cedar Ridge MS", "Benchmark plus teacher recommendation. Tier 2 = 30-minute WIN period, 3 times a week, small groups by skill (fluency, comprehension, vocabulary). Oral reading fluency checked every 2 weeks and written on a clipboard chart. Tier 3 = pull-out with the reading specialist 5 times a week, but no written plan."],
+    ["North HS", "9th graders \"below grade level\" are placed in a Literacy Support class. The only documentation is the course enrollment. Teachers say they don't see students' scores. Moving out takes a counselor schedule change, in January only."],
+    ["South HS", "One-page plan: baseline score, skill focus, goal, group size, minutes per week, 6-week review. Family letter at the start. Doesn't separate Tier 2 from Tier 3; everything is called \"intervention.\""]
+  ]}
+];
+
+// Form field shorthands for the templates below.
+const line = l => ["line", l], area = l => ["area", l], check = (l, o) => ["check", l, o],
+      row = (...ls) => ["row", ls], frame = t => ["frame", t], grid = (l, cells) => ["grid", l, cells];
+const HEADER = h => ({ h: "Student and team", f: [row("Student ID", "Grade", "Building"), row(h, "Start date")] });
+const WEEKS = ["Wk 2", "Wk 4", "Wk 6", "Wk 8", "Wk 10", "Wk 12"];
+const WEEKLY = ["Wk 1", "Wk 2", "Wk 3", "Wk 4", "Wk 5", "Wk 6"];
+
+const CANNED = {
+  templates: {
+    behavior: {
+      recon: [
+        { topic: "Team name", today: "CARE team · SST · MTSS team · Intervention team", std: "Student Support Team (SST) in every building", decide: "District decision: pick one name. Cedar Ridge's is already the most common term." },
+        { topic: "Tier 2 entry", today: "3 referrals or concern · referrals only · not written down", std: "3 or more office referrals in 4 weeks, or a Tier 1 record showing 4 weeks without progress", decide: "District decision: the referral threshold sets how many students enter Tier 2." },
+        { topic: "Review timing", today: "\"when someone remembers\" · every 2 weeks · weekly · 6 weeks", std: "Data check every 2 weeks; team decision at 6 weeks" },
+        { topic: "Exit", today: "\"doing better\" · not stated", std: "Goal met on 3 checks in a row" },
+        { topic: "Family contact", today: "not written · Tier 3 only", std: "Recorded on every tier: date, method, what the family shared" },
+        { topic: "Delivered as planned?", today: "not recorded in any building", std: "Sessions planned vs. sessions delivered, on Tier 2 and Tier 3" },
+        { topic: "Who sees the plan", today: "counselor's files · spreadsheet tabs · paper", std: "Stored where every teacher on the student's team can see it", decide: "District decision: name the system where plans are stored." }
+      ],
+      kept: "Kept from South HS: the one-page form, the 6-week review, and the family meeting within 10 school days for Tier 3. Kept from Cedar Ridge: the 2-week data check.",
+      tiers: {
+        1: { name: "Tier 1: Classroom support record", use: "Filled in by the classroom teacher before asking the SST for Tier 2 help.", sections: [
+          HEADER("Teacher (role)"),
+          { h: "1. Concern", f: [check("Type", ["Disruption", "Refusal", "Peer conflict", "Withdrawn", "Other"]), area("What it looks like (what you see and hear, no labels)"), line("When and where it happens most")] },
+          { h: "2. Supports tried", f: [check("Classroom supports", ["Expectations re-taught", "Seat change", "Reminders before transitions", "Positive call home", "Reset space"]), line("Dates tried")] },
+          { h: "3. Data", f: [row("Office referrals, last 4 weeks", "Days absent, last 4 weeks")] },
+          { h: "4. Family contact", f: [row("Date", "Method")], extra: check("", ["Phone", "Email", "In person", "Interpreter used"]) },
+          { h: "5. Decision", f: [check("Next step", ["Continue Tier 1, recheck on ____", "Refer to SST for Tier 2"])] }
+        ]},
+        2: { name: "Tier 2: Targeted support plan", use: "Filled in by the SST case lead. Reviewed every 2 weeks; team decision at 6 weeks.", sections: [
+          HEADER("Case lead (role)"),
+          { h: "1. Why Tier 2", f: [check("Entry reason", ["3+ referrals in 4 weeks", "Tier 1 record, 4 weeks no progress", "Screener result", "Team concern"]), line("Baseline (number and dates)")] },
+          { h: "2. Goal", f: [frame("By ____ , the student will ____ , as measured by ____ .")] },
+          { h: "3. Support", f: [check("Intervention", ["Check-in/check-out", "Social-skills group", "Mentoring", "Scheduled breaks"]), row("Times per week", "Minutes", "Group size", "Delivered by (role)")] },
+          { h: "4. Progress checks", f: [line("Measure used"), grid("Result every 2 weeks", WEEKS)] },
+          { h: "5. Delivered as planned?", f: [row("Sessions planned", "Sessions delivered")] },
+          { h: "6. Family contact", f: [row("Date", "Method"), line("What the family shared")] },
+          { h: "7. Decision at 6 weeks", f: [check("", ["Continue", "Adjust: ____", "Exit (goal met 3 checks in a row)", "Move to Tier 3"])] }
+        ]},
+        3: { name: "Tier 3: Intensive individual plan", use: "Filled in by the SST with the family. Family meeting within 10 school days of entry.", sections: [
+          HEADER("Case lead (role)"),
+          { h: "1. Why Tier 3", f: [check("Entry reason", ["6+ weeks of Tier 2, delivered as planned, without progress", "Safety concern"]), row("Team members (roles only)", "Family meeting date")] },
+          { h: "2. Goal and assessment", f: [row("Functional assessment started", "Completed"), frame("When ____ happens, the student ____ in order to ____ ."), frame("By ____ , the student will ____ , as measured by ____ .")] },
+          { h: "3. Support", f: [line("Replacement skill taught"), line("Changes to the setting"), line("Adult response plan"), row("Times per week", "Minutes", "Delivered by (role)")] },
+          { h: "4. Progress checks", f: [line("Measure used"), grid("Result every week", WEEKLY)] },
+          { h: "5. Delivered as planned?", f: [row("Sessions planned", "Sessions delivered")] },
+          { h: "6. Family contact", f: [row("Date", "Method"), check("", ["Interpreter needed"]), line("What the family shared")] },
+          { h: "7. Decision every 2 weeks", f: [check("", ["Continue", "Adjust: ____", "Step down to Tier 2", "Team discusses evaluation with school psychologist"]), line("Plan stored at (all of the student's teachers can see it)")] }
+        ]}
+      }
+    },
+    reading: {
+      recon: [
+        { topic: "Entry", today: "below 25th percentile · benchmark + teacher · \"below grade level\" · not stated", std: "Fall benchmark below the 25th percentile, confirmed by one second measure", decide: "District decision: the cut score sets how many students are served." },
+        { topic: "Goals", today: "none · by skill group · none · written goal", std: "Every student has a written, measurable goal" },
+        { topic: "Progress checks", today: "gradebook · fluency every 2 weeks · enrollment only · 6-week review", std: "Skill-matched check every 2 weeks (Tier 2), every week (Tier 3)" },
+        { topic: "Tier 2 vs. Tier 3", today: "one tier · specialist with no plan · one class · \"intervention\"", std: "Tier 3 = more minutes, a group of 1–3, and an individual plan" },
+        { topic: "Exit", today: "stays all year · not stated · January only", std: "Exit when the goal is met on 3 checks in a row; moves possible at every 6-week review", decide: "District decision: the master schedule must allow mid-semester moves at the high schools." },
+        { topic: "Family contact", today: "South HS only", std: "Family letter at entry and at every 6-week decision, all buildings" },
+        { topic: "Delivered as planned?", today: "not recorded in any building", std: "Minutes planned vs. minutes delivered, on Tier 2 and Tier 3" }
+      ],
+      kept: "Kept from South HS: the one-page plan with baseline, skill focus, goal, and 6-week review. Kept from Cedar Ridge: skill-based groups and the 2-week fluency check.",
+      tiers: {
+        1: { name: "Tier 1: Classroom reading support record", use: "Filled in by the ELA or content teacher before referring for Tier 2.", sections: [
+          HEADER("Teacher (role)"),
+          { h: "1. Concern", f: [check("Skill area", ["Decoding", "Fluency", "Vocabulary", "Comprehension", "Writing about reading"]), row("Benchmark score", "Percentile", "Date"), area("Classroom evidence (work samples, observations)")] },
+          { h: "2. Supports tried", f: [check("Classroom supports", ["Small-group reteach", "Text at reading level", "Vocabulary preview", "Graphic organizer", "Audio support"]), line("Dates tried")] },
+          { h: "3. Data", f: [row("Second measure used", "Result", "Date")] },
+          { h: "4. Family contact", f: [row("Date", "Method")], extra: check("", ["Phone", "Email", "In person", "Interpreter used"]) },
+          { h: "5. Decision", f: [check("Next step", ["Continue Tier 1, recheck on ____", "Refer for Tier 2"])] }
+        ]},
+        2: { name: "Tier 2: Targeted reading plan", use: "Filled in by the intervention teacher. Checked every 2 weeks; team decision at 6 weeks.", sections: [
+          HEADER("Intervention teacher (role)"),
+          { h: "1. Why Tier 2", f: [check("Entry reason", ["Below 25th percentile + second measure", "Tier 1 record, 6 weeks no progress"]), row("Baseline measure", "Score", "Date")] },
+          { h: "2. Goal", f: [check("Skill focus", ["Decoding", "Fluency", "Vocabulary", "Comprehension"]), frame("By ____ , the student will ____ , as measured by ____ .")] },
+          { h: "3. Support", f: [line("Approach or program"), row("Sessions per week", "Minutes", "Group size", "Delivered by (role)")] },
+          { h: "4. Progress checks", f: [line("Measure used"), grid("Score every 2 weeks", WEEKS)] },
+          { h: "5. Delivered as planned?", f: [row("Minutes planned", "Minutes delivered")] },
+          { h: "6. Family contact", f: [row("Letter sent (date)", "6-week update (date)")] },
+          { h: "7. Decision at 6 weeks", f: [check("", ["Continue", "Adjust: ____", "Exit (goal met 3 checks in a row)", "Move to Tier 3"])] }
+        ]},
+        3: { name: "Tier 3: Intensive reading plan", use: "Filled in by the reading specialist with the team. Checked every week.", sections: [
+          HEADER("Reading specialist (role)"),
+          { h: "1. Why Tier 3", f: [check("Entry reason", ["6+ weeks of Tier 2, delivered as planned, without progress", "Far below benchmark at entry"]), row("Team members (roles only)", "Family meeting date")] },
+          { h: "2. Goal and assessment", f: [row("Diagnostic assessment used", "Date"), line("Specific skills to target"), frame("By ____ , the student will ____ , as measured by ____ .")] },
+          { h: "3. Support", f: [line("Approach or program"), row("Sessions per week", "Minutes", "Group size (1–3)", "Delivered by (role)")] },
+          { h: "4. Progress checks", f: [line("Measure used"), grid("Score every week", WEEKLY)] },
+          { h: "5. Delivered as planned?", f: [row("Minutes planned", "Minutes delivered")] },
+          { h: "6. Family contact", f: [row("Date", "Method"), check("", ["Interpreter needed"]), line("What the family shared")] },
+          { h: "7. Decision every 2 weeks", f: [check("", ["Continue", "Adjust: ____", "Step down to Tier 2", "Team discusses evaluation with school psychologist"])] }
+        ]}
+      }
+    }
+  }
+};
+
+// AI boundary. Canned today; to go live, replace this body with a call to a model
+// (send PROMPTS[task] + the input text, return the model's text). Nothing else changes.
+async function respond(task, input) {
+  await new Promise(r => setTimeout(r, 700)); // feels like generation; remove when live
+  return CANNED[task][input.id];
+}
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const $ = id => document.getElementById(id);
+const blankLine = l => `<div class="fld"><span class="lab">${esc(l)}</span><span class="blank"></span></div>`;
+let runId = 0, result = null, tier = "1";
+
+function field(f) {
+  const [type, a, b] = f;
+  if (type === "line") return blankLine(a);
+  if (type === "row") return `<div class="row">${a.map(blankLine).join("")}</div>`;
+  if (type === "area") return `<div class="area"><div class="lab">${esc(a)}</div><div class="box" style="height:3.2em"></div></div>`;
+  if (type === "check") return `<div class="checks">${a ? `<div class="lab">${esc(a)}</div>` : ""}<div class="opts">${b.map(o => `<span>${esc(o)}</span>`).join("")}</div></div>`;
+  if (type === "frame") return `<div class="frame">${esc(a).replace(/____/g, '<span class="blank"></span>')}</div>`;
+  if (type === "grid") return `<div class="grid"><div class="lab">${esc(a)}</div><div class="cells">${b.map(c => `<div>${esc(c)}</div>`).join("")}</div></div>`;
+}
+
+function renderForm() {
+  document.querySelectorAll("[data-tier]").forEach(b => b.setAttribute("aria-pressed", b.dataset.tier === tier));
+  const t = result.tiers[tier];
+  $("form").innerHTML = `<div class="form">
+    <div class="fhead"><h3>${esc(t.name)}</h3><span>Same section order on every tier</span></div>
+    <p class="use">${esc(t.use)}</p>
+    ${t.sections.map(s => `<div class="fsec"><h4>${esc(s.h)}</h4>${s.f.map(field).join("")}${s.extra ? field(s.extra) : ""}</div>`).join("")}
+  </div>`;
+}
+
+function render(r) {
+  result = r;
+  const decisions = r.recon.filter(x => x.decide).length;
+  $("out").innerHTML = `
+    <h3>${r.recon.length} differences made consistent · ${decisions} need a district decision</h3>
+    <div class="recon">${r.recon.map(x => `<div class="rc${x.decide ? " decide" : ""}">
+      <div class="topic">${esc(x.topic)}</div><div class="today">Today: ${esc(x.today)}</div><div class="std">${esc(x.std)}</div>
+      ${x.decide ? `<div class="why">⚠ ${esc(x.decide)}</div>` : ""}</div>`).join("")}</div>
+    <p class="kept">${esc(r.kept)}</p>`;
+  $("form-area").hidden = false;
+  renderForm();
+}
+
+async function run(input) {
+  const my = ++runId;
+  document.querySelectorAll("[data-input]").forEach(b => b.setAttribute("aria-pressed", b.dataset.input === input.id));
+  $("in-notes").innerHTML = `<p class="src">${esc(input.src)}</p>` +
+    input.notes.map(([b, t]) => `<h3>${esc(b)}</h3><p>${esc(t)}</p>`).join("");
+  $("out").innerHTML = `<p class="drafting">Drafting…</p>`;
+  $("form-area").hidden = true;
+  const r = await respond("templates", input);
+  if (my === runId) render(r);
+}
+
+document.querySelectorAll("[data-input]").forEach(b =>
+  b.addEventListener("click", () => run(INPUTS.find(i => i.id === b.dataset.input))));
+document.querySelectorAll("[data-tier]").forEach(b =>
+  b.addEventListener("click", () => { tier = b.dataset.tier; if (result) renderForm(); }));
+
+$("prompt-text").textContent = PROMPTS.templates;
+$("toggle-prompt").addEventListener("click", () => {
+  const box = $("prompt");
+  box.hidden = !box.hidden;
+  $("toggle-prompt").setAttribute("aria-pressed", !box.hidden);
+  $("toggle-prompt").textContent = box.hidden ? "Show the prompt" : "Hide the prompt";
+});
+
+run(INPUTS[0]);
+</script>
+</body>
+</html>
