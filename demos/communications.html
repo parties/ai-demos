@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>One Message, Every Family</title>
+<style>
+  :root {
+    --bg: #fcfcfb; --ink: #0b0b0b; --muted: #52514e; --line: #d9d8d3;
+    --card: #ffffff; --accent: #1c5cab; --accent-ink: #ffffff; --soft: #eef4fc;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 20px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1500px; margin: 0 auto; padding: 24px 16px 40px; }
+  h1 { font-size: 2.1rem; margin: 0; line-height: 1.2; }
+  .sub { color: var(--muted); margin: 6px 0 20px; font-size: 1.15rem; }
+  .original { background: #f3f2ee; border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px; margin-bottom: 18px; }
+  .original h2 { font-size: 1rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 6px; }
+  .original p { margin: 0; font-size: 1.05rem; }
+  .controls { display: flex; flex-wrap: wrap; gap: 22px; align-items: center; margin-bottom: 18px; }
+  .group { display: flex; gap: 0; align-items: center; }
+  .group span { color: var(--muted); margin-right: 10px; font-weight: 600; }
+  button { font: inherit; font-weight: 600; padding: 10px 22px; min-height: 52px; cursor: pointer;
+    background: var(--card); color: var(--ink); border: 2px solid var(--accent); }
+  .group button:first-of-type { border-radius: 10px 0 0 10px; }
+  .group button:last-of-type { border-radius: 0 10px 10px 0; border-left: 0; }
+  button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+  #toggle-original { border-radius: 10px; border-color: var(--line); }
+  .cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .col { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; }
+  .col h3 { margin: 0; font-size: 1.35rem; }
+  .stats { color: var(--muted); font-size: .95rem; margin: 2px 0 10px; }
+  .col p { margin: 0; }
+  footer { color: var(--muted); font-size: 1rem; margin-top: 20px; }
+  @media (max-width: 900px) { .cols { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>One message, every family</h1>
+  <p class="sub">Three reading levels, two tones, two languages, from one paragraph. Drafted with AI, edited by a person.</p>
+
+  <section class="original" id="original">
+    <h2>What central office wrote</h2>
+    <p id="original-text"></p>
+  </section>
+
+  <div class="controls">
+    <div class="group" role="group" aria-label="Tone">
+      <span>Tone</span>
+      <button data-tone="warm" aria-pressed="true">Warm</button>
+      <button data-tone="formal" aria-pressed="false">Formal</button>
+    </div>
+    <div class="group" role="group" aria-label="Language">
+      <span>Language</span>
+      <button data-lang="en" aria-pressed="true">English</button>
+      <button data-lang="es" aria-pressed="false">Español</button>
+    </div>
+    <button id="toggle-original" aria-pressed="true">Hide original</button>
+  </div>
+
+  <div class="cols">
+    <article class="col"><h3>3rd grade level</h3><div class="stats" id="s-g3"></div><p id="t-g3"></p></article>
+    <article class="col"><h3>8th grade level</h3><div class="stats" id="s-g8"></div><p id="t-g8"></p></article>
+    <article class="col"><h3>Adult level</h3><div class="stats" id="s-adult"></div><p id="t-adult"></p></article>
+  </div>
+
+  <footer>
+    Spanish is an AI first draft; a fluent reviewer signs off before anything is sent.
+    Every version was generated ahead of time so this page works with no internet.
+  </footer>
+</main>
+
+<script>
+const ORIGINAL = "In accordance with district procedures governing inclement weather, the determination to implement a delayed start or a full closure is made by the Superintendent following an assessment of road conditions conducted by transportation staff beginning at 4:30 a.m. Notifications will be disseminated no later than 6:00 a.m. via text message, email, the district website, and local media outlets. In the event of a two-hour delay, morning preschool sessions are cancelled and bus pickup times shift by two hours. Families are encouraged to verify that their contact information is current in the family portal to ensure timely receipt of notifications.";
+
+const TEXT = {
+  en: {
+    warm: {
+      g3: "Snow day news! When the roads are icy, we may start school late or close for the day. Our bus team checks the roads very early. By 6:00 in the morning, we will send you a text and an email. If school starts two hours late, the bus comes two hours late too. Morning preschool will not meet that day. Please make sure we have your phone number.",
+      g8: "When winter weather hits, we know you need an answer early. Our transportation team starts checking roads at 4:30 a.m., and the superintendent decides whether to delay or close. You'll hear from us by 6:00 a.m. by text, email, the website, and local news. On a two-hour delay, buses run two hours later and morning preschool is cancelled. Take a minute now to check that your phone and email are current in the family portal. That's how we reach you.",
+      adult: "Winter is coming, and with it the early-morning question every family asks: is there school today? Here is how we decide. Beginning at 4:30 a.m., our transportation staff drive the routes and report on road conditions; the superintendent then makes the call to open on time, delay, or close. Whatever the decision, you will hear from us by 6:00 a.m. by text, email, the district website, and local media. On a two-hour delay, every bus runs two hours later and morning preschool is cancelled. The most helpful thing you can do now is confirm your phone number and email in the family portal, so the message reaches you the moment it goes out."
+    },
+    formal: {
+      g3: "When roads are icy, school may start late or close. Bus staff check the roads early in the morning. We will send a text and an email by 6:00 a.m. If school starts two hours late, buses come two hours late. Morning preschool will not meet. Please keep your phone number up to date.",
+      g8: "During winter weather, the superintendent decides whether to delay or close school after transportation staff check road conditions starting at 4:30 a.m. The district will announce its decision by 6:00 a.m. through text message, email, the district website, and local media. On a two-hour delay, bus pickup times move two hours later and morning preschool is cancelled. Please confirm that your contact information is current in the family portal.",
+      adult: "Decisions to delay or close schools due to inclement weather are made by the superintendent following a road-condition assessment by transportation staff, which begins at 4:30 a.m. The district will issue notification no later than 6:00 a.m. by text message, email, the district website, and local media. When a two-hour delay is in effect, bus pickup times shift two hours later and morning preschool sessions are cancelled. Families are asked to verify that their contact information in the family portal is current to ensure timely notification."
+    }
+  },
+  es: {
+    warm: {
+      g3: "¡Noticias sobre la nieve! Cuando las calles tienen hielo, la escuela puede empezar tarde o cerrar ese día. Nuestro equipo de autobuses revisa las calles muy temprano. Antes de las 6:00 de la mañana, le enviaremos un mensaje de texto y un correo electrónico. Si la escuela empieza dos horas tarde, el autobús también pasa dos horas tarde. Ese día no habrá preescolar en la mañana. Por favor, asegúrese de que tengamos su número de teléfono.",
+      g8: "Cuando llega el mal tiempo, sabemos que usted necesita una respuesta temprano. Nuestro equipo de transporte empieza a revisar las calles a las 4:30 a. m., y el superintendente decide si se retrasa el inicio o se cierran las escuelas. Le avisaremos antes de las 6:00 a. m. por mensaje de texto, correo electrónico, el sitio web y las noticias locales. Si hay un retraso de dos horas, los autobuses pasan dos horas más tarde y se cancela el preescolar de la mañana. Tómese un minuto ahora para revisar que su teléfono y su correo estén al día en el portal para familias. Así es como nos comunicamos con usted.",
+      adult: "Llega el invierno y, con él, la pregunta que toda familia se hace temprano por la mañana: ¿hay clases hoy? Así es como lo decidimos. A partir de las 4:30 a. m., nuestro personal de transporte recorre las rutas e informa sobre el estado de las calles; luego, el superintendente decide si las escuelas abren a tiempo, con retraso o si se cierran. Sea cual sea la decisión, usted sabrá de nosotros antes de las 6:00 a. m. por mensaje de texto, por correo electrónico, en el sitio web del distrito y en los medios locales. Con un retraso de dos horas, todos los autobuses pasan dos horas más tarde y se cancela el preescolar de la mañana. Lo más útil que puede hacer ahora es confirmar su número de teléfono y su correo electrónico en el portal para familias, para que el aviso le llegue en cuanto lo enviemos."
+    },
+    formal: {
+      g3: "Cuando las calles tienen hielo, la escuela puede empezar tarde o cerrar. El personal de transporte revisa las calles temprano en la mañana. Enviaremos un mensaje de texto y un correo electrónico antes de las 6:00 a. m. Si la escuela empieza dos horas tarde, los autobuses pasan dos horas tarde. No habrá preescolar en la mañana. Por favor, mantenga su número de teléfono al día.",
+      g8: "Durante el mal tiempo invernal, el superintendente decide si se retrasa el inicio o se cierran las escuelas, después de que el personal de transporte revisa las condiciones de las calles a partir de las 4:30 a. m. El distrito anunciará su decisión antes de las 6:00 a. m. por mensaje de texto, correo electrónico, el sitio web del distrito y los medios locales. Con un retraso de dos horas, el horario de los autobuses se mueve dos horas más tarde y se cancela el preescolar de la mañana. Por favor, confirme que su información de contacto esté actualizada en el portal para familias.",
+      adult: "La decisión de retrasar el inicio de clases o cerrar las escuelas por mal tiempo la toma el superintendente, tras una evaluación de las condiciones de las calles realizada por el personal de transporte a partir de las 4:30 a. m. El distrito emitirá la notificación a más tardar a las 6:00 a. m. por mensaje de texto, correo electrónico, el sitio web del distrito y los medios locales. Cuando haya un retraso de dos horas, el horario de recogida de los autobuses se desplazará dos horas y se cancelarán las sesiones de preescolar de la mañana. Se solicita a las familias verificar que su información de contacto en el portal para familias esté actualizada, a fin de garantizar una notificación oportuna."
+    }
+  }
+};
+
+const state = { tone: "warm", lang: "en" };
+
+// "a.m." / "a. m." ends a sentence only when a capital follows it.
+function stats(text, lang) {
+  const words = text.split(/\s+/).filter(Boolean).length;
+  const plain = text.replace(/a\.\s?m\.(\s+[A-ZÁÉÍÓÚ¿¡])/g, "am.$1").replace(/a\.\s?m\./g, "am");
+  const sentences = plain.split(/[.!?]+(?=\s|$)/).filter(s => s.trim()).length;
+  const per = Math.round(words / sentences);
+  return lang === "es" ? `${words} palabras · ${per} por oración` : `${words} words · ${per} per sentence`;
+}
+
+function render() {
+  for (const level of ["g3", "g8", "adult"]) {
+    const text = TEXT[state.lang][state.tone][level];
+    const p = document.getElementById("t-" + level);
+    p.textContent = text;
+    p.lang = state.lang;
+    document.getElementById("s-" + level).textContent = stats(text, state.lang);
+  }
+  document.querySelectorAll("[data-tone]").forEach(b => b.setAttribute("aria-pressed", b.dataset.tone === state.tone));
+  document.querySelectorAll("[data-lang]").forEach(b => b.setAttribute("aria-pressed", b.dataset.lang === state.lang));
+}
+
+document.querySelectorAll("[data-tone]").forEach(b => b.addEventListener("click", () => { state.tone = b.dataset.tone; render(); }));
+document.querySelectorAll("[data-lang]").forEach(b => b.addEventListener("click", () => { state.lang = b.dataset.lang; render(); }));
+
+const toggle = document.getElementById("toggle-original");
+toggle.addEventListener("click", () => {
+  const box = document.getElementById("original");
+  box.hidden = !box.hidden;
+  toggle.setAttribute("aria-pressed", !box.hidden);
+  toggle.textContent = box.hidden ? "Show original" : "Hide original";
+});
+
+document.getElementById("original-text").textContent = ORIGINAL;
+render();
+</script>
+</body>
+</html>
