@@ -3,91 +3,67 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Board Memo First Drafts</title>
+<title>Drafting a Board Memo From Your Notes</title>
+<link rel="stylesheet" href="../assets/demo.css">
+<script src="../assets/demo.js" defer></script>
 <style>
-  :root {
-    --bg: #fcfcfb; --ink: #0b0b0b; --muted: #52514e; --line: #d9d8d3;
-    --card: #ffffff; --accent: #1c5cab; --accent-ink: #ffffff; --soft: #eef4fc;
-    --paper: #f3f2ee; --warn-bg: #fff3d6; --warn-line: #c98500; --good: #1b7a4a;
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--ink);
-    font: 20px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  main { max-width: 1500px; margin: 0 auto; padding: 24px 16px 40px; }
-  h1 { font-size: 2.1rem; margin: 0; line-height: 1.2; }
-  .sub { color: var(--muted); margin: 6px 0 20px; font-size: 1.15rem; }
-  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 18px; }
-  .controls > span { color: var(--muted); font-weight: 600; margin-right: 4px; }
-  button { font: inherit; font-weight: 600; padding: 10px 22px; min-height: 52px; cursor: pointer;
-    background: var(--card); color: var(--ink); border: 2px solid var(--accent); border-radius: 10px; }
-  button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
-  #toggle-prompt { border-color: var(--line); }
-  .prompt { background: var(--soft); border: 2px solid var(--accent); border-radius: 12px; padding: 14px 18px; margin-bottom: 18px; }
-  .prompt h2 { font-size: 1rem; margin: 0 0 6px; }
-  pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; }
-  .prompt pre { font-size: 1rem; }
-  .cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); gap: 16px; align-items: start; }
-  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; }
-  .panel.in { background: var(--paper); }
-  .panel > h2 { font-size: 1rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 8px; }
-  .panel h3 { font-size: 1.1rem; margin: 0 0 6px; }
-  .notes { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; }
-  .example { background: var(--card); border: 1px dashed #8f8d87; border-radius: 10px; padding: 12px 16px; font-size: .9rem; }
-  .drafting { color: var(--muted); font-style: italic; font-size: 1.15rem; }
-  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
-  .chip { border: 2px solid var(--good); color: var(--good); border-radius: 999px; padding: 2px 12px; font-weight: 600; font-size: .95rem; background: #e7f4ec; }
-  .memo { border: 1px solid var(--line); border-radius: 6px; padding: 18px 22px; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
-  .memo .org { font-size: .9rem; letter-spacing: .08em; text-transform: uppercase; font-weight: 700; border-bottom: 3px solid var(--ink); padding-bottom: 6px; margin-bottom: 10px; }
-  .memo dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 2px 14px; margin: 0 0 12px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+  /* The draft memo reads as a sheet of paper inside the AI panel. */
+  .memo { background: var(--card); border: 1px solid var(--rule); border-radius: 6px; padding: 18px 22px; box-shadow: 0 2px 8px rgba(30,40,50,.08); }
+  .memo .org { font: 700 .95rem var(--serif); border-bottom: 3px solid var(--ink); padding-bottom: 6px; margin-bottom: 10px; }
+  .memo dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 2px 14px; margin: 0 0 12px; padding-bottom: 10px; border-bottom: 1px solid var(--rule); }
   .memo dt { font-weight: 700; }
   .memo dd { margin: 0; }
-  .memo h4 { font-size: .95rem; letter-spacing: .06em; margin: 14px 0 4px; color: var(--accent); }
+  .memo h4 { font: 700 .95rem var(--sans); letter-spacing: .04em; margin: 14px 0 4px; color: var(--accent); }
   .memo p { margin: 0 0 6px; }
   .memo ul { margin: 0 0 6px; padding-left: 1.2em; }
-  mark { background: var(--warn-bg); border: 2px solid var(--warn-line); border-radius: 6px; padding: 0 4px; color: var(--ink); font-weight: 600; }
-  .flag { background: var(--warn-bg); border: 2px solid var(--warn-line); border-radius: 10px; padding: 10px 16px; margin: 16px 0 0; }
-  .flag h3 { margin: 0 0 4px; font-size: 1.15rem; }
-  .flag ul { margin: 0; padding-left: 1.2em; }
-  .flag li { margin: 4px 0; }
-  footer { color: var(--muted); font-size: 1rem; margin-top: 20px; }
-  @media (min-width: 901px) { .panel.in { position: sticky; top: 12px; } }
-  @media (max-width: 900px) { .cols { grid-template-columns: minmax(0, 1fr); } .memo dl { grid-template-columns: 1fr; } }
+  .memo mark { background: var(--warn-bg); border: 2px solid var(--warn); border-radius: 6px; padding: 0 4px; font-weight: 600; }
+  @media (max-width: 700px) { .memo dl { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
-<main>
-  <h1>Board memo first drafts</h1>
-  <p class="sub">Your bullet notes plus last month's memo become a draft in the board's house format. You edit instead of starting cold.</p>
+<main class="demo">
+  <a class="demo-back" href="../index.html">All demos</a>
+  <header class="demo-head">
+    <h1>Drafting a board memo from your notes</h1>
+    <p class="demo-intro">Board memos follow the same format every month, which makes a first draft a good job for AI. Here, a superintendent gives the AI their rough notes and last month's memo, and asks for this month's memo in the same format. The AI fills in what the notes support and marks every figure it could not confirm, so the superintendent edits a draft instead of starting from a blank page.</p>
+    <p class="demo-intro">Choose a topic to see a different set of notes and the draft that comes back.</p>
+  </header>
 
-  <div class="controls" role="group" aria-label="Notes">
-    <span>This month's notes</span>
+  <div class="demo-presets" role="group" aria-label="Topic">
+    <span>This month's topic</span>
     <button data-input="roof" aria-pressed="true">Emergency roof repair</button>
     <button data-input="literacy" aria-pressed="false">Reading screener results</button>
     <button data-input="phones" aria-pressed="false">Cell phone policy</button>
-    <button id="toggle-prompt" aria-pressed="false">Show the prompt</button>
   </div>
 
-  <section class="prompt" id="prompt" hidden>
-    <h2>The prompt (copy this into any AI chat)</h2>
-    <pre id="prompt-text"></pre>
-  </section>
-
-  <div class="cols">
-    <section class="panel in">
-      <h2>What you paste in</h2>
-      <div class="notes"><h3>1. Your notes</h3><pre id="in-notes"></pre></div>
-      <div class="example"><h3>2. Last month's memo (the format to copy)</h3><pre id="in-example"></pre></div>
+  <div class="demo-steps">
+    <section class="demo-step demo-step--prompt">
+      <h2 class="demo-step-title">The prompt <button type="button" class="demo-copy">Copy the prompt</button></h2>
+      <p class="demo-step-note">What the superintendent types into the AI chat. The highlighted brackets show where each file goes. The same prompt works every month.</p>
+      <pre class="demo-prompt" id="prompt-text"></pre>
     </section>
-    <section class="panel">
-      <h2>What comes back</h2>
+
+    <section class="demo-step demo-step--files">
+      <h2 class="demo-step-title">The files you attach</h2>
+      <p class="demo-step-note">Pasted in below the prompt, or attached as files.</p>
+      <div class="demo-files">
+        <div class="demo-file"><span class="demo-file-tab">This month's notes</span><div class="demo-file-body"><pre id="in-notes"></pre></div></div>
+        <div class="demo-file"><span class="demo-file-tab">Last month's memo (copy its format)</span><div class="demo-file-body"><pre id="in-example"></pre></div></div>
+      </div>
+    </section>
+
+    <section class="demo-step demo-step--output" aria-live="polite">
+      <h2 class="demo-step-title">What the AI wrote <span class="demo-ai-tag">AI-generated</span></h2>
       <div id="out"></div>
     </section>
   </div>
 
-  <footer>
-    The superintendent checks every figure against the source, sets the agenda number, and owns the final wording before it goes in the packet.
-    Every output was generated ahead of time so this page works with no internet.
-  </footer>
+  <aside class="demo-before-use">
+    <h2>Before you use it</h2>
+    <p>The superintendent checks every figure against its source, fills in the agenda item number, and decides the final wording before the memo goes in the board packet. The AI's list at the bottom of the draft is where that checking starts.</p>
+  </aside>
+
+  <footer class="demo-foot">Every name, number, and document on this page is made up. The AI's answers were written ahead of time, so the page works without an internet connection.</footer>
 </main>
 
 <script>
@@ -265,10 +241,10 @@ function renderMemo(m) {
       : lines.flatMap(l => l.split("   ")).map(l => `<p>${marks(l)}</p>`).join("");
     return `<h4>${h}</h4>${text}`;
   }).join("");
-  return `<div class="chips">${m.chips.map(c => `<span class="chip">✓ ${esc(c)}</span>`).join("")}</div>
+  return `<div class="demo-chips">${m.chips.map(c => `<span class="demo-chip">✓ ${esc(c)}</span>`).join("")}</div>
     <article class="memo"><div class="org">Memorandum to the Board of Education</div>
     <dl>${m.head.map(([k, v]) => `<dt>${k}:</dt><dd>${marks(v)}</dd>`).join("")}</dl>${body}</article>
-    <div class="flag"><h3>⚠ Before this goes in the packet (${m.checks.length})</h3>
+    <div class="demo-flag"><h3>⚠ Before this goes in the packet (${m.checks.length})</h3>
     <ul>${m.checks.map(c => `<li>${esc(c)}</li>`).join("")}</ul></div>`;
 }
 
@@ -279,19 +255,12 @@ async function show(id) {
   document.querySelectorAll("[data-input]").forEach(b => b.setAttribute("aria-pressed", b.dataset.input === id));
   document.getElementById("in-notes").textContent = INPUTS[id].notes;
   const out = document.getElementById("out");
-  out.innerHTML = '<p class="drafting">Drafting…</p>';
+  out.innerHTML = '<p class="demo-drafting">Drafting…</p>';
   const memo = await respond("memo", { id, notes: INPUTS[id].notes, example: EXAMPLE });
   if (run === runId) out.innerHTML = renderMemo(memo);
 }
 
 document.querySelectorAll("[data-input]").forEach(b => b.addEventListener("click", () => show(b.dataset.input)));
-const toggle = document.getElementById("toggle-prompt");
-toggle.addEventListener("click", () => {
-  const box = document.getElementById("prompt");
-  box.hidden = !box.hidden;
-  toggle.setAttribute("aria-pressed", !box.hidden);
-  toggle.textContent = box.hidden ? "Show the prompt" : "Hide the prompt";
-});
 document.getElementById("prompt-text").textContent = PROMPTS.memo;
 document.getElementById("in-example").textContent = EXAMPLE;
 show(current);

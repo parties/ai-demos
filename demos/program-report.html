@@ -3,88 +3,74 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Numbers to Report Narrative</title>
+<title>Writing a Grant Report From Program Data</title>
+<link rel="stylesheet" href="../assets/demo.css">
+<script src="../assets/demo.js" defer></script>
 <style>
-  :root {
-    --bg: #fcfcfb; --ink: #0b0b0b; --muted: #52514e; --line: #d9d8d3;
-    --card: #ffffff; --accent: #1c5cab; --accent-ink: #ffffff; --soft: #eef4fc;
-    --hl: #ffe38a; --ok: #135c2f; --ok-bg: #e4f3e9; --warn: #7a4300; --warn-bg: #fff3df; --paper: #f3f2ee;
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--ink); overflow-wrap: anywhere;
-    font: 20px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  main { max-width: 1500px; margin: 0 auto; padding: 24px 16px 40px; }
-  h1 { font-size: 2.1rem; margin: 0; line-height: 1.2; }
-  .sub { color: var(--muted); margin: 6px 0 20px; font-size: 1.15rem; }
-  .controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 18px; }
-  .controls > span { color: var(--muted); font-weight: 600; }
-  button { font: inherit; font-weight: 600; padding: 10px 22px; min-height: 52px; cursor: pointer;
-    background: var(--card); color: var(--ink); border: 2px solid var(--accent); border-radius: 10px; }
-  button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
-  #toggle-prompt { border-color: var(--line); }
-  #toggle-prompt[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); }
-  pre.prompt { white-space: pre-wrap; background: var(--paper); border: 1px solid var(--line); border-radius: 10px;
-    padding: 14px 18px; margin: 0 0 18px; font: .95rem/1.5 ui-monospace, Menlo, Consolas, monospace; }
-  .cols { display: grid; grid-template-columns: 1fr 1.1fr; gap: 18px; align-items: start; }
-  .label { font-size: 1rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 8px; font-weight: 700; }
-  .scroll { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--line); font-size: .85rem; }
-  caption { text-align: left; font-weight: 700; font-size: 1rem; padding-bottom: 6px; }
-  th, td { overflow-wrap: normal; padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
-  thead th { background: var(--paper); font-size: .8rem; }
-  td.num { white-space: nowrap; font-weight: 700; }
-  td.rid { font-weight: 800; color: var(--accent); }
-  tr.hl td { background: var(--hl); }
-  .notes { background: var(--paper); border: 1px dashed #b9b7af; border-radius: 10px; padding: 10px 14px; margin-top: 12px; font-size: .9rem; }
-  .notes b { display: block; }
-  .report { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; }
+  /* The data table, with the row a clicked sentence came from highlighted. */
+  .data caption { text-align: left; font-weight: 700; padding-bottom: 6px; }
+  .data th, .data td { overflow-wrap: normal; }
+  .data thead th { font-size: .85rem; }
+  .data td.num { white-space: nowrap; font-weight: 700; }
+  .data td.rid { font-weight: 700; color: var(--accent); }
+  .data tr.hl td { background: var(--mark); }
+  /* The report: every sentence can be clicked to trace it to its rows. */
+  .report { background: var(--card); border: 1px solid var(--rule); border-radius: 12px; padding: 16px 20px; }
   .report h3 { font-size: 1.2rem; margin: 14px 0 4px; }
   .report h3:first-child { margin-top: 0; }
   .report p { margin: 0; line-height: 1.65; }
   .sent { cursor: pointer; border-radius: 4px; padding: 1px 0; }
-  .sent.on { background: var(--hl); box-shadow: 0 0 0 2px var(--hl); }
-  .ref { font-size: .7rem; font-weight: 800; color: var(--accent); background: var(--soft); border-radius: 5px; padding: 1px 5px; margin: 0 3px; vertical-align: 2px; white-space: nowrap; }
-  .trace { background: var(--soft); border: 2px solid var(--accent); border-radius: 12px; padding: 10px 16px; margin-bottom: 12px; min-height: 64px; }
+  .sent.on { background: var(--mark); box-shadow: 0 0 0 2px var(--mark); }
+  .ref { font-size: .75rem; font-weight: 700; color: var(--accent); background: var(--accent-soft); border-radius: 5px; padding: 1px 5px; margin: 0 3px; vertical-align: 2px; white-space: nowrap; }
+  .trace { background: var(--accent-soft); border: 2px solid var(--accent); border-radius: 12px; padding: 10px 16px; margin-bottom: 12px; min-height: 64px; }
   .trace b { color: var(--accent); }
   .trace .math { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .9rem; margin-top: 4px; }
-  .stats { font-weight: 700; color: var(--ok); margin: 10px 0 0; }
-  .left-out { background: var(--warn-bg); border: 2px solid #e6b866; border-radius: 12px; padding: 12px 16px; margin-top: 14px; }
-  .left-out h3 { margin: 0 0 4px; color: var(--warn); font-size: 1.1rem; }
-  .left-out ul { margin: 0; padding-left: 1.2em; font-size: .95rem; }
-  .left-out li { margin: 4px 0; }
-  .drafting { color: var(--muted); font-style: italic; font-size: 1.2rem; padding: 30px 0; }
-  footer { color: var(--muted); font-size: 1rem; margin-top: 20px; }
-  @media (max-width: 900px) { .cols { grid-template-columns: 1fr; } }
+  .stats { font-weight: 700; color: var(--good); margin: 10px 0 0; }
 </style>
 </head>
 <body>
-<main>
-  <h1>Numbers to report narrative</h1>
-  <p class="sub">A table of program numbers goes in. The needs, outcomes, and next-steps sections come back, and every sentence points to the row it came from. Click any sentence.</p>
+<main class="demo">
+  <a class="demo-back" href="../index.html">All demos</a>
+  <header class="demo-head">
+    <h1>Writing a grant report from program data</h1>
+    <p class="demo-intro">Grant renewals and state program reports ask for the same three sections every year: the need, the outcomes, and the next steps. A program coordinator usually writes them by hand from a table of program numbers. Here, the coordinator gives the AI the program's data table and the program lead's notes and asks for those three sections. The AI is told to use only numbers from the table, to name the table row behind every sentence, and to list anything in the notes that the table does not back up.</p>
+    <p class="demo-intro">Choose a program to see its data and the report that comes back. Then click any sentence in the report to see the row it came from. The full table opens with that row highlighted.</p>
+  </header>
 
-  <div class="controls">
-    <span>Program</span>
+  <div class="demo-presets" role="group" aria-label="Program">
+    <span>Choose a program</span>
     <button data-preset="tutoring" aria-pressed="true">After-school math tutoring (state report)</button>
     <button data-preset="literacy" aria-pressed="false">Family literacy nights (grant renewal)</button>
-    <button id="toggle-prompt" aria-pressed="false">Show the prompt</button>
   </div>
-  <pre class="prompt" id="prompt" hidden></pre>
 
-  <div class="cols">
-    <section>
-      <div class="label">What you paste in</div>
-      <div id="input"></div>
+  <div class="demo-steps">
+    <section class="demo-step demo-step--prompt">
+      <h2 class="demo-step-title">The prompt <button type="button" class="demo-copy">Copy the prompt</button></h2>
+      <p class="demo-step-note">What the program coordinator types into the AI chat. The highlighted brackets show where the data table and the notes go. The same prompt works for any program.</p>
+      <pre class="demo-prompt" id="prompt"></pre>
     </section>
-    <section>
-      <div class="label">What comes back</div>
+
+    <section class="demo-step demo-step--files">
+      <h2 class="demo-step-title">The files you attach</h2>
+      <p class="demo-step-note">This year's program numbers next to last year's and the target, plus the program lead's informal notes. Each row of the table has a number, such as R4, so the report can point back to it.</p>
+      <div class="demo-files">
+        <div class="demo-file" id="data-file"><span class="demo-file-tab">Program data</span><div class="demo-file-body" id="input"></div></div>
+        <div class="demo-file"><span class="demo-file-tab">Program lead's notes</span><div class="demo-file-body"><pre id="notes"></pre></div></div>
+      </div>
+    </section>
+
+    <section class="demo-step demo-step--output" aria-live="polite">
+      <h2 class="demo-step-title">What the AI wrote <span class="demo-ai-tag">AI-generated</span></h2>
       <div id="output"></div>
     </section>
   </div>
 
-  <footer>
-    A person checks every number against the source data and the funder's required wording, and the program lead signs off before submission.
-    Every output was generated ahead of time so this page works with no internet.
-  </footer>
+  <aside class="demo-before-use">
+    <h2>Before you use it</h2>
+    <p>The coordinator checks every number against the source data and the funder's required wording, and the program lead signs off before the report is submitted. Clicking each sentence shows its source row and any calculation, which is where that check starts.</p>
+  </aside>
+
+  <footer class="demo-foot">Every name, number, and document on this page is made up. The AI's answers were written ahead of time, so the page works without an internet connection.</footer>
 </main>
 
 <script>
@@ -212,16 +198,19 @@ let current = INPUTS.tutoring, seq = 0, sentences = [];
 
 function showInput() {
   $("input").innerHTML =
-    `<div class="scroll"><table><caption>${esc(current.title)}</caption><thead><tr><th></th><th>Measure</th><th>This year</th><th>Last year</th><th>Target</th></tr></thead><tbody>` +
+    `<div class="demo-tablewrap"><table class="data"><caption>${esc(current.title)}</caption><thead><tr><th></th><th>Measure</th><th>This year</th><th>Last year</th><th>Target</th></tr></thead><tbody>` +
     current.rows.map(([id, m, now, prior, target]) =>
       `<tr data-row="${id}"><td class="rid">${id}</td><td>${esc(m)}</td><td class="num">${esc(now)}</td><td class="num">${esc(prior) || "—"}</td><td class="num">${esc(target) || "—"}</td></tr>`).join("") +
-    `</tbody></table></div><div class="notes"><b>Program lead's notes</b>${esc(current.notes)}</div>`;
+    `</tbody></table></div>`;
+  $("notes").textContent = current.notes;
 }
 
 function trace(i) {
   const [text, refs, math] = sentences[i];
   document.querySelectorAll(".sent").forEach(s => s.classList.toggle("on", +s.dataset.i === i));
-  document.querySelectorAll("tr[data-row]").forEach(tr => tr.classList.toggle("hl", refs.includes(tr.dataset.row)));
+  document.querySelectorAll("#input tr[data-row]").forEach(tr => tr.classList.toggle("hl", refs.includes(tr.dataset.row)));
+  // The highlight goes on first: the viewer shows a copy of the table, so the copy carries it.
+  DemoViewer.open($("data-file"), `tr[data-row="${refs[0]}"]`);
   const rows = refs.map(id => current.rows.find(r => r[0] === id));
   $("trace").innerHTML = rows.map(([id, m, now, prior]) =>
     `<div><b>${id}</b> ${esc(m)}: <b>${esc(now)}</b>${prior ? ` (last year ${esc(prior)})` : ""}</div>`).join("") +
@@ -236,7 +225,7 @@ function render(r) {
     r.sections.map(([h, list]) => `<h3>${esc(h)}</h3><p>` + list.map(([t, refs]) =>
       `<span class="sent" role="button" tabindex="0" data-i="${i++}">${esc(t)}<span class="ref">${refs.join(" ")}</span></span>`).join(" ") + `</p>`).join("") +
     `<p class="stats">✓ ${sentences.length} sentences · ${sentences.length} traced to a row in the table · 0 numbers from outside it</p></article>` +
-    `<section class="left-out"><h3>⚠ Left out: the table doesn't support it</h3><ul>${r.leftOut.map(t => `<li>${esc(t)}</li>`).join("")}</ul></section>`;
+    `<section class="demo-flag"><h3>⚠ Left out: the table doesn't support it</h3><ul>${r.leftOut.map(t => `<li>${esc(t)}</li>`).join("")}</ul></section>`;
   document.querySelectorAll(".sent").forEach(s => {
     s.addEventListener("click", () => trace(+s.dataset.i));
     s.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); trace(+s.dataset.i); } });
@@ -246,7 +235,7 @@ function render(r) {
 async function run() {
   const n = ++seq;
   showInput();
-  $("output").innerHTML = '<p class="drafting">Drafting…</p>';
+  $("output").innerHTML = '<p class="demo-drafting">Drafting…</p>';
   const r = await respond("report", current);
   if (n === seq) render(r);
 }
@@ -258,11 +247,6 @@ document.querySelectorAll("[data-preset]").forEach(b => b.addEventListener("clic
 }));
 
 $("prompt").textContent = PROMPTS.report;
-$("toggle-prompt").addEventListener("click", e => {
-  const p = $("prompt"); p.hidden = !p.hidden;
-  e.currentTarget.setAttribute("aria-pressed", !p.hidden);
-  e.currentTarget.textContent = p.hidden ? "Show the prompt" : "Hide the prompt";
-});
 
 run();
 </script>

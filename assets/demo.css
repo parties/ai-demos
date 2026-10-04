@@ -1,0 +1,185 @@
+/* Shared look for every demo page. Each page links this file, then adds only
+   the rules unique to it in its own <style> block.
+
+   Page layout, top to bottom:
+     .demo                    the page column (on <main>)
+       .demo-back             link back to the gallery
+       .demo-head > h1 + .demo-intro
+       .demo-presets          the row of choice buttons; optional <span> label first
+       .demo-steps            the numbered rail
+         .demo-step.demo-step--prompt   ① what you type
+         .demo-step.demo-step--files    ② what you attach (.demo-files > .demo-file)
+         .demo-step.demo-step--output   ③ what the AI wrote (gets .demo-ai-tag)
+       .demo-before-use       the human check before anything is used
+       .demo-foot
+   assets/demo.js adds the file viewer, the Copy button and the prompt slots. */
+
+:root {
+  --page: #f4f5f0;
+  --ink: #1e2832;
+  --muted: #5b6670;
+  --rule: #d3d8d0;
+  --card: #ffffff;
+  --accent: #2e4a7a;
+  --accent-ink: #ffffff;
+  --accent-soft: #e6ecf5;
+  --file: #a8823f;
+  --file-ink: #6e521c;
+  --file-bg: #f3e8cf;
+  --ai: #16705f;
+  --ai-bg: #e4f1ed;
+  --warn: #b07200;
+  --warn-bg: #fff3d6;
+  --bad: #a3271b;
+  --bad-bg: #fde4e0;
+  --good: #1b6b3f;
+  --good-bg: #e3f2e8;
+  --mark: #ffe58a;
+  --serif: Charter, "Bitstream Charter", "Sitka Text", Cambria, Georgia, serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --rail: 56px;
+  --viewer-w: 34rem;
+}
+
+/* ---------- Base ---------- */
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--page); color: var(--ink); font: 19px/1.55 var(--sans); }
+h1, h2, h3, h4 { font-family: var(--serif); line-height: 1.2; }
+a { color: var(--accent); }
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; }
+table { border-collapse: collapse; width: 100%; font-size: .95rem; }
+th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-weight: 700; }
+mark { background: var(--mark); color: inherit; border-radius: 3px; padding: 0 2px; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+button { font: inherit; font-weight: 600; padding: 8px 18px; min-height: 46px; cursor: pointer;
+  background: var(--card); color: var(--ink); border: 2px solid var(--accent); border-radius: 10px; }
+button:hover { background: var(--accent-soft); }
+button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+
+/* ---------- Page frame ---------- */
+.demo { max-width: 72rem; margin: 0 auto; padding: 18px 16px 48px; }
+.demo-back { display: inline-block; font-size: .95rem; margin-bottom: 14px; }
+.demo-head h1 { font-size: 2.3rem; margin: 0 0 10px; letter-spacing: -.01em; max-width: 32ch; }
+.demo-intro { max-width: 68ch; margin: 0 0 6px; }
+.demo-intro + .demo-intro { margin-top: 10px; }
+.demo-presets { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 22px 0 30px; }
+.demo-presets > span { color: var(--muted); font-weight: 600; margin-right: 4px; }
+.demo-foot { color: var(--muted); font-size: .95rem; margin-top: 28px; max-width: 72ch; }
+
+/* ---------- The three steps ---------- */
+.demo-steps { counter-reset: step; position: relative; display: grid; gap: 30px; padding-left: var(--rail); }
+.demo-steps::before { content: ""; position: absolute; left: 19px; top: 20px; bottom: 40px; width: 2px; background: var(--rule); }
+.demo-step { counter-increment: step; position: relative; min-width: 0; }
+.demo-step-title { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; font-size: 1.4rem; margin: 0 0 4px; min-height: 40px; }
+.demo-step-title::before { content: counter(step); position: absolute; left: calc(-1 * var(--rail)); top: 0;
+  width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
+  font: 700 1.1rem var(--sans); background: var(--page); border: 2px solid currentColor; }
+.demo-step-note { color: var(--muted); font-size: .95rem; margin: 0 0 12px; max-width: 68ch; }
+.demo-step--prompt .demo-step-title { color: var(--accent); }
+.demo-step--files .demo-step-title { color: var(--file-ink); }
+
+/* ① The prompt: a white message box, like the one you type into */
+.demo-prompt { background: var(--card); border: 2px solid var(--accent); border-radius: 12px;
+  padding: 14px 18px; font-size: 1rem; box-shadow: 0 1px 0 var(--rule); }
+.demo-prompt + .demo-prompt { margin-top: 14px; }
+.demo-prompt-label { display: block; font-weight: 700; font-size: .9rem; color: var(--accent); margin: 14px 0 4px; }
+.demo-slot { background: var(--file-bg); border: 1px solid var(--file); color: var(--file-ink);
+  border-radius: 6px; padding: 0 5px; font-weight: 600; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+.demo-copy, .demo-file-open, .demo-viewer-close { min-height: 38px; padding: 4px 14px; font-size: .9rem; border-width: 1px; }
+.demo-copy { margin-left: auto; font-family: var(--sans); }
+
+/* ② The files: manila folders with a name tab */
+.demo-files { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); gap: 18px; align-items: start; }
+.demo-file { min-width: 0; }
+.demo-file-tab { display: inline-block; background: var(--file-bg); border: 1px solid var(--file); border-bottom: 0;
+  border-radius: 8px 8px 0 0; padding: 3px 14px; font-size: .9rem; font-weight: 700; color: var(--file-ink); max-width: 100%; }
+.demo-file-body { position: relative; background: var(--file-bg); border: 1px solid var(--file); border-radius: 0 10px 10px 10px;
+  padding: 14px 18px; font-size: .95rem; max-height: 17em; overflow: hidden; }
+.demo-file.is-long .demo-file-body::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 4.5em;
+  background: linear-gradient(rgba(243, 232, 207, 0), var(--file-bg) 85%); pointer-events: none; }
+.demo-file-body table { background: var(--card); }
+.demo-file-open { margin-top: 8px; border-color: var(--file); color: var(--file-ink); }
+.demo-file-open:hover { background: var(--file-bg); }
+.demo-nofile { background: var(--card); border: 1px dashed var(--file); border-radius: 10px; padding: 12px 16px; margin: 0; }
+
+/* ③ The output: the one teal thing on the page, breaking out over the rail */
+.demo-step--output { margin-left: calc(-1 * var(--rail)); background: var(--ai-bg); border: 4px solid var(--ai);
+  border-radius: 14px; padding: 16px 22px 22px; z-index: 1; }
+.demo-step--output > .demo-step-title { color: var(--ai); margin-bottom: 12px; }
+.demo-step--output > .demo-step-title::before { position: static; flex: none; background: var(--ai); color: #fff; border-color: var(--ai); }
+.demo-ai-tag { margin-left: auto; font: 700 .85rem var(--sans); color: #fff; background: var(--ai); border-radius: 999px; padding: 3px 12px; }
+.demo-outputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); gap: 16px; align-items: start; }
+.demo-drafting { color: var(--muted); font-style: italic; margin: 0; }
+
+/* ---------- After the steps ---------- */
+.demo-before-use { margin-top: 30px; background: var(--card); border: 1px solid var(--rule); border-left: 6px solid var(--warn);
+  border-radius: 0 12px 12px 0; padding: 14px 20px; max-width: 72ch; }
+.demo-before-use h2 { font-size: 1.2rem; margin: 0 0 4px; }
+.demo-before-use p { margin: 0; }
+
+/* ---------- Shared pieces used inside outputs ---------- */
+.demo-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; }
+.demo-chip { border: 1px solid var(--good); color: var(--good); background: var(--good-bg); border-radius: 999px;
+  padding: 1px 12px; font-weight: 600; font-size: .9rem; }
+.demo-flag { background: var(--warn-bg); border: 2px solid var(--warn); border-radius: 10px; padding: 10px 16px; margin: 16px 0 0; }
+.demo-flag h3 { margin: 0 0 4px; font-size: 1.15rem; }
+.demo-flag ul { margin: 0; padding-left: 1.2em; }
+.demo-flag li { margin: 4px 0; }
+.demo-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: 10px; margin: 0 0 16px; }
+.demo-tile { background: var(--card); border: 1px solid var(--rule); border-radius: 10px; padding: 8px 12px; }
+.demo-tile b { display: block; font-size: 1.5rem; line-height: 1.2; }
+.demo-meta { color: var(--muted); font-size: .9rem; }
+.demo-tablewrap { overflow-x: auto; }
+
+/* ---------- File viewer (built by demo.js) ---------- */
+.demo-viewer { border: 0; padding: 0; color: var(--ink); background: var(--card);
+  width: 100vw; height: 100vh; max-width: none; max-height: none; margin: 0; }
+.demo-viewer[open] { display: flex; flex-direction: column; }
+.demo-viewer::backdrop { background: rgba(30, 40, 50, .45); }
+.demo-viewer-head { display: flex; align-items: center; gap: 12px; padding: 10px 18px;
+  background: var(--file-bg); border-bottom: 1px solid var(--file); }
+.demo-viewer-head h2 { flex: 1; margin: 0; font-size: 1.15rem; color: var(--file-ink); }
+.demo-viewer-close { border-color: var(--file-ink); }
+.demo-viewer-body { flex: 1; overflow: auto; padding: 18px 22px 32px; font-size: 1rem; }
+@media (min-width: 1100px) {
+  .demo-viewer { position: fixed; inset: 0 0 0 auto; width: var(--viewer-w); border-left: 4px solid var(--file);
+    box-shadow: -6px 0 18px rgba(30, 40, 50, .12); z-index: 10; }
+  body.demo-viewer-docked { padding-right: var(--viewer-w); }
+}
+
+/* ---------- Gallery (index.html) ---------- */
+.view-toggle { display: inline-flex; gap: 0; margin: 18px 0 6px; }
+.view-toggle button { min-height: 40px; padding: 4px 16px; font-size: .95rem; border-radius: 0; }
+.view-toggle button:first-child { border-radius: 10px 0 0 10px; }
+.view-toggle button:last-child { border-radius: 0 10px 10px 0; border-left: 0; }
+.gallery section { margin-top: 30px; }
+.gallery h2 { font-size: 1.45rem; margin: 0 0 8px; }
+.gallery ul { list-style: none; margin: 0; padding: 0; }
+.gallery a { display: block; color: inherit; text-decoration: none; }
+.gallery h3 { font-size: 1.15rem; margin: 0 0 2px; color: var(--accent); }
+.gallery p { margin: 0; color: var(--muted); }
+.gallery a:hover h3, .gallery a:focus-visible h3 { text-decoration: underline; }
+.gallery--list ul { border-top: 1px solid var(--rule); }
+.gallery--list a { display: grid; grid-template-columns: minmax(0, 20rem) minmax(0, 1fr); gap: 4px 24px;
+  padding: 12px 4px; border-bottom: 1px solid var(--rule); }
+.gallery--list a:hover { background: var(--card); }
+.gallery--cards ul { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr)); gap: 16px; }
+.gallery--cards a { height: 100%; background: var(--card); border: 1px solid var(--rule); border-top: 4px solid var(--accent);
+  border-radius: 10px; padding: 16px 18px; }
+.gallery--cards a:hover { border-color: var(--accent); }
+.gallery--cards h3 { margin-bottom: 6px; }
+
+/* ---------- Narrow screens ---------- */
+@media (max-width: 700px) {
+  :root { --rail: 44px; }
+  body { font-size: 18px; }
+  .demo-head h1 { font-size: 1.8rem; }
+  .demo-steps::before { left: 15px; }
+  .demo-step-title::before { width: 32px; height: 32px; font-size: 1rem; }
+  .demo-step--output { padding: 14px 14px 18px; }
+  .gallery--list a { grid-template-columns: minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }

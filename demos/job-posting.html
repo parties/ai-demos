@@ -3,94 +3,84 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Job Postings, Flagged and Fixed</title>
+<title>Writing a Job Posting From a Duties List</title>
+<link rel="stylesheet" href="../assets/demo.css">
+<script src="../assets/demo.js" defer></script>
 <style>
-  :root {
-    --bg: #fcfcfb; --ink: #0b0b0b; --muted: #52514e; --line: #d9d8d3;
-    --card: #ffffff; --accent: #1c5cab; --accent-ink: #ffffff; --soft: #eef4fc;
-    --jar-bg: #fff4d6; --jar: #8a5a00; --pool-bg: #fde8e6; --pool: #a3221a; --legal-bg: #f1eafd; --legal: #5b33a0;
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--ink);
-    font: 20px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  main { max-width: 1500px; margin: 0 auto; padding: 24px 16px 40px; }
-  h1 { font-size: 2.1rem; margin: 0; line-height: 1.2; }
-  .sub { color: var(--muted); margin: 6px 0 20px; font-size: 1.15rem; }
-  .controls { display: flex; flex-wrap: wrap; gap: 14px 22px; align-items: center; margin-bottom: 18px; }
-  .group { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-  .group > span { color: var(--muted); margin-right: 4px; font-weight: 600; }
-  button { font: inherit; font-weight: 600; padding: 10px 22px; min-height: 52px; cursor: pointer; border-radius: 10px;
-    background: var(--card); color: var(--ink); border: 2px solid var(--accent); }
-  button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
-  #toggle-prompt { border-color: var(--line); }
-  .prompt { background: #f3f2ee; border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px; margin: 0 0 18px;
-    white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; font-size: 1rem; }
-  .cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.45fr); gap: 16px; align-items: start; }
-  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; }
-  .panel > h2 { font-size: 1rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 10px; }
-  .paste { background: #f3f2ee; border-radius: 8px; padding: 12px 14px; margin: 0; white-space: pre-wrap; overflow-wrap: anywhere;
-    font: .92rem/1.5 ui-monospace, Menlo, Consolas, monospace; }
-  .drafting { color: var(--muted); font-weight: 600; padding: 20px 0; }
-  .drafting::after { content: " ●"; animation: blink 1s infinite; }
-  @keyframes blink { 50% { opacity: .2; } }
-  @media (prefers-reduced-motion: reduce) { .drafting::after { animation: none; } }
-  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; }
-  .chip { border-radius: 999px; padding: 4px 14px; font-weight: 700; font-size: 1rem; border: 2px solid; }
-  .chip.jargon { background: var(--jar-bg); color: var(--jar); border-color: var(--jar); }
-  .chip.pool { background: var(--pool-bg); color: var(--pool); border-color: var(--pool); }
-  .chip.legal { background: var(--legal-bg); color: var(--legal); border-color: var(--legal); }
-  .chip.ok { background: #e7f4ec; color: #145c37; border-color: #145c37; }
+  /* Three kinds of flag, each with its own colour: jargon, a requirement that narrows the pool, a legal check. */
+  .views { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 14px; }
+  .views > span { color: var(--muted); font-weight: 600; margin-right: 4px; }
+  .demo-chip.jargon { background: var(--warn-bg); color: var(--ink); border-color: var(--warn); }
+  .demo-chip.pool { background: var(--bad-bg); color: var(--bad); border-color: var(--bad); }
+  .demo-chip.legal { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+  /* The posting reads as a sheet of paper inside the AI panel. */
+  .posting { background: var(--card); border: 1px solid var(--rule); border-radius: 6px; padding: 18px 22px; box-shadow: 0 2px 8px rgba(30,40,50,.08); }
   .posting h3 { font-size: 1.5rem; margin: 0 0 4px; }
   .hook { font-size: 1.1rem; margin: 0 0 12px; }
-  .kept { font-size: 1rem; color: var(--muted); border-left: 4px solid var(--line); padding-left: 10px; margin: 0 0 12px; }
-  .posting h4 { font-size: 1.1rem; margin: 16px 0 6px; padding-bottom: 2px; border-bottom: 2px solid var(--soft); }
+  .kept { font-size: 1rem; color: var(--muted); border-left: 4px solid var(--rule); padding-left: 10px; margin: 0 0 12px; }
+  .posting h4 { font-size: 1.1rem; margin: 16px 0 6px; padding-bottom: 2px; border-bottom: 2px solid var(--rule); }
   .posting ul { margin: 0; padding-left: 22px; }
   .posting li { margin: 4px 0; }
   .hl { padding: 0 3px; border-radius: 4px; }
-  .hl.jargon { background: var(--jar-bg); } .hl.pool { background: var(--pool-bg); } .hl.legal { background: var(--legal-bg); }
+  .hl.jargon { background: var(--warn-bg); } .hl.pool { background: var(--bad-bg); } .hl.legal { background: var(--accent-soft); }
   .flag { margin: 6px 0 10px; padding: 8px 12px; border-left: 5px solid; border-radius: 0 8px 8px 0; font-size: .95rem; }
-  .flag.jargon { background: var(--jar-bg); border-color: var(--jar); }
-  .flag.pool { background: var(--pool-bg); border-color: var(--pool); }
-  .flag.legal { background: var(--legal-bg); border-color: var(--legal); }
+  .flag.jargon { background: var(--warn-bg); border-color: var(--warn); }
+  .flag.pool { background: var(--bad-bg); border-color: var(--bad); }
+  .flag.legal { background: var(--accent-soft); border-color: var(--accent); }
   .flag b.k { display: block; }
-  .flag.jargon b.k { color: var(--jar); } .flag.pool b.k { color: var(--pool); } .flag.legal b.k { color: var(--legal); }
+  .flag.jargon b.k { color: var(--ink); } .flag.pool b.k { color: var(--bad); } .flag.legal b.k { color: var(--accent); }
   .flag p { margin: 2px 0 0; }
-  .accepted { font-weight: 600; color: #145c37; }
-  footer { color: var(--muted); font-size: 1rem; margin-top: 20px; }
-  .cols > .panel:first-child { position: sticky; top: 12px; }
-  @media (max-width: 900px) { .cols { grid-template-columns: 1fr; } .cols > .panel:first-child { position: static; } }
+  .accepted { font-weight: 600; color: var(--good); }
 </style>
 </head>
 <body>
-<main>
-  <h1>Job postings, flagged and fixed</h1>
-  <p class="sub">Paste the duties list you already have. Get a posting in district format, with every bit of jargon and every requirement that shrinks your applicant pool flagged, and why.</p>
+<main class="demo">
+  <a class="demo-back" href="../index.html">All demos</a>
+  <header class="demo-head">
+    <h1>Writing a job posting from a duties list</h1>
+    <p class="demo-intro">Most job postings start as a duties list written by the department, full of salary grades, acronyms, and requirements copied from older postings. Here, a human resources staff member gives the AI that list and asks for a posting in the district's format, written for someone who has never worked in a school. The AI rewrites the jargon in plain words. Under each line it also flags any requirement that is stricter than the job needs and any wording that could raise a legal concern, and suggests a rewrite. It does not remove anything on its own; human resources decides every flag.</p>
+    <p class="demo-intro">Choose a job to see a different duties list and the posting that comes back. In the AI's answer, you can switch between the draft with its flags and the version with every suggestion accepted.</p>
+  </header>
 
-  <div class="controls">
-    <div class="group" role="group" aria-label="Duties list">
-      <span>Duties list</span>
-      <button data-preset="bus" aria-pressed="true">Bus driver</button>
-      <button data-preset="para" aria-pressed="false">SpEd paraprofessional</button>
-      <button data-preset="payroll" aria-pressed="false">Payroll specialist</button>
-    </div>
-    <div class="group" role="group" aria-label="View">
-      <span>View</span>
-      <button data-view="flagged" aria-pressed="true">Flagged draft</button>
-      <button data-view="clean" aria-pressed="false">Suggestions accepted</button>
-    </div>
-    <button id="toggle-prompt" aria-pressed="false">Show the prompt</button>
-  </div>
-  <pre class="prompt" id="prompt" hidden></pre>
-
-  <div class="cols">
-    <section class="panel"><h2>What you paste in</h2><pre class="paste" id="input"></pre></section>
-    <section class="panel"><h2>What comes back</h2><div id="out" aria-live="polite"></div></section>
+  <div class="demo-presets" role="group" aria-label="Job">
+    <span>Choose a job</span>
+    <button data-preset="bus" aria-pressed="true">Bus driver</button>
+    <button data-preset="para" aria-pressed="false">Special education paraprofessional</button>
+    <button data-preset="payroll" aria-pressed="false">Payroll specialist</button>
   </div>
 
-  <footer>
-    HR reviews every flag, fills in the pay range, and confirms legal requirements before anything posts; the AI never removes a requirement on its own.
-    Every output was generated ahead of time so this page works with no internet.
-  </footer>
+  <div class="demo-steps">
+    <section class="demo-step demo-step--prompt">
+      <h2 class="demo-step-title">The prompt <button type="button" class="demo-copy">Copy the prompt</button></h2>
+      <p class="demo-step-note">What the human resources staff member types into the AI chat. The highlighted bracket shows where the duties list goes. The same prompt works for any job.</p>
+      <pre class="demo-prompt" id="prompt"></pre>
+    </section>
+
+    <section class="demo-step demo-step--files">
+      <h2 class="demo-step-title">The file you attach</h2>
+      <p class="demo-step-note">The duties list exactly as the department wrote it, pasted in below the prompt.</p>
+      <div class="demo-files">
+        <div class="demo-file"><span class="demo-file-tab">Duties list</span><div class="demo-file-body"><pre id="input"></pre></div></div>
+      </div>
+    </section>
+
+    <section class="demo-step demo-step--output" aria-live="polite">
+      <h2 class="demo-step-title">What the AI wrote <span class="demo-ai-tag">AI-generated</span></h2>
+      <div class="views" role="group" aria-label="View">
+        <span>Show</span>
+        <button data-view="flagged" aria-pressed="true">The draft with flags</button>
+        <button data-view="clean" aria-pressed="false">Every suggestion accepted</button>
+      </div>
+      <div id="out"></div>
+    </section>
+  </div>
+
+  <aside class="demo-before-use">
+    <h2>Before you use it</h2>
+    <p>Human resources reviews every flag, fills in the pay range, and confirms the legal requirements before the posting goes up. The AI never removes a requirement on its own, so a person decides each one.</p>
+  </aside>
+
+  <footer class="demo-foot">Every name, number, and document on this page is made up. The AI's answers were written ahead of time, so the page works without an internet connection.</footer>
 </main>
 
 <script>
@@ -339,8 +329,8 @@ function renderPosting(p) {
   const n = k => flags.filter(i => i.f.k === k).length;
   const clean = state.view === "clean";
   let html = clean
-    ? `<div class="chips"><span class="chip ok">✓ ${n("pool") + n("legal")} suggestions applied — HR still approves each one</span></div>`
-    : `<div class="chips"><span class="chip jargon">${n("jargon")} jargon terms rewritten</span><span class="chip pool">${n("pool")} requirements shrink the pool</span><span class="chip legal">${n("legal")} legal / equity checks</span></div>`;
+    ? `<div class="demo-chips"><span class="demo-chip">✓ ${n("pool") + n("legal")} suggestions applied — HR still approves each one</span></div>`
+    : `<div class="demo-chips"><span class="demo-chip jargon">${n("jargon")} jargon terms rewritten</span><span class="demo-chip pool">${n("pool")} requirements shrink the pool</span><span class="demo-chip legal">${n("legal")} legal / equity checks</span></div>`;
   html += `<div class="posting"><h3>${esc(p.title)}</h3><p class="hook">${esc(p.hook)}</p>`;
   if (p.kept && !clean) html += `<p class="kept">${esc(p.kept)}</p>`;
   for (const s of p.sections) {
@@ -371,7 +361,7 @@ function renderPosting(p) {
 async function generate() {
   const input = INPUTS[state.preset];
   document.getElementById("input").textContent = input.text;
-  out.innerHTML = `<div class="drafting">Drafting…</div>`;
+  out.innerHTML = `<p class="demo-drafting">Drafting…</p>`;
   const my = ++run;
   const result = await respond("posting", input);
   if (my !== run) return;
@@ -389,13 +379,7 @@ document.querySelectorAll("[data-view]").forEach(b => b.addEventListener("click"
   document.querySelectorAll("[data-view]").forEach(x => x.setAttribute("aria-pressed", x === b));
   if (state.result) renderPosting(state.result);
 }));
-const tp = document.getElementById("toggle-prompt"), pr = document.getElementById("prompt");
-pr.textContent = PROMPTS.posting;
-tp.addEventListener("click", () => {
-  pr.hidden = !pr.hidden;
-  tp.setAttribute("aria-pressed", !pr.hidden);
-  tp.textContent = pr.hidden ? "Show the prompt" : "Hide the prompt";
-});
+document.getElementById("prompt").textContent = PROMPTS.posting;
 generate();
 </script>
 </body>

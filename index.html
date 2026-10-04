@@ -3,221 +3,100 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI Demos</title>
-<style>
-  :root { --bg: #fcfcfb; --ink: #0b0b0b; --muted: #52514e; --line: #d9d8d3; --card: #ffffff; --accent: #1c5cab; }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--ink);
-    font: 19px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  main { max-width: 1100px; margin: 0 auto; padding: 32px 16px 48px; }
-  h1 { font-size: 2.2rem; margin: 0; line-height: 1.2; }
-  .sub { color: var(--muted); font-size: 1.15rem; margin: 6px 0 28px; }
-  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
-  a.card { display: block; text-decoration: none; color: inherit; background: var(--card);
-    border: 2px solid var(--line); border-radius: 14px; padding: 20px 22px; }
-  a.card:hover, a.card:focus-visible { border-color: var(--accent); }
-  section { margin-top: 34px; }
-  section h2 { font-size: 1.15rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 12px; }
-  a.card h3 { font-size: 1.4rem; margin: 0 0 6px; color: var(--accent); }
-  a.card p { margin: 0; }
-  footer { margin-top: 32px; color: var(--muted); font-size: 1rem; }
-</style>
+<title>AI Demos for Schools</title>
+<link rel="stylesheet" href="assets/demo.css">
 </head>
 <body>
-<main>
-  <h1>AI demos for school and district staff</h1>
-  <p class="sub">Interactive examples of what AI does to the work that repeats. 30 demos, grouped by who does the work. Every record is fabricated; every page works offline.</p>
+<main class="demo">
+  <header class="demo-head">
+    <h1>AI demos for school and district staff</h1>
+    <p class="demo-intro">Each demo walks through one real task from school or district work. You see the prompt a staff member typed, the files they gave the AI, and what the AI wrote back, so you can judge whether it would help with your own work and what you would still need to check.</p>
+    <p class="demo-intro">There are 10 demos here, grouped by job. Every name and number in them is made up, and every page works without an internet connection.</p>
+  </header>
 
-  <section>
-    <h2>Everyone</h2>
-    <div class="cards">
-      <a class="card" href="framework.html">
-        <h3>The four-part request</h3>
-        <p>Verb, format, voice, context: add one part at a time and watch a board memo, a family letter or a job posting go from generic to usable.</p>
-      </a>
-      <a class="card" href="demos/where-it-fails.html">
-        <h3>Where it fails, and how you catch it</h3>
-        <p>Three finished-looking answers with planted mistakes; one click shows each flaw and the habit that catches it.</p>
-      </a>
-      <a class="card" href="demos/interview-then-build.html">
-        <h3>Make it ask you questions first</h3>
-        <p>The same request asked plainly, then with five questions first: a template full of blanks versus a letter you can send.</p>
-      </a>
-    </div>
-  </section>
+  <div class="view-toggle" role="group" aria-label="Show demos as">
+    <button type="button" data-view="list" aria-pressed="true">List</button>
+    <button type="button" data-view="cards" aria-pressed="false">Cards</button>
+  </div>
 
-  <section>
-    <h2>Superintendent</h2>
-    <div class="cards">
-      <a class="card" href="demos/board-memo-draft.html">
-        <h3>Board memo first drafts</h3>
-        <p>Bullet notes plus last month&#x27;s memo become a draft in the board&#x27;s house format, with uncertain figures flagged.</p>
-      </a>
-      <a class="card" href="demos/board-packet-brief.html">
-        <h3>Board packet in one page</h3>
-        <p>A 148-page public packet becomes decisions due, dollars, and the items likely to draw questions, each with a page number.</p>
-      </a>
-      <a class="card" href="demos/decision-brief.html">
-        <h3>Evidence before a decision</h3>
-        <p>The documents on a decision become a sourced pro/con brief, where they conflict, and the questions still to ask.</p>
-      </a>
-      <a class="card" href="demos/meeting-rehearsal.html">
-        <h3>Rehearse a hard meeting</h3>
-        <p>AI plays a skeptical board member, an upset parent, or a reporter, and coaches each answer.</p>
-      </a>
-    </div>
-  </section>
+  <div class="gallery gallery--list" id="gallery">
+    <section>
+      <h2>For everyone</h2>
+      <ul>
+        <li><a href="demos/where-it-fails.html"><h3>AI answers that look right but aren&#x27;t: how to check them</h3><p>Three AI answers with mistakes planted in them: a policy summary, a budget total, and a legal question. Find the mistakes, then see the four checking habits that catch them.</p></a></li>
+      </ul>
+    </section>
+    <section>
+      <h2>Superintendent&#x27;s office</h2>
+      <ul>
+        <li><a href="demos/board-memo-draft.html"><h3>Drafting a board memo from your notes</h3><p>Give the AI your rough notes and last month&#x27;s memo. It drafts this month&#x27;s memo in the same format and marks every figure you still need to confirm.</p></a></li>
+        <li><a href="demos/meeting-rehearsal.html"><h3>Practicing for a difficult meeting</h3><p>The AI plays a skeptical board member, an upset parent, or a reporter. You answer its questions, and it gives you feedback on each answer.</p></a></li>
+      </ul>
+    </section>
+    <section>
+      <h2>Human capital and HR</h2>
+      <ul>
+        <li><a href="demos/job-posting.html"><h3>Writing a job posting from a duties list</h3><p>Give the AI the duties list you already have. It writes a posting in district format and flags jargon and requirements that would turn away qualified applicants, with the reason for each.</p></a></li>
+      </ul>
+    </section>
+    <section>
+      <h2>Information services</h2>
+      <ul>
+        <li><a href="demos/vendor-privacy-review.html"><h3>Reviewing a vendor&#x27;s privacy policy</h3><p>Give the AI a vendor&#x27;s privacy policy and the district&#x27;s privacy checklist. It checks each item and quotes the line it based its answer on. The approval decision stays with you.</p></a></li>
+      </ul>
+    </section>
+    <section>
+      <h2>Curriculum and instructional technology</h2>
+      <ul>
+        <li><a href="demos/standards-alignment.html"><h3>Checking a course against the standards</h3><p>Give the AI a course outline and a standards list. It returns a coverage table showing which standards are missing, repeated, or only partly covered.</p></a></li>
+      </ul>
+    </section>
+    <section>
+      <h2>Wellness</h2>
+      <ul>
+        <li><a href="demos/deidentified-patterns.html"><h3>Finding patterns in student data without exposing students</h3><p>Start with an attendance, behavior, and wellness export. Remove names and ID numbers first, on screen, then look at the patterns by time and place.</p></a></li>
+      </ul>
+    </section>
+    <section>
+      <h2>Teaching, learning and culture: secondary</h2>
+      <ul>
+        <li><a href="demos/directive-to-building.html"><h3>Passing a district directive on to building staff</h3><p>Give the AI a dense central-office directive. It writes a one-page brief for the principal and five minutes of talking points for the staff meeting.</p></a></li>
+      </ul>
+    </section>
+    <section>
+      <h2>Communications</h2>
+      <ul>
+        <li><a href="demos/communications.html"><h3>Adapting one message for every family</h3><p>One district notice rewritten at three reading levels, in two tones, in English and Spanish, side by side.</p></a></li>
+      </ul>
+    </section>
+    <section>
+      <h2>Programs and operations</h2>
+      <ul>
+        <li><a href="demos/program-report.html"><h3>Writing a grant report from program data</h3><p>Give the AI a table of program numbers. It drafts the needs, outcomes, and next-steps sections of a grant report. Click any sentence to see the numbers behind it.</p></a></li>
+      </ul>
+    </section>
+    <section>
+      <h2>Classroom</h2>
+      <ul>
+        <!-- Relative so it resolves to the sibling Pages site without an absolute URL. -->
+        <li><a href="../ai-workshop/"><h3>Teacher workshop gallery</h3><p>Demos for classroom teachers, and the materials from the teacher AI workshop.</p></a></li>
+      </ul>
+    </section>
+  </div>
 
-  <section>
-    <h2>Human capital and HR</h2>
-    <div class="cards">
-      <a class="card" href="demos/job-posting.html">
-        <h3>Job postings, flagged and fixed</h3>
-        <p>A duties list becomes a posting, with jargon and requirements that shrink the applicant pool flagged and rewritten.</p>
-      </a>
-      <a class="card" href="demos/interview-kit.html">
-        <h3>Interview kits, same for everyone</h3>
-        <p>One posting becomes structured questions and a scoring rubric identical for every candidate. Humans screen; AI never ranks.</p>
-      </a>
-      <a class="card" href="demos/staff-faq.html">
-        <h3>The August question flood</h3>
-        <p>A dense benefits packet becomes the 20 questions HR answers every year, each answer citing its section.</p>
-      </a>
-      <a class="card" href="demos/contract-language.html">
-        <h3>Contract language, read closely</h3>
-        <p>A clause in plain English, or every contradiction between the handbook and a negotiated agreement, side by side.</p>
-      </a>
-    </div>
-  </section>
-
-  <section>
-    <h2>Information services</h2>
-    <div class="cards">
-      <a class="card" href="demos/vendor-privacy-review.html">
-        <h3>Vendor privacy review</h3>
-        <p>A vendor&#x27;s privacy policy checked against the district&#x27;s own list, every finding tied to a quoted line. The decision stays yours.</p>
-      </a>
-      <a class="card" href="demos/helpdesk-howto.html">
-        <h3>Repeat help-desk tickets</h3>
-        <p>A technician&#x27;s terse fix notes become a numbered how-to any staff member can follow.</p>
-      </a>
-      <a class="card" href="demos/outage-notice.html">
-        <h3>Change and outage notices</h3>
-        <p>A jargon-heavy maintenance plan becomes a calm staff notice: what changes, when, and what to do.</p>
-      </a>
-      <a class="card" href="demos/spreadsheet-formulas.html">
-        <h3>Spreadsheet formulas</h3>
-        <p>Describe a result and get the formula, or paste an inherited formula or script and get it explained line by line, risks included.</p>
-      </a>
-    </div>
-  </section>
-
-  <section>
-    <h2>Curriculum and instructional technology</h2>
-    <div class="cards">
-      <a class="card" href="demos/standards-alignment.html">
-        <h3>Standards coverage check</h3>
-        <p>A course outline and a standards list become a coverage grid with every gap, repeat, and partial standard flagged.</p>
-      </a>
-      <a class="card" href="demos/adoption-review.html">
-        <h3>Adoption review, side by side</h3>
-        <p>Three publishers&#x27; samples scored against the adoption rubric, every score quoting the sentence it came from.</p>
-      </a>
-      <a class="card" href="demos/pd-followthrough.html">
-        <h3>PD session follow-through</h3>
-        <p>One session&#x27;s messy notes become a handout, an exit question, and the follow-up email.</p>
-      </a>
-      <a class="card" href="demos/catalog-descriptions.html">
-        <h3>Course catalog, one voice</h3>
-        <p>Descriptions written in a dozen voices rewritten to one format at a family reading level, missing facts flagged.</p>
-      </a>
-    </div>
-  </section>
-
-  <section>
-    <h2>Wellness</h2>
-    <div class="cards">
-      <a class="card" href="demos/deidentified-patterns.html">
-        <h3>De-identified patterns</h3>
-        <p>An attendance, behavior and wellness export, de-identified on screen, then turned into patterns by time and place.</p>
-      </a>
-      <a class="card" href="demos/survey-themes.html">
-        <h3>Survey comments to themes</h3>
-        <p>Hundreds of anonymous comments become ranked themes with counts, a chart, and verbatim quotes.</p>
-      </a>
-      <a class="card" href="demos/resource-guide.html">
-        <h3>Community resource guide</h3>
-        <p>A messy agency list becomes a family guide sorted by need, with missing hours and phone numbers flagged.</p>
-      </a>
-    </div>
-  </section>
-
-  <section>
-    <h2>Teaching, learning and culture — secondary</h2>
-    <div class="cards">
-      <a class="card" href="demos/data-meeting-prep.html">
-        <h3>Data meeting prep</h3>
-        <p>A de-identified data summary becomes a timed agenda and guiding questions for a principals&#x27; data meeting.</p>
-      </a>
-      <a class="card" href="demos/directive-to-building.html">
-        <h3>Directive to building brief</h3>
-        <p>One dense central-office directive becomes a principal&#x27;s brief and five minutes of staff-meeting talking points.</p>
-      </a>
-      <a class="card" href="demos/intervention-templates.html">
-        <h3>Tiered intervention templates</h3>
-        <p>Four buildings&#x27; different practices become one comparison and blank Tier 1, 2 and 3 forms.</p>
-      </a>
-    </div>
-  </section>
-
-  <section>
-    <h2>Communications</h2>
-    <div class="cards">
-      <a class="card" href="demos/communications.html">
-        <h3>One message, every family</h3>
-        <p>One district notice at three reading levels, in two tones, in English and Spanish, side by side.</p>
-      </a>
-      <a class="card" href="demos/newsletter-assembly.html">
-        <h3>Eight voices, one newsletter</h3>
-        <p>Eight department submissions in eight voices become one newsletter, with conflicts to check before sending.</p>
-      </a>
-      <a class="card" href="demos/holding-statement.html">
-        <h3>Holding statement in minutes</h3>
-        <p>Confirmed facts become a holding statement plus the questions reporters will ask next, known and not yet known.</p>
-      </a>
-      <a class="card" href="demos/every-channel.html">
-        <h3>One announcement, every channel</h3>
-        <p>One memo becomes a website post, a social post, and a text alert, each counted against its limit.</p>
-      </a>
-    </div>
-  </section>
-
-  <section>
-    <h2>Programs and operations</h2>
-    <div class="cards">
-      <a class="card" href="demos/schedule-conflicts.html">
-        <h3>Draft schedule, conflicts found</h3>
-        <p>Rooms, presenters and constraints become a schedule grid and the conflicts that need your decision.</p>
-      </a>
-      <a class="card" href="demos/program-report.html">
-        <h3>Numbers to report narrative</h3>
-        <p>A program data table becomes grant-report sections; click any sentence to see the numbers behind it.</p>
-      </a>
-    </div>
-  </section>
-
-  <section>
-    <h2>Classroom</h2>
-    <div class="cards">
-      <!-- Relative so it resolves to the sibling Pages site without an absolute URL. -->
-      <a class="card" href="../ai-workshop/">
-        <h3>Teacher workshop gallery</h3>
-        <p>Classroom-facing demos and the materials from the teacher AI workshop.</p>
-      </a>
-    </div>
-  </section>
-
-  <footer>Eric Ogden · AI training for schools</footer>
+  <footer class="demo-foot">Eric Ogden · AI training for schools</footer>
 </main>
+<script>
+// List or cards; the choice is remembered in this browser when storage is available.
+const gallery = document.getElementById("gallery");
+const buttons = document.querySelectorAll("[data-view]");
+function setView(view) {
+  gallery.className = "gallery gallery--" + view;
+  buttons.forEach(b => b.setAttribute("aria-pressed", b.dataset.view === view));
+  try { localStorage.setItem("demo-view", view); } catch {}
+}
+buttons.forEach(b => b.addEventListener("click", () => setView(b.dataset.view)));
+try { if (localStorage.getItem("demo-view") === "cards") setView("cards"); } catch {}
+</script>
 </body>
 </html>

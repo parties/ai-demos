@@ -3,105 +3,90 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Standards Coverage Check</title>
+<title>Checking a Course Against the Standards</title>
+<link rel="stylesheet" href="../assets/demo.css">
+<script src="../assets/demo.js" defer></script>
 <style>
-  :root {
-    --bg: #fcfcfb; --ink: #0b0b0b; --muted: #52514e; --line: #d9d8d3;
-    --card: #ffffff; --accent: #1c5cab; --accent-ink: #ffffff; --soft: #eef4fc;
-    --gap: #a3221b; --gap-bg: #fdeceb; --dup: #7a4f00; --dup-bg: #fff2d1; --ok-bg: #e8f3ea;
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--ink);
-    font: 20px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  main { max-width: 1500px; margin: 0 auto; padding: 24px 16px 40px; }
-  h1 { font-size: 2.1rem; margin: 0; line-height: 1.2; }
-  .sub { color: var(--muted); margin: 6px 0 20px; font-size: 1.15rem; }
-  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 18px; }
-  .controls > span { color: var(--muted); font-weight: 600; margin-right: 4px; }
-  button { font: inherit; font-weight: 600; padding: 10px 22px; min-height: 52px; cursor: pointer;
-    background: var(--card); color: var(--ink); border: 2px solid var(--accent); border-radius: 10px; }
-  button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
-  #toggle-prompt { border-color: var(--line); }
-  #toggle-prompt[aria-pressed="true"] { border-color: var(--accent); }
-  .prompt { background: var(--soft); border: 1px solid var(--accent); border-radius: 10px; padding: 14px 18px; margin-bottom: 18px; }
-  .prompt pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: .9rem/1.5 ui-monospace, Menlo, Consolas, monospace; }
-  .label { font-size: 1rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 8px; }
-  .pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); gap: 16px; align-items: start; }
-  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; min-width: 0; }
-  .panel.input { background: #f3f2ee; }
-  .paste { margin: 0 0 14px; white-space: pre-wrap; overflow-wrap: anywhere; font: .85rem/1.5 ui-monospace, Menlo, Consolas, monospace;
-    background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
-  .paste-h { font-weight: 700; margin: 0 0 4px; font-size: 1rem; }
-  .drafting { color: var(--muted); font-style: italic; font-size: 1.2rem; }
-  .tiles { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 14px; }
-  .tile { border: 1px solid var(--line); border-radius: 10px; padding: 6px 14px; background: var(--card); }
-  .tile b { display: block; font-size: 1.6rem; line-height: 1.2; }
-  .tile.gap { background: var(--gap-bg); border-color: var(--gap); }
-  .tile.dup { background: var(--dup-bg); border-color: #c98500; }
-  table { border-collapse: collapse; width: 100%; font-size: .95rem; table-layout: fixed; }
-  th, td { border: 1px solid var(--line); padding: 6px 4px; text-align: center; }
-  th { background: #f3f2ee; }
-  th.code, td.code { text-align: left; width: 34%; padding-left: 8px; }
-  td.code b { display: block; }
-  tr.gap td { background: var(--gap-bg); }
-  tr.dup td { background: var(--dup-bg); }
-  tr.partial td { background: var(--soft); }
-  td.mark { font-size: 1.3rem; }
-  .badge { display: inline-block; font-size: .78rem; font-weight: 800; letter-spacing: .04em; border-radius: 6px; padding: 1px 7px; color: #fff; }
-  .badge.gap { background: var(--gap); }
-  .badge.dup { background: var(--dup); }
+  /* The coverage grid: one row per standard, one column per unit. */
+  .grid { table-layout: fixed; background: var(--card); }
+  .grid th, .grid td { border: 1px solid var(--rule); padding: 6px 4px; text-align: center; }
+  .grid th { background: var(--page); }
+  .grid .code { text-align: left; width: 34%; padding-left: 8px; }
+  .grid td.code b { display: block; }
+  .grid td.mark { font-size: 1.3rem; }
+  .grid tr.gap td { background: var(--bad-bg); }
+  .grid tr.dup td { background: var(--warn-bg); }
+  .grid tr.partial td { background: var(--accent-soft); }
+  .demo-tile.gap { background: var(--bad-bg); border-color: var(--bad); }
+  .demo-tile.dup { background: var(--warn-bg); border-color: var(--warn); }
+  .badge { display: inline-block; font-size: .8rem; font-weight: 700; border-radius: 6px; padding: 1px 7px; color: #fff; }
+  .badge.gap { background: var(--bad); }
+  .badge.dup { background: var(--warn); }
   .badge.partial { background: var(--accent); }
   .badge.none { background: var(--muted); }
-  .badge.fix { background: #1e6b34; }
-  .badge.ok { background: #1e6b34; }
-  .legend { color: var(--muted); font-size: .95rem; margin: 8px 0 14px; }
+  .badge.fix, .badge.ok { background: var(--good); }
+  .legend { margin: 8px 0 14px; }
   .legend span { display: inline-block; margin-right: 14px; }
-  ul.findings { list-style: none; padding: 0; margin: 0; }
-  ul.findings li { border-left: 6px solid var(--line); padding: 6px 0 6px 12px; margin-bottom: 10px; }
-  ul.findings li.gap { border-color: var(--gap); }
-  ul.findings li.dup { border-color: #c98500; }
-  ul.findings li.partial { border-color: var(--accent); }
-  ul.findings li.fix, ul.findings li.ok { border-color: #1e6b34; }
-  footer { color: var(--muted); font-size: 1rem; margin-top: 20px; }
-  @media (max-width: 900px) { .pair { grid-template-columns: 1fr; } }
-  @media (max-width: 520px) { table { font-size: .8rem; } td.mark { font-size: 1.05rem; } th.code, td.code { width: 38%; } }
+  .findings { list-style: none; padding: 0; margin: 0; }
+  .findings li { background: var(--card); border-left: 6px solid var(--rule); border-radius: 0 8px 8px 0; padding: 6px 12px; margin-bottom: 10px; }
+  .findings li.gap { border-color: var(--bad); }
+  .findings li.dup { border-color: var(--warn); }
+  .findings li.partial { border-color: var(--accent); }
+  .findings li.fix, .findings li.ok { border-color: var(--good); }
+  @media (max-width: 520px) { .grid { font-size: .8rem; } .grid td.mark { font-size: 1.05rem; } .grid .code { width: 38%; } }
+  .tip { margin-top: 18px; background: var(--card); border: 1px solid var(--rule); border-left: 6px solid var(--accent); border-radius: 0 12px 12px 0; padding: 12px 18px; max-width: 72ch; }
+  .tip h3 { margin: 0 0 4px; font-size: 1.1rem; color: var(--accent); }
+  .tip p { margin: 6px 0 0; }
 </style>
 </head>
 <body>
-<main>
-  <h1>Standards coverage check</h1>
-  <p class="sub">Paste a course outline and the standards list. Get back a coverage grid with every gap and repeat flagged, ready for the department meeting.</p>
+<main class="demo">
+  <a class="demo-back" href="../index.html">All demos</a>
+  <header class="demo-head">
+    <h1>Checking a course against the standards</h1>
+    <p class="demo-intro">Before a department meeting, a department head or curriculum lead often needs to know whether a course outline covers every standard on the state list. Doing it by hand means reading every unit against every standard. Here, the department head gives the AI the standards list and the department's draft outline and asks for a coverage grid. The grid shows which units teach each standard. Below it, the AI lists the standards no unit teaches, the ones taught twice, and one low-cost fix for each.</p>
+    <p class="demo-intro">Choose a course to see a different outline and the grid that comes back.</p>
+  </header>
 
-  <div class="controls" role="group" aria-label="Sample course">
-    <span>Sample course</span>
+  <div class="demo-presets" role="group" aria-label="Sample course">
+    <span>Choose a course</span>
     <button data-input="sci8" aria-pressed="true">Grade 8 Science</button>
     <button data-input="ela10" aria-pressed="false">English 10</button>
-    <button id="toggle-prompt" aria-pressed="false">Show the prompt</button>
   </div>
 
-  <section class="prompt" id="prompt" hidden>
-    <p class="label">The prompt (copy it, fill in the brackets)</p>
-    <pre id="prompt-text"></pre>
-  </section>
-
-  <div class="pair">
-    <section class="panel input">
-      <p class="label">What you paste in</p>
-      <p class="paste-h">Standards list</p>
-      <pre class="paste" id="in-standards"></pre>
-      <p class="paste-h">Course outline (department draft)</p>
-      <pre class="paste" id="in-outline"></pre>
+  <div class="demo-steps">
+    <section class="demo-step demo-step--prompt">
+      <h2 class="demo-step-title">The prompt <button type="button" class="demo-copy">Copy the prompt</button></h2>
+      <p class="demo-step-note">What the department head types into the AI chat. The highlighted brackets show where each file goes. Replace "[grade and course]" with your own course name. The same prompt works for any course.</p>
+      <pre class="demo-prompt" id="prompt-text"></pre>
     </section>
-    <section class="panel">
-      <p class="label">What comes back</p>
+
+    <section class="demo-step demo-step--files">
+      <h2 class="demo-step-title">The files you attach</h2>
+      <p class="demo-step-note">The state standards list for the course and the department's current outline, pasted in below the prompt or attached as files. The outline is a working draft, shorthand and all.</p>
+      <div class="demo-files">
+        <div class="demo-file"><span class="demo-file-tab">Standards list</span><div class="demo-file-body"><pre id="in-standards"></pre></div></div>
+        <div class="demo-file"><span class="demo-file-tab">Course outline (department draft)</span><div class="demo-file-body"><pre id="in-outline"></pre></div></div>
+      </div>
+      <aside class="tip">
+        <h3>Tip: let Claude look up the standards for you</h3>
+        <p>Finding and pasting the right standards list is often the slowest part of this task. In Claude, the Learning Commons Knowledge Graph connector looks up official K–12 standards for all 50 states. You can ask for "the [state] standards for [grade and course]" instead of attaching the list yourself. It can also break a standard into the smaller skills inside it and show which standards come before and after it, which helps when you plan how to fill a gap. Adding it takes one click and needs no separate sign-in. Compare the list it returns with your state's official document before you rely on it.</p>
+        <p><a href="https://claude.com/marketplace/connectors/learning-commons-knowledge-graph" target="_blank" rel="noopener">Learning Commons Knowledge Graph in the Claude connector directory</a></p>
+      </aside>
+    </section>
+
+    <section class="demo-step demo-step--output" aria-live="polite">
+      <h2 class="demo-step-title">What the AI wrote <span class="demo-ai-tag">AI-generated</span></h2>
       <div id="out"></div>
     </section>
   </div>
 
-  <footer>
-    A person still checks every mark against the actual unit plans and assessments; the outline is only as complete as whoever wrote it.
-    Every output was generated ahead of time so this page works with no internet.
-  </footer>
+  <aside class="demo-before-use">
+    <h2>Before you use it</h2>
+    <p>The department checks every mark against the actual unit plans and assessments before anyone changes the course. The AI sees only the outline, so a standard that is taught but never written down will show up as a gap, and a topic that is listed but rushed will show up as covered.</p>
+  </aside>
+
+  <footer class="demo-foot">Every name, number, and document on this page is made up. The AI's answers were written ahead of time, so the page works without an internet connection.</footer>
 </main>
 
 <script>
@@ -262,28 +247,28 @@ async function respond(task, input) {
   return CANNED[task][input.id];
 }
 
-const BADGE = { gap: "GAP", dup: "DUPLICATE", partial: "PARTIAL", none: "NO STANDARD", fix: "FIX", ok: "OK" };
+const BADGE = { gap: "Gap", dup: "Duplicate", partial: "Partial", none: "No standard", fix: "Fix", ok: "OK" };
 const $ = id => document.getElementById(id);
 let run = 0;
 
 function render(out) {
   const count = f => out.rows.filter(r => r[2] === f).length;
   const tiles =
-    `<div class="tiles">
-      <div class="tile"><b>${out.rows.length}</b>standards</div>
-      <div class="tile"><b>${count("ok")}</b>covered cleanly</div>
-      <div class="tile gap"><b>${count("gap")}</b>gaps</div>
-      <div class="tile dup"><b>${count("dup")}</b>duplicated</div>
-      ${count("partial") ? `<div class="tile"><b>${count("partial")}</b>partial</div>` : ""}
+    `<div class="demo-tiles">
+      <div class="demo-tile"><b>${out.rows.length}</b>standards</div>
+      <div class="demo-tile"><b>${count("ok")}</b>covered cleanly</div>
+      <div class="demo-tile gap"><b>${count("gap")}</b>gaps</div>
+      <div class="demo-tile dup"><b>${count("dup")}</b>duplicated</div>
+      ${count("partial") ? `<div class="demo-tile"><b>${count("partial")}</b>partial</div>` : ""}
     </div>`;
   const head = `<tr><th class="code">Standard</th>${out.units.map((u, i) => `<th>U${i + 1}</th>`).join("")}</tr>`;
   const rows = out.rows.map(([code, marks, flag]) =>
     `<tr class="${flag}"><td class="code"><b>${code}</b>${flag === "ok" ? "" : `<span class="badge ${flag}">${BADGE[flag]}</span>`}</td>` +
     [...marks].map(m => `<td class="mark">${m === "·" ? "" : m}</td>`).join("") + `</tr>`).join("");
-  const legend = `<p class="legend">${out.units.map((u, i) => `<span><b>U${i + 1}</b> ${u}</span>`).join("")}<span>● taught · ◐ touched</span></p>`;
+  const legend = `<p class="demo-meta legend">${out.units.map((u, i) => `<span><b>U${i + 1}</b> ${u}</span>`).join("")}<span>● taught · ◐ touched</span></p>`;
   const findings = `<ul class="findings">${out.findings.map(([k, title, text]) =>
     `<li class="${k}"><span class="badge ${k}">${BADGE[k]}</span> <b>${title}.</b> ${text}</li>`).join("")}</ul>`;
-  $("out").innerHTML = tiles + `<table>${head}${rows}</table>` + legend + findings;
+  $("out").innerHTML = tiles + `<div class="demo-tablewrap"><table class="grid">${head}${rows}</table></div>` + legend + findings;
 }
 
 async function choose(id) {
@@ -292,18 +277,12 @@ async function choose(id) {
   document.querySelectorAll("[data-input]").forEach(b => b.setAttribute("aria-pressed", b.dataset.input === id));
   $("in-standards").textContent = input.standards;
   $("in-outline").textContent = input.outline;
-  $("out").innerHTML = `<p class="drafting">Drafting…</p>`;
+  $("out").innerHTML = `<p class="demo-drafting">Drafting…</p>`;
   const out = await respond("align", input);
   if (mine === run) render(out);
 }
 
 document.querySelectorAll("[data-input]").forEach(b => b.addEventListener("click", () => choose(b.dataset.input)));
-$("toggle-prompt").addEventListener("click", e => {
-  const box = $("prompt");
-  box.hidden = !box.hidden;
-  e.currentTarget.setAttribute("aria-pressed", !box.hidden);
-  e.currentTarget.textContent = box.hidden ? "Show the prompt" : "Hide the prompt";
-});
 $("prompt-text").textContent = PROMPTS.align;
 choose("sci8");
 </script>

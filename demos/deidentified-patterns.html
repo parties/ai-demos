@@ -3,78 +3,90 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>De-identified Patterns</title>
+<title>Finding Patterns in Student Data Without Exposing Students</title>
+<link rel="stylesheet" href="../assets/demo.css">
+<script src="../assets/demo.js" defer></script>
 <style>
-  :root {
-    --bg: #fcfcfb; --ink: #0b0b0b; --muted: #52514e; --axis: #898781; --line: #d9d8d3;
-    --card: #ffffff; --accent: #1c5cab; --s1: #2a78d6; --s2: #eb6834;
-    --gone: #9a9893; --flag: #fff3d6;
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--ink);
-    font: 19px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  main { max-width: 1500px; margin: 0 auto; padding: 20px 16px 40px; }
-  h1 { font-size: 2rem; margin: 0; line-height: 1.2; }
-  .banner { display: inline-block; background: var(--flag); border: 2px solid #c98500; border-radius: 8px;
-    padding: 4px 12px; font-weight: 700; margin: 8px 0 16px; }
-  nav { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
-  button { font: inherit; font-weight: 600; min-height: 52px; padding: 10px 22px; cursor: pointer;
-    border-radius: 10px; border: 2px solid var(--accent); background: var(--card); color: var(--ink); }
-  nav button[aria-pressed="true"], button.primary { background: var(--accent); color: #fff; }
-  .lede { font-size: 1.2rem; margin: 0 0 14px; }
-  .scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
-  table { border-collapse: collapse; width: 100%; font-size: 1rem; }
-  th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
-  th { background: #f3f2ee; }
-  td.gone, th.gone { color: var(--gone); text-decoration: line-through; }
+  /* Chart series colours, kept page-specific: blue for the comparison, orange for the group that stands out. */
+  :root { --s1: #2a78d6; --s2: #eb6834; --axis: #898781; }
+
+  /* The wizard: step buttons echo the numbered circles of the other demos. */
+  .wiz-nav { display: flex; flex-wrap: wrap; gap: 10px; margin: 22px 0 26px; }
+  .wiz-nav button { display: inline-flex; align-items: center; gap: 10px; padding-left: 8px; }
+  .wiz-nav button[data-step="3"] { border-color: var(--ai); }
+  .wiz-nav button[data-step="3"][aria-pressed="true"] { background: var(--ai); }
+  .wiz-num { flex: none; width: 32px; height: 32px; border-radius: 50%; display: inline-grid; place-items: center;
+    border: 2px solid currentColor; font: 700 1rem var(--sans); }
+  .wiz-title { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; font-size: 1.4rem; margin: 0 0 4px; }
+  .wiz-title .wiz-num { width: 40px; height: 40px; background: var(--page); }
+  #step-1 .wiz-title { color: var(--file-ink); }
+  #step-2 .wiz-title { color: var(--accent); }
+  #step-3.demo-step--output { margin-left: 0; }
+  #step-3 .wiz-title { color: var(--ai); margin-bottom: 4px; }
+  #step-3 .wiz-title .wiz-num { background: var(--ai); color: #fff; border-color: var(--ai); }
+  button.primary { background: var(--accent); color: var(--accent-ink); }
+
+  /* Step 1: the raw export is the "file", in the manila look. */
+  .export { background: var(--file-bg); border: 1px solid var(--file); border-radius: 0 10px 10px 10px; padding: 12px; }
+  .export .demo-tablewrap { background: var(--card); border-radius: 6px; }
+  .boxed { border: 1px solid var(--rule); border-radius: 10px; background: var(--card); }
+  #raw td, #raw th, #deid td, #deid th { white-space: nowrap; }
+  #raw th, #deid th { background: var(--page); }
+  td.gone, th.gone { color: var(--muted); text-decoration: line-through; }
   td.gone { font-style: italic; }
-  td.alias, th.alias { background: #eef4fc; font-weight: 700; }
-  .note { color: var(--muted); font-size: 1rem; margin: 10px 0 0; }
-  .split { display: grid; grid-template-columns: 340px 1fr; gap: 18px; align-items: start; }
+  td.alias, th.alias { background: var(--accent-soft); font-weight: 700; }
+
+  /* Step 2: the de-identification rules. */
+  .split { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 18px; align-items: start; }
   ol.rules { margin: 0; padding: 0; list-style: none; }
-  ol.rules li { padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; margin-bottom: 8px; background: var(--card); }
-  ol.rules li.on { border-color: var(--accent); background: #eef4fc; }
+  ol.rules li { padding: 10px 12px; border: 1px solid var(--rule); border-radius: 8px; margin-bottom: 8px; background: var(--card); }
+  ol.rules li.on { border-color: var(--accent); background: var(--accent-soft); }
   ol.rules li.on::before { content: "✓ "; color: var(--accent); font-weight: 800; }
-  .check { margin-top: 12px; padding: 10px 12px; border-radius: 8px; background: #e7f4ec; border: 2px solid #1b7a4a; font-weight: 600; }
-  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
-  .panel h2 { font-size: 1.25rem; margin: 0 0 4px; }
+  .check { margin-top: 12px; padding: 10px 12px; border-radius: 8px; background: var(--good-bg); border: 2px solid var(--good); font-weight: 600; }
+
+  /* Step 3: the patterns. */
+  .charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr)); gap: 16px; }
+  .chart { min-width: 0; background: var(--card); border: 1px solid var(--rule); border-radius: 12px; padding: 14px 18px; }
+  .chart h3 { font-size: 1.15rem; margin: 0 0 4px; }
   .finding { font-weight: 700; margin: 0 0 10px; }
-  .tiles { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
-  .tile { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 8px 16px; }
-  .tile b { font-size: 1.5rem; display: block; }
   .heat td, .heat th { text-align: center; font-size: 1.05rem; padding: 10px 6px; }
   .heat td:first-child, .heat th:first-child { text-align: left; }
   .heat td.cell { border: 2px solid var(--card); font-weight: 700; }
-  .heat td.sup { background: #f0efec; color: var(--muted); font-weight: 400; }
-  .chronic { display: flex; gap: 10px; flex-wrap: wrap; }
-  .chronic .tile b { color: var(--ink); }
-  .cannot { margin-top: 16px; background: var(--card); border-left: 6px solid var(--s2); border-radius: 8px; padding: 12px 16px; }
-  .cannot h2 { font-size: 1.15rem; margin: 0 0 6px; }
-  .cannot ul { margin: 0; padding-left: 22px; }
+  .heat td.sup { background: var(--page); color: var(--muted); font-weight: 400; }
+  #c-chr { margin: 0; }
   svg text { font-family: inherit; }
-  @media (max-width: 1000px) { .grid, .split { grid-template-columns: 1fr; } }
+  @media (max-width: 1000px) { .split { grid-template-columns: minmax(0, 1fr); } }
 </style>
 </head>
 <body>
-<main>
-  <h1>From raw export to patterns, without exposing a single student</h1>
-  <div class="banner">All records fabricated. No real students.</div>
+<main class="demo">
+  <a class="demo-back" href="../index.html">All demos</a>
+  <header class="demo-head">
+    <h1>Finding patterns in student data without exposing students</h1>
+    <p class="demo-intro">Attendance, behavior, and wellness records can show a district where students need help, and an AI can find patterns in thousands of rows quickly. But student records must never be pasted into an AI tool as they come out of the student information system. This page shows the safe order. A district data staff member exports the records, then removes names, ID numbers, birthdates, and staff notes on the district's own system. Only the de-identified rows go to the AI, and every pattern it reports is about a day, a class period, a grade, or a building, never a single student.</p>
+    <p class="demo-intro">Work through the three steps in order. In step 2, press the button to watch each rule applied and to see the check that nothing identifying is left. All records on this page are fabricated; no real students appear.</p>
+  </header>
 
-  <nav>
-    <button data-step="1" aria-pressed="true">1 · Raw export</button>
-    <button data-step="2" aria-pressed="false">2 · De-identify</button>
-    <button data-step="3" aria-pressed="false">3 · Patterns</button>
+  <nav class="wiz-nav" aria-label="Steps">
+    <button data-step="1" aria-pressed="true"><span class="wiz-num">1</span>The raw export</button>
+    <button data-step="2" aria-pressed="false"><span class="wiz-num">2</span>Remove what identifies students</button>
+    <button data-step="3" aria-pressed="false"><span class="wiz-num">3</span>The patterns the AI found</button>
   </nav>
 
   <section id="step-1">
-    <p class="lede">What an attendance, behavior and wellness export looks like before anyone should paste it anywhere.</p>
-    <div class="scroll"><table id="raw"></table></div>
-    <p class="note" id="raw-count"></p>
-    <p><button class="primary" data-go="2">Next: de-identify →</button></p>
+    <h2 class="wiz-title"><span class="wiz-num">1</span>The raw export</h2>
+    <p class="demo-step-note">This is what an attendance, behavior, and wellness export looks like when it comes out of the student information system. Each record carries the student's name, ID number, and birthdate, and some carry a staff note. In this form it must not be pasted into any AI tool.</p>
+    <span class="demo-file-tab">Raw export from the student information system</span>
+    <div class="export">
+      <div class="demo-tablewrap"><table id="raw"></table></div>
+      <p class="demo-meta" id="raw-count"></p>
+    </div>
+    <p><button class="primary" data-go="2">Next: remove what identifies students →</button></p>
   </section>
 
   <section id="step-2" hidden>
+    <h2 class="wiz-title"><span class="wiz-num">2</span>Remove what identifies students (done by the district)</h2>
+    <p class="demo-step-note">A district staff member does this step on screen, on the district's own system, before anything goes to an AI. Press the button to apply each rule in turn. The page then scans every row to confirm that no name, ID number, birthdate, or staff note is left. Only these de-identified rows move on to step 3.</p>
     <div class="split">
       <div>
         <ol class="rules" id="rules">
@@ -84,26 +96,28 @@
           <li>Remove staff notes; free text hides names</li>
           <li>Suppress small groups: any count under 5 shows as "&lt;5"</li>
         </ol>
-        <p><button class="primary" id="deid-btn">De-identify</button></p>
+        <p><button class="primary" id="deid-btn">Remove identifying details</button></p>
         <div class="check" id="deid-check" hidden></div>
       </div>
       <div>
-        <div class="scroll"><table id="deid"></table></div>
-        <p><button class="primary" data-go="3" id="to-3" hidden>Next: find patterns →</button></p>
+        <div class="demo-tablewrap boxed"><table id="deid"></table></div>
+        <p><button class="primary" data-go="3" id="to-3" hidden>Next: look for patterns →</button></p>
       </div>
     </div>
   </section>
 
-  <section id="step-3" hidden>
-    <div class="tiles" id="tiles"></div>
-    <div class="grid">
-      <div class="panel"><h2>Absences by day of week</h2><p class="finding" id="f-abs"></p><div id="c-abs"></div></div>
-      <div class="panel"><h2>Behavior incidents by class period</h2><p class="finding" id="f-inc"></p><div id="c-inc"></div></div>
-      <div class="panel"><h2>Weekly wellness check-in (1–5), average</h2><p class="finding" id="f-well"></p><div id="c-well"></div></div>
-      <div class="panel"><h2>Chronic absence (missed 10% or more of days)</h2><p class="finding" id="f-chr"></p><div id="c-chr" class="chronic"></div></div>
+  <section id="step-3" class="demo-step--output" aria-live="polite" hidden>
+    <h2 class="wiz-title"><span class="wiz-num">3</span>The patterns the AI found <span class="demo-ai-tag">AI-generated</span></h2>
+    <p class="demo-step-note">The AI receives only the de-identified rows from step 2. It counts absences, behavior incidents, and wellness check-ins by day, class period, grade, and building, and describes what stands out.</p>
+    <div class="demo-tiles" id="tiles"></div>
+    <div class="charts">
+      <div class="chart"><h3>Absences by day of the week</h3><p class="finding" id="f-abs"></p><div id="c-abs"></div></div>
+      <div class="chart"><h3>Behavior incidents by class period</h3><p class="finding" id="f-inc"></p><div id="c-inc" class="demo-tablewrap"></div></div>
+      <div class="chart"><h3>Weekly wellness check-in average (scale of 1 to 5)</h3><p class="finding" id="f-well"></p><div id="c-well"></div></div>
+      <div class="chart"><h3>Chronic absence (missed 10% or more of school days)</h3><p class="finding" id="f-chr"></p><div id="c-chr" class="demo-tiles"></div></div>
     </div>
-    <div class="cannot">
-      <h2>What this can't tell you</h2>
+    <div class="demo-flag">
+      <h3>What this can't tell you</h3>
       <ul>
         <li>Why. A period spike could be lunch, one schedule, or one hallway. The data says where to look; people find out why.</li>
         <li>Who. Every result is about a time, a place, or a grade, never a student.</li>
@@ -111,6 +125,13 @@
       </ul>
     </div>
   </section>
+
+  <aside class="demo-before-use">
+    <h2>Before you use it</h2>
+    <p>These patterns tell you where to look, not why something is happening or which students are involved. Someone who knows the buildings has to find the reason, for example by talking with the staff who teach period 5. Before you share any result, check that no group is small enough to point to a student; any count under 5 should show as "&lt;5".</p>
+  </aside>
+
+  <footer class="demo-foot">All records are fabricated; no real students appear on this page. Every name, number, and record is made up. The patterns in step 3 are worked out by the page itself, standing in for the AI, so the page works without an internet connection.</footer>
 </main>
 
 <script>
@@ -254,7 +275,7 @@ function analyze() {
   document.getElementById("tiles").innerHTML = [
     [deid.length.toLocaleString(), "de-identified rows"], [roster.length, "aliases, 0 names"],
     [abs.length.toLocaleString(), "absences"], [inc.length.toLocaleString(), "incidents"], [chk.length.toLocaleString(), "check-ins"]]
-    .map(([n, l]) => `<div class="tile"><b>${n}</b>${l}</div>`).join("");
+    .map(([n, l]) => `<div class="demo-tile"><b>${n}</b>${l}</div>`).join("");
 
   // Absences by weekday: bar chart, values labelled on the bars.
   const byDow = [1, 2, 3, 4, 5].map(d => abs.filter(r => r.dow === d).length);
@@ -263,11 +284,11 @@ function analyze() {
     `Mondays run ${pct(byDow[0] / mid - 1)}% above the Tue–Thu average; Fridays ${pct(byDow[4] / mid - 1)}%.`;
   const max = Math.max(...byDow), W = 520, H = 230, bw = 64, gap = (W - 40 - 5 * bw) / 4;
   document.getElementById("c-abs").innerHTML = `<svg viewBox="0 0 ${W} ${H + 40}" width="100%" role="img" aria-label="Absences by weekday: ${byDow.map((n, i) => DOW[i + 1] + " " + n).join(", ")}">
-    <line x1="20" y1="${H}" x2="${W - 20}" y2="${H}" stroke="#898781" stroke-width="1"/>
+    <line x1="20" y1="${H}" x2="${W - 20}" y2="${H}" style="stroke:var(--axis)" stroke-width="1"/>
     ${byDow.map((n, i) => { const h = (n / max) * (H - 40), x = 20 + i * (bw + gap);
-      return `<path d="M${x},${H} V${H - h + 4} q0,-4 4,-4 h${bw - 8} q4,0 4,4 V${H} Z" fill="#2a78d6"/>
-        <text x="${x + bw / 2}" y="${H - h - 10}" text-anchor="middle" font-size="22" font-weight="700" fill="#0b0b0b">${n}</text>
-        <text x="${x + bw / 2}" y="${H + 30}" text-anchor="middle" font-size="22" fill="#52514e">${DOW[i + 1]}</text>`; }).join("")}
+      return `<path d="M${x},${H} V${H - h + 4} q0,-4 4,-4 h${bw - 8} q4,0 4,4 V${H} Z" style="fill:var(--s1)"/>
+        <text x="${x + bw / 2}" y="${H - h - 10}" text-anchor="middle" font-size="22" font-weight="700" style="fill:var(--ink)">${n}</text>
+        <text x="${x + bw / 2}" y="${H + 30}" text-anchor="middle" font-size="22" style="fill:var(--muted)">${DOW[i + 1]}</text>`; }).join("")}
   </svg>`;
 
   // Incidents: building x period heatmap, one-hue ramp, small cells suppressed.
@@ -285,7 +306,7 @@ function analyze() {
       if (n > 0 && n < 5) return `<td class="cell sup">&lt;5</td>`;
       const step = Math.min(ramp.length - 1, Math.floor((n / gmax) * ramp.length));
       return `<td class="cell" style="background:${ramp[step]};color:${step >= 3 ? "#fff" : "var(--ink)"}">${n}</td>`;
-    }).join("") + "</tr>").join("") + `</tbody></table><p class="note">${grid.flat().some(n => n > 0 && n < 5) ? 'Gray "&lt;5" cells are suppressed' : 'Any count under 5 would show as "&lt;5"'} so a small group can't be identified.</p>`;
+    }).join("") + "</tr>").join("") + `</tbody></table><p class="demo-meta">${grid.flat().some(n => n > 0 && n < 5) ? 'Gray "&lt;5" cells are suppressed' : 'Any count under 5 would show as "&lt;5"'} so a small group can't be identified.</p>`;
 
   // Wellness: find the grade whose average fell most from week 1 to week 6; plot it against everyone else.
   const avg = rows => rows.reduce((a, r) => a + r.value, 0) / rows.length;
@@ -300,13 +321,13 @@ function analyze() {
   const LW = 580, LH = 230, x = i => 40 + i * ((LW - 220) / 5), y = v => 20 + (5 - v) / 3 * (LH - 40);   // y from 2 to 5
   const path = s => s.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
   document.getElementById("c-well").innerHTML = `<svg viewBox="0 0 ${LW} ${LH + 40}" width="100%" role="img" aria-label="Grade ${worst.g} weekly average ${worst.s.map(v => v.toFixed(1)).join(", ")}; other grades ${rest.map(v => v.toFixed(1)).join(", ")}">
-    ${[2, 3, 4, 5].map(v => `<line x1="40" x2="${x(5)}" y1="${y(v)}" y2="${y(v)}" stroke="#d9d8d3"/><text x="30" y="${y(v) + 6}" text-anchor="end" font-size="18" fill="#52514e">${v}</text>`).join("")}
-    ${weeks.map((w, i) => `<text x="${x(i)}" y="${LH + 30}" text-anchor="middle" font-size="18" fill="#52514e">Wk ${w}</text>`).join("")}
-    <path d="${path(rest)}" fill="none" stroke="#2a78d6" stroke-width="3"/>
-    <path d="${path(worst.s)}" fill="none" stroke="#eb6834" stroke-width="3"/>
-    ${worst.s.map((v, i) => `<circle cx="${x(i)}" cy="${y(v)}" r="5" fill="#eb6834" stroke="#ffffff" stroke-width="2"/>`).join("")}
-    <text x="${x(5) + 12}" y="${y(rest[5]) + 6}" font-size="18" font-weight="700" fill="#0b0b0b">Other grades ${rest[5].toFixed(1)}</text>
-    <text x="${x(5) + 12}" y="${y(worst.s[5]) + 6}" font-size="18" font-weight="700" fill="#0b0b0b">Grade ${worst.g} ${worst.s[5].toFixed(1)}</text>
+    ${[2, 3, 4, 5].map(v => `<line x1="40" x2="${x(5)}" y1="${y(v)}" y2="${y(v)}" style="stroke:var(--rule)"/><text x="30" y="${y(v) + 6}" text-anchor="end" font-size="18" style="fill:var(--muted)">${v}</text>`).join("")}
+    ${weeks.map((w, i) => `<text x="${x(i)}" y="${LH + 30}" text-anchor="middle" font-size="18" style="fill:var(--muted)">Wk ${w}</text>`).join("")}
+    <path d="${path(rest)}" fill="none" style="stroke:var(--s1)" stroke-width="3"/>
+    <path d="${path(worst.s)}" fill="none" style="stroke:var(--s2)" stroke-width="3"/>
+    ${worst.s.map((v, i) => `<circle cx="${x(i)}" cy="${y(v)}" r="5" style="fill:var(--s2);stroke:var(--card)" stroke-width="2"/>`).join("")}
+    <text x="${x(5) + 12}" y="${y(rest[5]) + 6}" font-size="18" font-weight="700" style="fill:var(--ink)">Other grades ${rest[5].toFixed(1)}</text>
+    <text x="${x(5) + 12}" y="${y(worst.s[5]) + 6}" font-size="18" font-weight="700" style="fill:var(--ink)">Grade ${worst.g} ${worst.s[5].toFixed(1)}</text>
   </svg>`;
 
   // Chronic absence: an alias missing 3+ of 30 days, by building.
@@ -321,7 +342,7 @@ function analyze() {
   document.getElementById("f-chr").textContent =
     `${total} of ${roster.length} students (${pct(total / roster.length)}%) are already chronically absent six weeks in.`;
   document.getElementById("c-chr").innerHTML = chronic.map(c =>
-    `<div class="tile"><b>${c.n > 0 && c.n < 5 ? "<5" : pct(c.n / c.pop) + "%"}</b>${esc(c.name)} · ${sup(c.n)} of ${c.pop}</div>`).join("");
+    `<div class="demo-tile"><b>${c.n > 0 && c.n < 5 ? "<5" : pct(c.n / c.pop) + "%"}</b>${esc(c.name)} · ${sup(c.n)} of ${c.pop}</div>`).join("");
 }
 analyze();
 
