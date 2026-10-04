@@ -34,6 +34,9 @@
   .findings li.partial { border-color: var(--accent); }
   .findings li.fix, .findings li.ok { border-color: var(--good); }
   @media (max-width: 520px) { .grid { font-size: .8rem; } .grid td.mark { font-size: 1.05rem; } .grid .code { width: 38%; } }
+  .tip { margin-top: 18px; background: var(--card); border: 1px solid var(--rule); border-left: 6px solid var(--accent); border-radius: 0 12px 12px 0; padding: 12px 18px; max-width: 72ch; }
+  .tip h3 { margin: 0 0 4px; font-size: 1.1rem; color: var(--accent); }
+  .tip p { margin: 6px 0 0; }
 </style>
 </head>
 <body>
@@ -65,6 +68,11 @@
         <div class="demo-file"><span class="demo-file-tab">Standards list</span><div class="demo-file-body"><pre id="in-standards"></pre></div></div>
         <div class="demo-file"><span class="demo-file-tab">Course outline (department draft)</span><div class="demo-file-body"><pre id="in-outline"></pre></div></div>
       </div>
+      <aside class="tip">
+        <h3>Tip: let Claude look up the standards for you</h3>
+        <p>Finding and pasting the right standards list is often the slowest part of this task. In Claude, the Learning Commons Knowledge Graph connector looks up official K–12 standards for all 50 states. You can ask for "the [state] standards for [grade and course]" instead of attaching the list yourself. It can also break a standard into the smaller skills inside it and show which standards come before and after it, which helps when you plan how to fill a gap. Adding it takes one click and needs no separate sign-in. Compare the list it returns with your state's official document before you rely on it.</p>
+        <p><a href="https://claude.com/marketplace/connectors/learning-commons-knowledge-graph" target="_blank" rel="noopener">Learning Commons Knowledge Graph in the Claude connector directory</a></p>
+      </aside>
     </section>
 
     <section class="demo-step demo-step--output" aria-live="polite">
