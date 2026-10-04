@@ -3,98 +3,79 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Vendor Privacy Review</title>
+<title>Reviewing a Vendor's Privacy Policy</title>
+<link rel="stylesheet" href="../assets/demo.css">
+<script src="../assets/demo.js" defer></script>
 <style>
-  :root {
-    --bg: #fcfcfb; --ink: #0b0b0b; --muted: #52514e; --line: #d9d8d3;
-    --card: #ffffff; --accent: #1c5cab; --accent-ink: #ffffff; --soft: #eef4fc;
-    --ok-bg: #e3f3e6; --ok-ink: #11592a; --no-bg: #fbe4e2; --no-ink: #8f1c12;
-    --q-bg: #fdf1d6; --q-ink: #6e4400; --mark: #fff0a8;
-  }
-  * { box-sizing: border-box; }
-  [hidden] { display: none !important; }
-  body { margin: 0; background: var(--bg); color: var(--ink);
-    font: 20px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  main { max-width: 1500px; margin: 0 auto; padding: 24px 16px 40px; }
-  h1 { font-size: 2.1rem; margin: 0; line-height: 1.2; }
-  .sub { color: var(--muted); margin: 6px 0 20px; font-size: 1.15rem; }
-  .controls { display: flex; flex-wrap: wrap; gap: 12px 22px; align-items: center; margin-bottom: 18px; }
-  .presets { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-  .presets > span { color: var(--muted); font-weight: 600; margin-right: 4px; }
-  button { font: inherit; font-weight: 600; padding: 10px 22px; min-height: 52px; cursor: pointer;
-    background: var(--card); color: var(--ink); border: 2px solid var(--accent); border-radius: 10px; }
-  button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
-  #toggle-prompt { border-color: var(--line); }
-  #toggle-prompt[aria-pressed="true"] { border-color: var(--accent); }
-  .prompt { background: #f3f2ee; border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px; margin: 0 0 18px;
-    white-space: pre-wrap; overflow-wrap: anywhere; font: .95rem/1.5 ui-monospace, Menlo, Consolas, monospace; }
-  .io { display: grid; grid-template-columns: 2fr 3fr; gap: 16px; align-items: start; }
-  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; min-width: 0; }
-  .panel.in { background: #f3f2ee; }
-  .panel h2 { font-size: 1rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 8px; }
   .doc-title { font-weight: 700; margin: 0 0 8px; }
-  .policy p { margin: 0 0 10px; font-size: .95rem; }
-  mark { background: var(--mark); color: var(--ink); padding: 0 2px; border-radius: 3px; }
-  mark::before { content: attr(data-n); display: inline-block; background: var(--ink); color: #fff; font-size: .75rem;
+  .policy p { margin: 0 0 10px; }
+  /* Each quoted sentence in the policy carries the number of its row in the AI's table. */
+  .policy mark::before { content: attr(data-n); display: inline-block; background: var(--ink); color: #fff; font-size: .75rem;
     font-weight: 700; border-radius: 4px; padding: 0 5px; margin-right: 4px; vertical-align: 2px; }
-  .drafting { color: var(--muted); font-style: italic; }
-  .decision { background: var(--soft); border-left: 6px solid var(--accent); border-radius: 8px; padding: 10px 14px; margin: 0 0 14px; }
-  .counts { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 14px; }
-  .pill { border-radius: 999px; padding: 4px 14px; font-weight: 700; }
-  .met { background: var(--ok-bg); color: var(--ok-ink); }
-  .not { background: var(--no-bg); color: var(--no-ink); }
-  .unclear { background: var(--q-bg); color: var(--q-ink); }
-  table { width: 100%; border-collapse: collapse; }
-  th { text-align: left; font-size: .9rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted);
-    border-bottom: 2px solid var(--line); padding: 6px 8px; }
-  td { border-bottom: 1px solid var(--line); padding: 10px 8px; vertical-align: top; }
+  .decision { background: var(--accent-soft); border-left: 6px solid var(--accent); border-radius: 8px; padding: 10px 14px; margin: 0 0 14px; }
+  .pill { display: inline-block; border-radius: 999px; padding: 2px 12px; font-weight: 700; font-size: .9rem; border: 1px solid; }
+  .met { background: var(--good-bg); color: var(--good); }
+  .not { background: var(--bad-bg); color: var(--bad); }
+  .unclear { background: var(--warn-bg); color: var(--ink); border-color: var(--warn); }
+  #out table { background: var(--card); border: 1px solid var(--rule); border-radius: 8px; }
+  #out th { border-bottom: 2px solid var(--rule); padding: 8px; }
+  #out td { padding: 10px 8px; }
   td .req { display: block; color: var(--muted); font-size: .9rem; }
   .status { white-space: nowrap; }
   .quote { font-style: italic; margin: 0 0 4px; }
-  .quote.none { font-style: normal; color: var(--no-ink); font-weight: 600; }
+  .quote.none { font-style: normal; color: var(--bad); font-weight: 600; }
   .why { margin: 0; font-size: .95rem; }
   .src { font-size: .85rem; color: var(--muted); margin-top: 2px; }
-  .src.bad { color: var(--no-ink); font-weight: 700; }
-  h3 { font-size: 1.15rem; margin: 18px 0 6px; }
+  .src.bad { color: var(--bad); font-weight: 700; }
+  #out h3 { font-size: 1.15rem; margin: 18px 0 6px; }
   ul.list { margin: 0; padding-left: 1.2em; }
   ul.list li { margin-bottom: 6px; }
-  footer { color: var(--muted); font-size: 1rem; margin-top: 20px; }
   @media (max-width: 900px) {
-    .io { grid-template-columns: 1fr; }
-    thead { display: none; }
-    table, tbody, tr, td { display: block; }
-    tr { border-bottom: 2px solid var(--line); padding: 8px 0; }
-    td { border: 0; padding: 4px 0; }
+    #out thead { display: none; }
+    #out table, #out tbody, #out tr, #out td { display: block; }
+    #out tr { border-bottom: 2px solid var(--rule); padding: 8px 10px; }
+    #out td { border: 0; padding: 4px 0; }
   }
 </style>
 </head>
 <body>
-<main>
-  <h1>Vendor privacy review</h1>
-  <p class="sub">A vendor's public privacy policy, checked line by line against the district's own checklist. Gaps get flagged, but the decision stays yours.</p>
+<main class="demo">
+  <a class="demo-back" href="../index.html">All demos</a>
+  <header class="demo-head">
+    <h1>Reviewing a vendor's privacy policy</h1>
+    <p class="demo-intro">Before teachers use a new app with students, someone at the district reads the company's privacy policy and compares it with the district's own privacy requirements. Here, the district's information services director gives the AI a vendor's public privacy policy and the district's six-item checklist, and asks it to check each item. For every item, the AI marks it met, not met, or unclear, and quotes the exact sentence it relied on. It then lists other parts of the policy worth noticing and the questions to send the vendor. It does not approve or reject the vendor; that decision stays with the district.</p>
+    <p class="demo-intro">Choose a vendor to see a different policy and the review that comes back.</p>
+  </header>
 
-  <div class="controls">
-    <div class="presets" role="group" aria-label="Example policy" id="presets"><span>Example policy</span></div>
-    <button id="toggle-prompt" aria-pressed="false">Show the prompt</button>
-  </div>
-  <pre class="prompt" id="prompt" hidden></pre>
+  <div class="demo-presets" role="group" aria-label="Vendor" id="presets"><span>Choose a vendor</span></div>
 
-  <div class="io">
-    <section class="panel in">
-      <h2>What you paste in: the vendor's public policy</h2>
-      <p class="doc-title" id="doc-title"></p>
-      <div class="policy" id="policy"></div>
+  <div class="demo-steps">
+    <section class="demo-step demo-step--prompt">
+      <h2 class="demo-step-title">The prompt <button type="button" class="demo-copy">Copy the prompt</button></h2>
+      <p class="demo-step-note">What the director types into the AI chat. The district's checklist is written into the prompt, so the same prompt works for every vendor. The highlighted bracket shows where the vendor's policy goes.</p>
+      <pre class="demo-prompt" id="prompt"></pre>
     </section>
-    <section class="panel">
-      <h2>What comes back: checked against your list</h2>
+
+    <section class="demo-step demo-step--files">
+      <h2 class="demo-step-title">The file you attach</h2>
+      <p class="demo-step-note">The vendor's public privacy policy, copied from its website and pasted in below the prompt. Once the AI answers, each sentence it quoted is highlighted here and numbered to match its row in the table. Open the full file to check the quotes against the policy.</p>
+      <div class="demo-files">
+        <div class="demo-file"><span class="demo-file-tab">Vendor privacy policy</span><div class="demo-file-body"><p class="doc-title" id="doc-title"></p><div class="policy" id="policy"></div></div></div>
+      </div>
+    </section>
+
+    <section class="demo-step demo-step--output" aria-live="polite">
+      <h2 class="demo-step-title">What the AI wrote <span class="demo-ai-tag">AI-generated</span></h2>
       <div id="out"></div>
     </section>
   </div>
 
-  <footer>
-    Someone checks each quote against the vendor's current policy and contract. Approval, and any legal review, stays with the district.
-    Every output was generated ahead of time so this page works with no internet.
-  </footer>
+  <aside class="demo-before-use">
+    <h2>Before you use it</h2>
+    <p>Someone at the district checks each quote against the vendor's current policy and contract before the review goes to the privacy committee. The decision to approve the vendor, and any legal review, stays with the district.</p>
+  </aside>
+
+  <footer class="demo-foot">Every name, number, and document on this page is made up. The AI's answers were written ahead of time, so the page works without an internet connection.</footer>
 </main>
 
 <script>
@@ -263,7 +244,7 @@ async function select(input) {
   document.querySelectorAll("[data-id]").forEach(b => b.setAttribute("aria-pressed", b.dataset.id === input.id));
   $("doc-title").textContent = input.title;
   showPolicy(input, []);
-  $("out").innerHTML = '<p class="drafting">Drafting…</p>';
+  $("out").innerHTML = '<p class="demo-drafting">Drafting…</p>';
   const res = await respond("review", input);
   if (run !== current) return;
 
@@ -274,7 +255,7 @@ async function select(input) {
     : '<div class="src bad">⚠ Quote not found in the policy. Verify before using.</div>';
 
   let html = `<p class="decision"><strong>The decision stays yours.</strong> This flags gaps against your checklist. It does not approve or reject a vendor.</p>
-    <div class="counts"><span class="pill met">✓ ${count("met")} met</span><span class="pill not">✗ ${count("not")} not met</span><span class="pill unclear">? ${count("unclear")} unclear</span></div>
+    <div class="demo-chips"><span class="pill met">✓ ${count("met")} met</span><span class="pill not">✗ ${count("not")} not met</span><span class="pill unclear">? ${count("unclear")} unclear</span></div>
     <table><thead><tr><th>Your checklist</th><th>Status</th><th>What the policy says</th></tr></thead><tbody>`;
   res.rows.forEach(([status, quote, why], i) => {
     const [cls, label] = STATUS[status];
@@ -302,13 +283,6 @@ INPUTS.forEach(input => {
 });
 
 $("prompt").textContent = PROMPTS.review;
-const toggle = $("toggle-prompt");
-toggle.addEventListener("click", () => {
-  const box = $("prompt");
-  box.hidden = !box.hidden;
-  toggle.setAttribute("aria-pressed", !box.hidden);
-  toggle.textContent = box.hidden ? "Show the prompt" : "Hide the prompt";
-});
 
 select(INPUTS[0]);
 </script>

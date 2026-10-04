@@ -145,3 +145,24 @@ Page-specific rules stay in each page's inline `<style>`, using the shared token
 - Eric reviews the pilot screenshots at the checkpoint and the full set before merge.
 
 Done when: all 30 demos, `framework.html` and `index.html` link `assets/demo.css` (and every demo with files links `assets/demo.js`), no page contains `toggle-prompt`, and the Playwright pass reports 0 console errors and 0 network requests.   Eric verifies: opens the published index on his laptop, toggles list/cards, and opens three demos to confirm the prompt, files and AI output are clearly separate.
+
+## Revision (2026-10-04, after the pilot review)
+
+Eric approved the pilot layout, then changed the scope. The public gallery becomes a sales showcase. The full set is kept for paid client work.
+
+- **Showcase (10, stay public):**
+  - where-it-fails
+  - board-memo-draft
+  - meeting-rehearsal
+  - job-posting
+  - vendor-privacy-review
+  - standards-alignment
+  - deidentified-patterns
+  - directive-to-building
+  - communications
+  - program-report
+- **Off the public site:** the other 20 demos and `framework.html`. The repo is public and Pages serves `main` from the root, so any file on `main` is public. They are deleted from `main` on this branch. They stay recoverable from the tag `full-gallery-2026-10-04`, which points at the last commit that has all of them.
+- **Restyle only the showcase demos.** Step 5's batches are replaced by the 8 showcase pages still to convert. Merge PR #1 once, after they are done.
+- **Next, on a new branch:** a Claude walkthrough prototype for the board memo. It uses real Claude screenshots that Eric captures.
+
+Done when (revised): the 10 showcase demos and `index.html` link `assets/demo.css`, the index lists exactly those 10 plus the workshop link, no remaining page contains `toggle-prompt`, and the Playwright pass reports 0 console errors and 0 network requests.   Eric verifies: opens the published index after merge and spot-checks three demos.

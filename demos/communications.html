@@ -3,73 +3,78 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>One Message, Every Family</title>
+<title>Adapting One Message for Every Family</title>
+<link rel="stylesheet" href="../assets/demo.css">
+<script src="../assets/demo.js" defer></script>
 <style>
-  :root {
-    --bg: #fcfcfb; --ink: #0b0b0b; --muted: #52514e; --line: #d9d8d3;
-    --card: #ffffff; --accent: #1c5cab; --accent-ink: #ffffff; --soft: #eef4fc;
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--ink);
-    font: 20px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  main { max-width: 1500px; margin: 0 auto; padding: 24px 16px 40px; }
-  h1 { font-size: 2.1rem; margin: 0; line-height: 1.2; }
-  .sub { color: var(--muted); margin: 6px 0 20px; font-size: 1.15rem; }
-  .original { background: #f3f2ee; border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px; margin-bottom: 18px; }
-  .original h2 { font-size: 1rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 6px; }
-  .original p { margin: 0; font-size: 1.05rem; }
-  .controls { display: flex; flex-wrap: wrap; gap: 22px; align-items: center; margin-bottom: 18px; }
-  .group { display: flex; gap: 0; align-items: center; }
-  .group span { color: var(--muted); margin-right: 10px; font-weight: 600; }
-  button { font: inherit; font-weight: 600; padding: 10px 22px; min-height: 52px; cursor: pointer;
-    background: var(--card); color: var(--ink); border: 2px solid var(--accent); }
-  .group button:first-of-type { border-radius: 10px 0 0 10px; }
-  .group button:last-of-type { border-radius: 0 10px 10px 0; border-left: 0; }
-  button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
-  #toggle-original { border-radius: 10px; border-color: var(--line); }
-  .cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-  .col { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; }
-  .col h3 { margin: 0; font-size: 1.35rem; }
-  .stats { color: var(--muted); font-size: .95rem; margin: 2px 0 10px; }
-  .col p { margin: 0; }
-  footer { color: var(--muted); font-size: 1rem; margin-top: 20px; }
-  @media (max-width: 900px) { .cols { grid-template-columns: 1fr; } }
+  /* Two segmented choices (tone, language) share the preset row. */
+  .demo-presets { gap: 14px 28px; }
+  .seg { display: flex; align-items: center; flex-wrap: wrap; }
+  .seg > span { color: var(--muted); font-weight: 600; margin-right: 10px; }
+  .seg button { border-radius: 0; }
+  .seg button:first-of-type { border-radius: 10px 0 0 10px; }
+  .seg button:last-of-type { border-radius: 0 10px 10px 0; border-left: 0; }
+  .demo-file-body > p { margin: 0; }
+  /* Each reading level is a sheet of paper inside the AI panel. */
+  .level { background: var(--card); border: 1px solid var(--rule); border-radius: 6px; padding: 14px 18px; box-shadow: 0 2px 8px rgba(30,40,50,.08); min-width: 0; }
+  .level h3 { margin: 0; font-size: 1.35rem; }
+  .level .demo-meta { margin: 2px 0 10px; }
+  .level p { margin: 0; }
 </style>
 </head>
 <body>
-<main>
-  <h1>One message, every family</h1>
-  <p class="sub">Three reading levels, two tones, two languages, from one paragraph. Drafted with AI, edited by a person.</p>
+<main class="demo">
+  <a class="demo-back" href="../index.html">All demos</a>
+  <header class="demo-head">
+    <h1>Adapting one message for every family</h1>
+    <p class="demo-intro">District notices are often written in formal language that many families find hard to read, and some families read Spanish first. Here, someone in the district communications office gives the AI one notice from central office and asks for it rewritten at three reading levels, in the tone and language they choose. They then pick the version that fits each audience and check it before it goes out.</p>
+    <p class="demo-intro">Choose a tone and a language to see the prompt change and the three versions that come back.</p>
+  </header>
 
-  <section class="original" id="original">
-    <h2>What central office wrote</h2>
-    <p id="original-text"></p>
-  </section>
-
-  <div class="controls">
-    <div class="group" role="group" aria-label="Tone">
+  <div class="demo-presets">
+    <div class="seg" role="group" aria-label="Tone">
       <span>Tone</span>
       <button data-tone="warm" aria-pressed="true">Warm</button>
       <button data-tone="formal" aria-pressed="false">Formal</button>
     </div>
-    <div class="group" role="group" aria-label="Language">
+    <div class="seg" role="group" aria-label="Language">
       <span>Language</span>
       <button data-lang="en" aria-pressed="true">English</button>
       <button data-lang="es" aria-pressed="false">Español</button>
     </div>
-    <button id="toggle-original" aria-pressed="true">Hide original</button>
   </div>
 
-  <div class="cols">
-    <article class="col"><h3>3rd grade level</h3><div class="stats" id="s-g3"></div><p id="t-g3"></p></article>
-    <article class="col"><h3>8th grade level</h3><div class="stats" id="s-g8"></div><p id="t-g8"></p></article>
-    <article class="col"><h3>Adult level</h3><div class="stats" id="s-adult"></div><p id="t-adult"></p></article>
+  <div class="demo-steps">
+    <section class="demo-step demo-step--prompt">
+      <h2 class="demo-step-title">The prompt <button type="button" class="demo-copy">Copy the prompt</button></h2>
+      <p class="demo-step-note">What the communications staff member types into the AI chat. The tone and language lines change with your choices above; the rest stays the same for any notice.</p>
+      <pre class="demo-prompt" id="prompt-text"></pre>
+    </section>
+
+    <section class="demo-step demo-step--files">
+      <h2 class="demo-step-title">The file you attach</h2>
+      <p class="demo-step-note">The notice exactly as central office wrote it, pasted in where the brackets are.</p>
+      <div class="demo-files">
+        <div class="demo-file"><span class="demo-file-tab">The notice from central office</span><div class="demo-file-body"><p id="original-text"></p></div></div>
+      </div>
+    </section>
+
+    <section class="demo-step demo-step--output" aria-live="polite">
+      <h2 class="demo-step-title">What the AI wrote <span class="demo-ai-tag">AI-generated</span></h2>
+      <div class="demo-outputs">
+        <article class="level"><h3>3rd grade level</h3><div class="demo-meta" id="s-g3"></div><p id="t-g3"></p></article>
+        <article class="level"><h3>8th grade level</h3><div class="demo-meta" id="s-g8"></div><p id="t-g8"></p></article>
+        <article class="level"><h3>Adult level</h3><div class="demo-meta" id="s-adult"></div><p id="t-adult"></p></article>
+      </div>
+    </section>
   </div>
 
-  <footer>
-    Spanish is an AI first draft; a fluent reviewer signs off before anything is sent.
-    Every version was generated ahead of time so this page works with no internet.
-  </footer>
+  <aside class="demo-before-use">
+    <h2>Before you use it</h2>
+    <p>A person on staff reads every version against the original notice and edits it before anything is sent. The Spanish versions are a first draft only: a fluent Spanish reader checks and signs off on them before they go to families.</p>
+  </aside>
+
+  <footer class="demo-foot">Every name, number, and document on this page is made up. The AI's answers were written ahead of time, so the page works without an internet connection.</footer>
 </main>
 
 <script>
@@ -102,6 +107,26 @@ const TEXT = {
   }
 };
 
+const PROMPTS = {
+  // The prompt is built from the tone and language buttons; only these lines change.
+  lang: { en: "English", es: "Spanish" },
+  langVoice: { en: "", es: " Write natural Spanish that a family would use, not a word-for-word translation of the English, and address families as usted." },
+  tone: {
+    warm: "warm and friendly, like a note from someone at school who knows these families. Speak to the reader as \"you.\"",
+    formal: "formal and neutral, like an official district announcement. No exclamation points."
+  },
+  rewrite: (tone, lang) => `Rewrite the district notice below for families, in ${PROMPTS.lang[lang]}, at three reading levels.
+
+Format: three versions, labeled "3rd grade level," "8th grade level," and "Adult level." Each version is one paragraph. The lower the level, the shorter the sentences and the more everyday the words. Every version keeps what a family needs to act on: what will happen, when and how they will hear about it, and what they should do now. The lower levels may leave out background detail. Do not add any fact that is not in the notice.
+
+Voice: ${PROMPTS.tone[tone]}${PROMPTS.langVoice[lang]}
+
+Context: I work in the district communications office. This notice goes to every family by text, email, and the district website. Our families read at many different levels, and many read Spanish first. A person on our staff will check every version against the original before it is sent.
+
+Notice:
+[paste the notice here]`
+};
+
 const state = { tone: "warm", lang: "en" };
 
 // "a.m." / "a. m." ends a sentence only when a capital follows it.
@@ -121,20 +146,13 @@ function render() {
     p.lang = state.lang;
     document.getElementById("s-" + level).textContent = stats(text, state.lang);
   }
+  document.getElementById("prompt-text").textContent = PROMPTS.rewrite(state.tone, state.lang);
   document.querySelectorAll("[data-tone]").forEach(b => b.setAttribute("aria-pressed", b.dataset.tone === state.tone));
   document.querySelectorAll("[data-lang]").forEach(b => b.setAttribute("aria-pressed", b.dataset.lang === state.lang));
 }
 
 document.querySelectorAll("[data-tone]").forEach(b => b.addEventListener("click", () => { state.tone = b.dataset.tone; render(); }));
 document.querySelectorAll("[data-lang]").forEach(b => b.addEventListener("click", () => { state.lang = b.dataset.lang; render(); }));
-
-const toggle = document.getElementById("toggle-original");
-toggle.addEventListener("click", () => {
-  const box = document.getElementById("original");
-  box.hidden = !box.hidden;
-  toggle.setAttribute("aria-pressed", !box.hidden);
-  toggle.textContent = box.hidden ? "Show original" : "Hide original";
-});
 
 document.getElementById("original-text").textContent = ORIGINAL;
 render();

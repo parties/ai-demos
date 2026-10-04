@@ -3,99 +3,85 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Directive to Building Brief</title>
+<title>Passing a District Directive On to Building Staff</title>
+<link rel="stylesheet" href="../assets/demo.css">
+<script src="../assets/demo.js" defer></script>
 <style>
-  :root {
-    --bg: #fcfcfb; --ink: #0b0b0b; --muted: #52514e; --line: #d9d8d3;
-    --card: #ffffff; --accent: #1c5cab; --accent-ink: #ffffff; --soft: #eef4fc;
-    --paper: #f3f2ee; --warn-bg: #fff3d6; --warn-line: #c98500; --good: #1b7a4a;
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--ink);
-    font: 20px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  main { max-width: 1600px; margin: 0 auto; padding: 24px 16px 40px; }
-  h1 { font-size: 2.1rem; margin: 0; line-height: 1.2; }
-  .sub { color: var(--muted); margin: 6px 0 20px; font-size: 1.15rem; }
-  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 18px; }
-  .controls > span { color: var(--muted); font-weight: 600; margin-right: 4px; }
-  button { font: inherit; font-weight: 600; padding: 10px 22px; min-height: 52px; cursor: pointer;
-    background: var(--card); color: var(--ink); border: 2px solid var(--accent); border-radius: 10px; }
-  button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
-  #toggle-prompt { border-color: var(--line); }
-  .prompt { background: var(--soft); border: 2px solid var(--accent); border-radius: 12px; padding: 14px 18px; margin-bottom: 18px; }
-  .prompt h3 { font-size: 1rem; margin: 10px 0 4px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
-  .prompt pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; font-size: 1rem; }
-  .cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: start; }
-  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; }
-  .panel.in { background: var(--paper); }
-  .panel > h2 { font-size: 1rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 8px; }
-  .memo { font-family: Georgia, "Times New Roman", serif; font-size: .95rem; line-height: 1.5; }
+  /* The directive reads as a dense printed memo inside its file folder. */
+  .memo { font-family: var(--serif); font-size: .95rem; line-height: 1.5; }
   .memo .hdr { margin: 0 0 10px; padding-bottom: 8px; border-bottom: 2px solid var(--ink); }
-  .memo .hdr div { margin: 0; }
   .memo p { margin: 0; text-align: justify; hyphens: auto; }
-  .wc { color: var(--muted); font-size: .95rem; margin: 10px 0 0; font-family: system-ui, sans-serif; }
-  .drafting { color: var(--muted); font-style: italic; font-size: 1.15rem; }
-  .out h3 { font-size: 1.15rem; margin: 14px 0 4px; }
-  .out h3:first-child { margin-top: 0; }
-  .bottom { font-size: 1.1rem; font-weight: 600; padding: 8px 12px; background: var(--soft); border-left: 5px solid var(--accent); border-radius: 0 8px 8px 0; margin: 0; }
+  .memo .demo-meta { margin-top: 10px; font-family: var(--sans); text-align: left; }
+  /* Each output is a sheet of paper inside the AI panel. */
+  .out-sheet { background: var(--card); border: 1px solid var(--rule); border-radius: 6px; padding: 16px 20px; box-shadow: 0 2px 8px rgba(30,40,50,.08); min-width: 0; }
+  .out-sheet > h3 { font-size: 1.35rem; margin: 0 0 10px; color: var(--ai); }
+  .out > h3 { font-size: 1.15rem; margin: 14px 0 4px; }
   .out ul { margin: 0; padding-left: 22px; }
   .out li { margin-bottom: 4px; }
+  .bottom { font-weight: 600; padding: 8px 12px; background: var(--accent-soft); border-left: 5px solid var(--accent); border-radius: 0 8px 8px 0; margin: 0; }
   ul.checks { list-style: none; padding-left: 0; }
   ul.checks li::before { content: "☐ "; font-weight: 700; }
-  .dates { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; }
+  .dates { margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; }
   .dates dt { font-weight: 700; color: var(--accent); white-space: nowrap; }
   .dates dd { margin: 0; }
-  .ask { background: var(--warn-bg); border: 2px solid var(--warn-line); border-radius: 10px; padding: 10px 14px; margin-top: 14px; }
-  .ask h3 { margin: 0 0 4px; }
   ol.say { margin: 0; padding-left: 1.4em; }
   ol.say li { margin-bottom: 10px; }
   ol.say b { display: block; }
-  .fill { background: var(--warn-bg); border: 1px dashed var(--warn-line); border-radius: 4px; padding: 0 4px; font-weight: 600; }
-  .qa { border-top: 1px solid var(--line); padding: 8px 0; }
+  .fill { background: var(--warn-bg); border: 1px dashed var(--warn); border-radius: 4px; padding: 0 4px; font-weight: 600; }
+  .qa { border-top: 1px solid var(--rule); padding: 8px 0; }
   .qa .q { font-weight: 700; }
-  .length { color: var(--muted); font-size: 1rem; margin: 0 0 8px; }
-  footer { color: var(--muted); font-size: 1rem; margin-top: 20px; }
-  @media (max-width: 1250px) { .cols { grid-template-columns: repeat(2, minmax(0, 1fr)); } .panel.in { grid-column: 1 / -1; } }
-  @media (max-width: 900px) { .cols { grid-template-columns: minmax(0, 1fr); } .memo p { text-align: left; } }
+  .out .demo-meta { margin: 0 0 8px; }
+  @media (max-width: 700px) { .memo p { text-align: left; } .dates { grid-template-columns: minmax(0, 1fr); } }
 </style>
 </head>
 <body>
-<main>
-  <h1>One directive, ready for the building</h1>
-  <p class="sub">Paste a dense central-office memo; get the principal's one-page brief and the five minutes they'll say at the staff meeting.</p>
+<main class="demo">
+  <a class="demo-back" href="../index.html">All demos</a>
+  <header class="demo-head">
+    <h1>Passing a district directive on to building staff</h1>
+    <p class="demo-intro">When central office sends a new directive, each principal has to work out what it means for their building and then explain it to staff. The directive is usually one long paragraph of formal language. Here, a principal gives the AI the directive and asks for two things: a one-page brief the principal can act on, and talking points for a five-minute staff meeting. The AI pulls out the dates and duties and lists the questions the directive leaves unanswered, so the principal knows what to ask central office before talking to staff.</p>
+    <p class="demo-intro">Choose a directive to see the memo itself and the two documents the AI wrote from it.</p>
+  </header>
 
-  <div class="controls" role="group" aria-label="Directive">
-    <span>Directive</span>
+  <div class="demo-presets" role="group" aria-label="Directive">
+    <span>Choose a directive</span>
     <button data-input="devices" aria-pressed="true">Phone and device procedure</button>
     <button data-input="benchmark" aria-pressed="false">Fall benchmark testing</button>
-    <button id="toggle-prompt" aria-pressed="false">Show the prompt</button>
   </div>
 
-  <section class="prompt" id="prompt" hidden>
-    <h2 style="font-size:1rem;margin:0 0 6px">The prompts (copy either into any AI chat)</h2>
-    <h3>Principal brief</h3><pre id="prompt-brief"></pre>
-    <h3>Staff-meeting talking points</h3><pre id="prompt-talking"></pre>
-  </section>
+  <div class="demo-steps">
+    <section class="demo-step demo-step--prompt">
+      <h2 class="demo-step-title">The prompts <button type="button" class="demo-copy">Copy the prompt</button></h2>
+      <p class="demo-step-note">What the principal types into the AI chat. There are two prompts, one for each document, and each is sent with the directive pasted in where the brackets are. The same two prompts work for any directive.</p>
+      <span class="demo-prompt-label">For the principal's brief</span>
+      <pre class="demo-prompt" id="prompt-brief"></pre>
+      <span class="demo-prompt-label">For the staff meeting talking points</span>
+      <pre class="demo-prompt" id="prompt-talking"></pre>
+    </section>
 
-  <div class="cols">
-    <section class="panel in">
-      <h2>What you paste in</h2>
-      <div class="memo" id="in-memo"></div>
+    <section class="demo-step demo-step--files">
+      <h2 class="demo-step-title">The file you attach</h2>
+      <p class="demo-step-note">The directive exactly as central office sent it, pasted in below either prompt.</p>
+      <div class="demo-files">
+        <div class="demo-file"><span class="demo-file-tab">The directive from central office</span><div class="demo-file-body"><div class="memo" id="in-memo"></div></div></div>
+      </div>
     </section>
-    <section class="panel">
-      <h2>What comes back: principal brief</h2>
-      <div class="out" id="out-brief"></div>
-    </section>
-    <section class="panel">
-      <h2>What comes back: staff talking points</h2>
-      <div class="out" id="out-talking"></div>
+
+    <section class="demo-step demo-step--output" aria-live="polite">
+      <h2 class="demo-step-title">What the AI wrote <span class="demo-ai-tag">AI-generated</span></h2>
+      <div class="demo-outputs">
+        <article class="out-sheet"><h3>The principal's brief</h3><div class="out" id="out-brief"></div></article>
+        <article class="out-sheet"><h3>Talking points for the staff meeting</h3><div class="out" id="out-talking"></div></article>
+      </div>
     </section>
   </div>
 
-  <footer>
-    The principal checks every date and requirement against the original directive, fills in the local details, and gets answers to the flagged questions before the staff meeting.
-    Every output was generated ahead of time so this page works with no internet.
-  </footer>
+  <aside class="demo-before-use">
+    <h2>Before you use it</h2>
+    <p>The principal checks every date and requirement against the original directive, fills in the highlighted local details, and gets answers from central office to the flagged questions before the staff meeting.</p>
+  </aside>
+
+  <footer class="demo-foot">Every name, number, and document on this page is made up. The AI's answers were written ahead of time, so the page works without an internet connection.</footer>
 </main>
 
 <script>
@@ -253,13 +239,13 @@ function renderBrief(r) {
     <h3>Deadlines</h3><dl class="dates">${r.deadlines.map(([d, w]) => `<dt>${esc(d)}</dt><dd>${esc(w)}</dd>`).join("")}</dl>
     <h3>You do</h3><ul class="checks">${r.you.map(c => `<li>${esc(c)}</li>`).join("")}</ul>
     <h3>Staff do</h3><ul class="checks">${r.staff.map(c => `<li>${esc(c)}</li>`).join("")}</ul>
-    <div class="ask"><h3>⚠ Ask Central Office before the staff meeting</h3>
+    <div class="demo-flag"><h3>⚠ Ask Central Office before the staff meeting</h3>
       <ul>${r.ask.map(a => `<li>${esc(a)}</li>`).join("")}</ul></div>`;
 }
 
 function renderTalking(r) {
   $("out-talking").innerHTML = `
-    <p class="length">${esc(r.length)}</p>
+    <p class="demo-meta">${esc(r.length)}</p>
     <ol class="say">${r.points.map(p => `<li><b>${esc(p.h)}</b>${fills(p.say)}</li>`).join("")}</ol>
     <h3>Questions staff will ask</h3>
     ${r.qa.map(x => `<div class="qa"><div class="q">${esc(x.q)}</div><div>${fills(x.a)}</div></div>`).join("")}`;
@@ -270,8 +256,8 @@ async function run(input) {
   document.querySelectorAll("[data-input]").forEach(b => b.setAttribute("aria-pressed", b.dataset.input === input.id));
   const words = input.body.split(/\s+/).length;
   $("in-memo").innerHTML = `<div class="hdr">${input.hdr.map(h => `<div>${esc(h)}</div>`).join("")}</div>
-    <p>${esc(input.body)}</p><p class="wc">${words} words, one paragraph</p>`;
-  $("out-brief").innerHTML = $("out-talking").innerHTML = `<p class="drafting">Drafting…</p>`;
+    <p>${esc(input.body)}</p><p class="demo-meta">${words} words, one paragraph</p>`;
+  $("out-brief").innerHTML = $("out-talking").innerHTML = `<p class="demo-drafting">Drafting…</p>`;
   const [brief, talking] = await Promise.all([respond("brief", input), respond("talking", input)]);
   if (my !== runId) return;
   renderBrief(brief);
@@ -283,12 +269,6 @@ document.querySelectorAll("[data-input]").forEach(b =>
 
 $("prompt-brief").textContent = PROMPTS.brief;
 $("prompt-talking").textContent = PROMPTS.talking;
-$("toggle-prompt").addEventListener("click", () => {
-  const box = $("prompt");
-  box.hidden = !box.hidden;
-  $("toggle-prompt").setAttribute("aria-pressed", !box.hidden);
-  $("toggle-prompt").textContent = box.hidden ? "Show the prompt" : "Hide the prompt";
-});
 
 run(INPUTS[0]);
 </script>

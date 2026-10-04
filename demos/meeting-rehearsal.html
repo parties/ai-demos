@@ -3,107 +3,88 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Rehearse a Hard Meeting</title>
+<title>Practicing for a Difficult Meeting</title>
+<link rel="stylesheet" href="../assets/demo.css">
+<script src="../assets/demo.js" defer></script>
 <style>
-  :root {
-    --bg: #fcfcfb; --ink: #0b0b0b; --muted: #52514e; --line: #d9d8d3;
-    --card: #ffffff; --accent: #1c5cab; --accent-ink: #ffffff; --soft: #eef4fc;
-    --paper: #f3f2ee; --warn-bg: #fff3d6; --warn-line: #c98500; --good: #1b7a4a; --good-bg: #e7f4ec;
-    --them: #7a2a1c; --them-bg: #fbecea;
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--ink);
-    font: 20px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  main { max-width: 1500px; margin: 0 auto; padding: 24px 16px 40px; }
-  h1 { font-size: 2.1rem; margin: 0; line-height: 1.2; }
-  .sub { color: var(--muted); margin: 6px 0 20px; font-size: 1.15rem; }
-  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 12px; }
-  .controls > span { color: var(--muted); font-weight: 600; margin-right: 4px; min-width: 4.2em; }
-  button { font: inherit; font-weight: 600; padding: 10px 22px; min-height: 52px; cursor: pointer;
-    background: var(--card); color: var(--ink); border: 2px solid var(--accent); border-radius: 10px; }
-  button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
-  #toggle-prompt { border-color: var(--line); }
-  .prompt { background: var(--soft); border: 2px solid var(--accent); border-radius: 12px; padding: 14px 18px; margin: 6px 0 18px; }
-  .prompt h2 { font-size: 1rem; margin: 0 0 6px; }
-  pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; }
-  .prompt pre { font-size: 1rem; }
-  .cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); gap: 16px; align-items: start; margin-top: 8px; }
-  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; }
-  .panel.in { background: var(--paper); }
-  .panel > h2 { font-size: 1rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 8px; }
-  .panel.in h3 { font-size: 1.05rem; margin: 10px 0 4px; }
-  .panel.in p { margin: 0; }
-  .panel.in ul { margin: 0; padding-left: 1.2em; font-size: .95rem; }
-  .panel.in li { margin: 3px 0; }
-  .progress { font-weight: 700; color: var(--muted); margin: 0 0 10px; }
-  .msg { border-radius: 14px; padding: 10px 16px; margin: 0 0 12px; max-width: 88%; }
-  .msg .who { display: block; font-size: .85rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
-  .msg.them { background: var(--them-bg); border: 2px solid var(--them); }
-  .msg.them .who { color: var(--them); }
-  .msg.them p { margin: 0; font-size: 1.15rem; font-weight: 600; }
-  .msg.me { background: var(--soft); border: 2px solid var(--accent); margin-left: auto; }
-  .msg.me .who { color: var(--accent); }
-  .msg.me.draft { border-style: dashed; }
-  .msg.me p { margin: 0; }
-  .coach { background: var(--good-bg); border: 2px solid var(--good); border-radius: 12px; padding: 10px 16px; margin: 0 0 14px; }
-  .coach h4 { margin: 0 0 4px; color: var(--good); font-size: 1rem; text-transform: uppercase; letter-spacing: .05em; }
+  /* The transcript: AI turns are white cards with a teal edge; your turns are plain white cards on the right. */
+  .demo-files ul { margin: 0; padding-left: 1.2em; }
+  .demo-files li { margin: 3px 0; }
+  #progress { font-weight: 700; margin: 0 0 12px; }
+  .msg { background: var(--card); border-radius: 12px; padding: 10px 16px; margin: 0 0 12px; max-width: 88%; }
+  .msg .who { display: block; font-size: .9rem; font-weight: 700; margin-bottom: 2px; }
+  .msg p { margin: 0; }
+  .msg.them { border: 1px solid var(--ai); border-left: 6px solid var(--ai); }
+  .msg.them .who { color: var(--ai); }
+  .msg.them p { font-size: 1.1rem; font-weight: 600; }
+  .msg.me { border: 1px solid var(--rule); margin-left: auto; }
+  .msg.me .who { color: var(--muted); }
+  .msg.me.draft { border: 2px dashed var(--muted); }
+  .coach { background: var(--card); border: 2px solid var(--ai); border-radius: 12px; padding: 10px 16px; margin: 0 0 14px; }
+  .coach h4 { margin: 0 0 4px; color: var(--ai); font-size: 1.1rem; }
   .coach p { margin: 3px 0; }
   .coach b { display: inline-block; min-width: 5.6em; }
-  .coach .try { background: var(--card); border-left: 5px solid var(--good); padding: 4px 10px; border-radius: 0 8px 8px 0; }
-  .wrap { background: var(--warn-bg); border: 2px solid var(--warn-line); border-radius: 12px; padding: 12px 16px; margin: 0 0 14px; }
-  .wrap h4 { margin: 0 0 6px; font-size: 1.15rem; }
+  .coach .try { background: var(--ai-bg); border-left: 5px solid var(--ai); padding: 4px 10px; border-radius: 0 8px 8px 0; }
+  .wrap { background: var(--card); border: 4px double var(--ai); border-radius: 12px; padding: 12px 16px; margin: 0 0 14px; }
+  .wrap h4 { margin: 0 0 6px; color: var(--ai); font-size: 1.2rem; }
   .wrap p { margin: 4px 0; }
-  .wrap .line { font-size: 1.2rem; font-weight: 700; }
-  .drafting { color: var(--muted); font-style: italic; font-size: 1.15rem; margin: 0 0 12px; }
+  .wrap .line { font: 700 1.2rem var(--serif); }
+  .demo-step--output .demo-drafting { margin: 0 0 12px; }
   #next { background: var(--accent); color: var(--accent-ink); }
-  footer { color: var(--muted); font-size: 1rem; margin-top: 20px; }
-  @media (min-width: 901px) { .panel.in { position: sticky; top: 12px; } }
-  @media (max-width: 900px) { .cols { grid-template-columns: minmax(0, 1fr); } .msg { max-width: 100%; } }
+  @media (max-width: 700px) { .msg { max-width: 100%; } }
 </style>
 </head>
 <body>
-<main>
-  <h1>Rehearse a hard meeting</h1>
-  <p class="sub">AI plays the skeptical board member, the upset parent, or the reporter, and coaches each answer. Practice before the real one.</p>
+<main class="demo">
+  <a class="demo-back" href="../index.html">All demos</a>
+  <header class="demo-head">
+    <h1>Practicing for a difficult meeting</h1>
+    <p class="demo-intro">Before a hard conversation, it helps to practice your answers out loud. Here, a superintendent asks the AI to play the person on the other side of the table: a skeptical board member, an upset parent, or a local reporter. The AI asks three tough questions, one at a time. After each answer, it steps out of character and coaches like a communications advisor: what worked, what to tighten, and one sentence to try instead.</p>
+    <p class="demo-intro">Choose who you are meeting and the topic, then press "Start the rehearsal" and step through the conversation. The superintendent's answers are already written in, so you can see how the coaching responds to them.</p>
+  </header>
 
-  <div class="controls" role="group" aria-label="Who you're meeting">
-    <span>Meeting</span>
+  <div class="demo-presets" role="group" aria-label="Who you are meeting">
+    <span>Who you are meeting</span>
     <button data-role="board" aria-pressed="true">Skeptical board member</button>
     <button data-role="parent" aria-pressed="false">Upset parent</button>
     <button data-role="reporter" aria-pressed="false">Local reporter</button>
   </div>
-  <div class="controls" role="group" aria-label="Topic">
-    <span>Topic</span>
+  <div class="demo-presets" role="group" aria-label="Topic">
+    <span>The topic</span>
     <button data-topic="budget" aria-pressed="true">Staff cuts in the budget</button>
-    <button data-topic="start" aria-pressed="false">Later high school start</button>
-    <button id="toggle-prompt" aria-pressed="false">Show the prompt</button>
+    <button data-topic="start" aria-pressed="false">Later high school start time</button>
   </div>
 
-  <section class="prompt" id="prompt" hidden>
-    <h2>The prompt (copy this into any AI chat)</h2>
-    <pre id="prompt-text"></pre>
-  </section>
-
-  <div class="cols">
-    <section class="panel in">
-      <h2>What you paste in</h2>
-      <h3>Who the AI plays</h3>
-      <p id="in-role"></p>
-      <h3>The facts you're working from</h3>
-      <ul id="in-facts"></ul>
+  <div class="demo-steps">
+    <section class="demo-step demo-step--prompt">
+      <h2 class="demo-step-title">The prompt <button type="button" class="demo-copy">Copy the prompt</button></h2>
+      <p class="demo-step-note">What the superintendent types into the AI chat. It names the person the AI plays, the topic, and the facts, so it changes when you choose a different meeting or topic.</p>
+      <pre class="demo-prompt" id="prompt-text"></pre>
     </section>
-    <section class="panel">
-      <h2>What comes back</h2>
-      <p class="progress" id="progress"></p>
+
+    <section class="demo-step demo-step--files">
+      <h2 class="demo-step-title">What the AI works from</h2>
+      <p class="demo-step-note">The role and the facts are already written into the prompt. They are shown here on their own so you can check the AI's questions and coaching against them. The AI should not use any fact that is not on this list.</p>
+      <div class="demo-files">
+        <div class="demo-file"><span class="demo-file-tab">Who the AI plays</span><div class="demo-file-body"><p id="in-role"></p></div></div>
+        <div class="demo-file"><span class="demo-file-tab">The facts you are working from</span><div class="demo-file-body"><ul id="in-facts"></ul></div></div>
+      </div>
+    </section>
+
+    <section class="demo-step demo-step--output" aria-live="polite">
+      <h2 class="demo-step-title">What the AI wrote <span class="demo-ai-tag">AI-generated</span></h2>
+      <p id="progress"></p>
       <div id="talk"></div>
       <button id="next">Start the rehearsal</button>
     </section>
   </div>
 
-  <footer>
-    The coaching is a starting point: the superintendent decides what's true, what's settled, and what to say, and checks every fact before using it in a real meeting.
-    Every output was generated ahead of time so this page works with no internet.
-  </footer>
+  <aside class="demo-before-use">
+    <h2>Before you use it</h2>
+    <p>The coaching is a starting point, not a script. The superintendent decides what is true, what is already settled, and what to say. Check every fact and every suggested line against the district's own documents before using it in a real meeting, because the AI's wording can sound more certain than the facts allow.</p>
+  </aside>
+
+  <footer class="demo-foot">Every name, number, and record on this page is made up. The AI's answers were written ahead of time, so the page works without an internet connection.</footer>
 </main>
 
 <script>
@@ -285,10 +266,10 @@ async function advance() {
   const run = runId, key = `${state.role}-${state.topic}`, t = state.turn;
   const draft = talk.querySelector(".msg.me.draft");
   if (draft) { draft.classList.remove("draft"); draft.querySelector(".who").textContent = "You"; }
-  add(`<p class="drafting">${t === 0 ? "Getting into character…" : "Coaching your answer…"}</p>`);
+  add(`<p class="demo-drafting">${t === 0 ? "Getting into character…" : "Coaching your answer…"}</p>`);
   const r = await respond("rehearse", { id: `${key}-${t}`, answer: t > 0 ? SCRIPTS[key].a[t - 1] : "" });
   if (run !== runId) return;
-  talk.querySelector(".drafting").remove();
+  talk.querySelector(".demo-drafting").remove();
   if (r.coach) add(`<div class="coach"><h4>Coaching on answer ${t}</h4>
     <p><b>Landed:</b> ${esc(r.coach[0])}</p><p><b>Tighten:</b> ${esc(r.coach[1])}</p>
     <p class="try"><b>Try saying:</b> ${esc(r.coach[2])}</p></div>`);
@@ -310,13 +291,6 @@ async function advance() {
 document.querySelectorAll("[data-role]").forEach(b => b.addEventListener("click", () => { state.role = b.dataset.role; reset(); }));
 document.querySelectorAll("[data-topic]").forEach(b => b.addEventListener("click", () => { state.topic = b.dataset.topic; reset(); }));
 next.addEventListener("click", advance);
-const toggle = document.getElementById("toggle-prompt");
-toggle.addEventListener("click", () => {
-  const box = document.getElementById("prompt");
-  box.hidden = !box.hidden;
-  toggle.setAttribute("aria-pressed", !box.hidden);
-  toggle.textContent = box.hidden ? "Show the prompt" : "Hide the prompt";
-});
 reset();
 </script>
 </body>

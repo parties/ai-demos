@@ -34,18 +34,20 @@
     viewer.querySelector(".demo-viewer-body").replaceChildren(...[...file.querySelector(".demo-file-body").childNodes].map(n => n.cloneNode(true)));
   };
   const close = () => viewer.open && viewer.close();
-  viewer.addEventListener("close", () => { document.body.classList.remove("demo-viewer-docked"); shown?.querySelector(".demo-file-open")?.focus(); shown = null; });
+  viewer.addEventListener("close", () => { document.body.classList.remove("demo-viewer-docked"); shown?.querySelector(".demo-file-open")?.focus({ preventScroll: true }); shown = null; });
   viewer.querySelector(".demo-viewer-close").addEventListener("click", close);
   document.addEventListener("keydown", e => { if (e.key === "Escape") close(); }); // a docked (non-modal) dialog ignores Escape on its own
 
   // Exposed so pages can open a file at a spot, e.g. a cited section: DemoViewer.open(fileEl, "#sec-4")
   window.DemoViewer = {
     open(file, target) {
-      if (viewer.open) viewer.close();
       shown = file;
       fill(file);
-      if (matchMedia("(min-width: 1100px)").matches) { viewer.show(); document.body.classList.add("demo-viewer-docked"); }
-      else viewer.showModal();
+      // Already open: just swap the content. Closing and reopening would fire the (async) close event after the reopen.
+      if (!viewer.open) {
+        if (matchMedia("(min-width: 1100px)").matches) { viewer.show(); document.body.classList.add("demo-viewer-docked"); }
+        else viewer.showModal();
+      }
       const body = viewer.querySelector(".demo-viewer-body");
       const spot = target && body.querySelector(target);
       if (spot) spot.scrollIntoView({ block: "center" }); else body.scrollTop = 0;
