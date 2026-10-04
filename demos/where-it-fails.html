@@ -3,102 +3,93 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Where It Fails, and How You Catch It</title>
+<title>AI Answers That Look Right but Aren't</title>
+<link rel="stylesheet" href="../assets/demo.css">
+<script src="../assets/demo.js" defer></script>
 <style>
-  :root {
-    --bg: #fcfcfb; --ink: #0b0b0b; --muted: #52514e; --line: #d9d8d3;
-    --card: #ffffff; --accent: #1c5cab; --accent-ink: #ffffff; --soft: #eef4fc;
-    --bad: #a3271b; --bad-soft: #fde4e0;
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--ink);
-    font: 20px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  main { max-width: 1500px; margin: 0 auto; padding: 24px 16px 40px; }
-  h1 { font-size: 2.1rem; margin: 0; line-height: 1.2; }
-  .sub { color: var(--muted); margin: 6px 0 20px; font-size: 1.15rem; }
-  .controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 18px; }
-  .controls > span { color: var(--muted); font-weight: 600; }
-  button { font: inherit; font-weight: 600; padding: 10px 22px; min-height: 52px; cursor: pointer;
-    background: var(--card); color: var(--ink); border: 2px solid var(--accent); border-radius: 10px; }
-  button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
-  #check { background: var(--bad); border-color: var(--bad); color: #fff; }
-  #check[aria-pressed="true"] { background: var(--card); color: var(--bad); }
-  #toggle-prompt { border-color: var(--line); }
-  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .col { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; min-width: 0; }
-  .col h2 { font-size: 1rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 8px; }
-  .ask { font-weight: 600; margin: 0 0 12px; }
-  .source { background: #f3f2ee; border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; font-size: 1rem; overflow-x: auto; }
-  .source p { margin: 0 0 6px; }
-  table { border-collapse: collapse; width: 100%; font-size: .95rem; }
-  th, td { padding: 4px 8px; border-bottom: 1px solid var(--line); text-align: right; }
-  th:first-child, td:first-child { text-align: left; }
   .answer { white-space: pre-wrap; margin: 0 0 14px; min-height: 3em; }
-  .answer mark { background: none; color: inherit; }
-  .checked .answer mark { background: var(--bad-soft); outline: 2px solid var(--bad); border-radius: 3px; }
+  .answer mark { background: none; padding: 0; }
+  .checked .answer mark { background: var(--bad-bg); outline: 2px solid var(--bad); border-radius: 3px; }
   .checked .answer mark::after { content: attr(data-n); display: inline-block; margin-left: 4px; padding: 0 7px;
     border-radius: 999px; background: var(--bad); color: #fff; font-size: .8rem; font-weight: 700; vertical-align: 2px; }
-  .drafting { color: var(--muted); font-style: italic; }
-  .verdict { font-weight: 700; color: var(--bad); margin: 0 0 10px; }
-  .findings { list-style: none; padding: 0; margin: 18px 0 0; display: grid; gap: 12px; }
-  .findings li { background: var(--card); border: 1px solid var(--line); border-left: 6px solid var(--bad);
-    border-radius: 10px; padding: 12px 16px; display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; }
+  #check { background: var(--bad); border-color: var(--bad); color: #fff; }
+  #check[aria-pressed="true"] { background: var(--card); color: var(--bad); }
+  .verdict { font-weight: 700; color: var(--bad); margin: 16px 0 0; }
+  .findings { list-style: none; padding: 0; margin: 12px 0 0; display: grid; gap: 12px; }
+  .findings li { background: var(--card); border: 1px solid var(--rule); border-left: 6px solid var(--bad);
+    border-radius: 10px; padding: 12px 16px; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 14px; }
   .num { grid-row: span 3; width: 36px; height: 36px; border-radius: 50%; background: var(--bad); color: #fff;
     font-weight: 700; display: grid; place-items: center; }
-  .habit { justify-self: start; background: var(--soft); color: var(--accent); font-weight: 700; padding: 2px 12px; border-radius: 999px; }
+  .habit { justify-self: start; background: var(--accent-soft); color: var(--accent); font-weight: 700; font-size: .9rem; padding: 2px 12px; border-radius: 999px; }
   .truth { color: var(--muted); }
-  .habits { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 22px; }
-  .habits div { border: 2px solid var(--line); border-radius: 10px; padding: 10px 14px; font-size: 1rem; }
-  .habits div.used { border-color: var(--accent); background: var(--soft); }
-  .habits strong { display: block; font-size: 1.1rem; }
-  pre { white-space: pre-wrap; background: #f3f2ee; border: 1px solid var(--line); border-radius: 10px;
-    padding: 14px 18px; font: 1rem/1.5 ui-monospace, Menlo, Consolas, monospace; margin: 0 0 18px; }
-  footer { color: var(--muted); font-size: 1rem; margin-top: 20px; }
-  @media (max-width: 900px) { .cols, .habits { grid-template-columns: 1fr; } }
+  #source th + th, #source td + td { text-align: right; }
+  .habits-wrap { margin-top: 34px; }
+  .habits-wrap h2 { font-size: 1.45rem; margin: 0 0 4px; }
+  .habits-wrap > p { margin: 0 0 14px; max-width: 68ch; }
+  .habits { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: 12px; }
+  .habits div { background: var(--card); border: 2px solid var(--rule); border-radius: 10px; padding: 10px 14px; font-size: 1rem; }
+  .habits div.used { border-color: var(--accent); background: var(--accent-soft); }
+  .habits strong { display: block; font-size: 1.1rem; font-family: var(--serif); }
 </style>
 </head>
 <body>
-<main>
-  <h1>Where it fails, and how you catch it</h1>
-  <p class="sub">Each answer below looks finished. Each one has a problem planted in it. Read it, then press "Check it."</p>
+<main class="demo">
+  <a class="demo-back" href="../index.html">All demos</a>
+  <header class="demo-head">
+    <h1>AI answers that look right but aren't: how to check them</h1>
+    <p class="demo-intro">AI tools write confident, polished answers, and some of those answers are wrong. This page shows three tasks a district staff member might give an AI. Each answer looks finished, but we planted mistakes in every one of them, the same kinds of mistakes AI tools really make.</p>
+    <p class="demo-intro">Pick a task, read the AI's answer, and try to find the problems yourself. Then press "Show the mistakes" to see each one and the checking habit that would have caught it.</p>
+  </header>
 
-  <div class="controls" role="group" aria-label="Task">
-    <span>Task</span>
+  <div class="demo-presets" role="group" aria-label="Task">
+    <span>Choose a task</span>
     <button data-preset="policy" aria-pressed="true">Summarize a policy</button>
     <button data-preset="budget" aria-pressed="false">Total a budget</button>
-    <button data-preset="law" aria-pressed="false">Answer a law question</button>
-    <button id="toggle-prompt" aria-pressed="false">Show the prompt</button>
+    <button data-preset="law" aria-pressed="false">Answer a legal question</button>
   </div>
 
-  <pre id="prompt" hidden></pre>
-
-  <div class="cols">
-    <section class="col">
-      <h2>What you paste in</h2>
-      <p class="ask" id="ask"></p>
-      <div class="source" id="source"></div>
+  <div class="demo-steps">
+    <section class="demo-step demo-step--prompt">
+      <h2 class="demo-step-title">The prompt <button type="button" class="demo-copy">Copy the prompt</button></h2>
+      <p class="demo-step-note">What the staff member types into the AI chat. It is a careful, specific request; the mistakes below are not the prompt's fault.</p>
+      <pre class="demo-prompt" id="prompt"></pre>
     </section>
-    <section class="col" id="out-col">
-      <h2>What comes back</h2>
+
+    <section class="demo-step demo-step--files">
+      <h2 class="demo-step-title">The file you attach</h2>
+      <p class="demo-step-note">The document the AI is asked to work from. Open the full file to read it beside the AI's answer: comparing the two is how you catch most of the mistakes.</p>
+      <div class="demo-files">
+        <div class="demo-file" id="file"><span class="demo-file-tab" id="file-name"></span><div class="demo-file-body" id="source"></div></div>
+      </div>
+      <p class="demo-nofile" id="nofile" hidden><strong>No file attached.</strong> The question goes in on its own, so the AI answers from what it learned in training. That training stops at a fixed date, and the AI may not say so.</p>
+    </section>
+
+    <section class="demo-step demo-step--output" id="out-col" aria-live="polite">
+      <h2 class="demo-step-title">What the AI wrote <span class="demo-ai-tag">AI-generated</span></h2>
       <p class="answer" id="answer"></p>
+      <button id="check" aria-pressed="false" hidden>Show the mistakes</button>
       <p class="verdict" id="verdict" hidden></p>
-      <button id="check" aria-pressed="false" hidden>Check it</button>
+      <ol class="findings" id="findings" hidden></ol>
     </section>
   </div>
 
-  <ol class="findings" id="findings" hidden></ol>
+  <section class="habits-wrap">
+    <h2>Four habits that catch AI mistakes</h2>
+    <p>Each mistake on this page is caught by one of these. The ones that apply to the task you picked light up when you show the mistakes.</p>
+    <div class="habits" id="habits">
+      <div data-habit="source"><strong>Ask for the source</strong>"Where exactly does that come from?" Then open it yourself.</div>
+      <div data-habit="compare"><strong>Compare against the original</strong>Read the answer beside what you gave it, line by line.</div>
+      <div data-habit="recompute"><strong>Recompute</strong>Redo every number it calculated, in a spreadsheet.</div>
+      <div data-habit="date"><strong>Check the date</strong>"As of when?" Its knowledge stops at a training date.</div>
+    </div>
+  </section>
 
-  <div class="habits" id="habits">
-    <div data-habit="source"><strong>Ask for the source</strong>"Where exactly does that come from?" Then open it yourself.</div>
-    <div data-habit="compare"><strong>Compare against the original</strong>Read the answer beside what you pasted, line by line.</div>
-    <div data-habit="recompute"><strong>Recompute</strong>Redo every number it calculated, in a spreadsheet.</div>
-    <div data-habit="date"><strong>Check the date</strong>"As of when?" Its knowledge stops at a training date.</div>
-  </div>
+  <aside class="demo-before-use">
+    <h2>Before you use any AI answer</h2>
+    <p>Check every citation, number, and legal claim yourself. A polished answer is not the same as a correct one, and the person who sends it is responsible for it.</p>
+  </aside>
 
-  <footer>
-    Trust is earned with a checking habit, not assumed: a person verifies every citation, number, and legal claim before anything is used.
-    Every output was generated ahead of time so this page works with no internet.
-  </footer>
+  <footer class="demo-foot">Every name, number, policy, and court case on this page is made up. The AI's answers were written ahead of time, so the page works without an internet connection.</footer>
 </main>
 
 <script>
@@ -158,7 +149,7 @@ const BUDGET_ROWS = [
 const PRESETS = {
   policy: {
     task: "summarize",
-    ask: "Summarize this attendance policy for principals.",
+    file: "Board Policy 5113, Student Attendance",
     source: "<p><strong>Board Policy 5113, Student Attendance (revised June 2026)</strong></p>" +
       "<p>1. A student is chronically absent after missing 10% of enrolled school days for any reason.</p>" +
       "<p>2. After 5 unexcused absences, the school attendance team calls the family and documents the call.</p>" +
@@ -174,7 +165,7 @@ const PRESETS = {
   },
   budget: {
     task: "budget",
-    ask: "What is the FY27 total, how much did it grow, and are we under the board's 3% limit?",
+    file: "Transportation budget, FY26 and FY27",
     source: "<p><strong>Transportation budget, FY26 actual vs. FY27 proposed ($)</strong></p><table><tr><th>Line</th><th>FY26</th><th>FY27</th></tr>" +
       BUDGET_ROWS.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join("") + "</table>",
     checks: [
@@ -185,8 +176,8 @@ const PRESETS = {
   },
   law: {
     task: "law",
-    ask: "How many business days do we have to respond to a public records request, and can we charge for copies?",
-    source: "<p><strong>No document pasted.</strong></p><p>Just the question. The answer comes from what the AI learned in training, which stops at a fixed date.</p>",
+    file: null,
+    source: "",
     checks: [
       { habit: "date", problem: "The deadline is out of date.", truth: "In this example, the legislature shortened it to 5 business days in its 2026 session, effective July 1, 2026. The AI answered from older training data and did not say so." },
       { habit: "source", problem: "Harmon v. Eastfield School District does not exist.", truth: "The case name, year, and holding are invented. Ask for the source, then look it up yourself or ask district counsel." }
@@ -205,7 +196,7 @@ function setChecked(on) {
   const p = PRESETS[current];
   outCol.classList.toggle("checked", on);
   check.setAttribute("aria-pressed", on);
-  check.textContent = on ? "Hide the checks" : "Check it";
+  check.textContent = on ? "Hide the mistakes" : "Show the mistakes";
   findings.hidden = verdict.hidden = !on;
   const used = new Set(on ? p.checks.map(c => c.habit) : []);
   document.querySelectorAll("[data-habit]").forEach(d => d.classList.toggle("used", used.has(d.dataset.habit)));
@@ -215,12 +206,14 @@ async function load(id) {
   current = id;
   const p = PRESETS[id], mine = ++run;
   document.querySelectorAll("[data-preset]").forEach(b => b.setAttribute("aria-pressed", b.dataset.preset === id));
-  $("ask").textContent = p.ask;
+  $("file").hidden = !p.file;
+  $("nofile").hidden = !!p.file;
+  $("file-name").textContent = p.file || "";
   $("source").innerHTML = p.source;
   $("prompt").textContent = PROMPTS[p.task];
   setChecked(false);
   check.hidden = true;
-  answer.innerHTML = '<span class="drafting">Drafting…</span>';
+  answer.innerHTML = '<span class="demo-drafting">Drafting…</span>';
 
   const segments = await respond(p.task, { id });
   if (mine !== run) return; // a newer preset was chosen while this one was drafting
@@ -232,7 +225,7 @@ async function load(id) {
     m.textContent = s[1];
     answer.append(m);
   }
-  verdict.textContent = `${p.checks.length} problems in an answer that looked finished.`;
+  verdict.textContent = `${p.checks.length} mistakes in an answer that looked finished:`;
   findings.innerHTML = "";
   p.checks.forEach((c, i) => {
     const li = document.createElement("li");
@@ -247,14 +240,6 @@ async function load(id) {
 
 document.querySelectorAll("[data-preset]").forEach(b => b.addEventListener("click", () => load(b.dataset.preset)));
 check.addEventListener("click", () => setChecked(check.getAttribute("aria-pressed") !== "true"));
-
-const togglePrompt = $("toggle-prompt");
-togglePrompt.addEventListener("click", () => {
-  const box = $("prompt");
-  box.hidden = !box.hidden;
-  togglePrompt.setAttribute("aria-pressed", !box.hidden);
-  togglePrompt.textContent = box.hidden ? "Show the prompt" : "Hide the prompt";
-});
 
 load("policy");
 </script>
